@@ -1,3 +1,27 @@
+JIBBLE PROJECT STRUCTURE — 10/10 VERSION (BACKEND + MOBILE)
+================================================================
+
+This file is a **fully self-contained**, production-grade blueprint for the Jibble project.
+It fixes all previous issues and includes:
+- Monorepo layout
+- Backend (Node.js + Express + Socket.io) with:
+  - Repository layer per module (no service → DB coupling)
+  - Versioned APIs (`/api/v1/...`)
+  - Queues & background workers (BullMQ-style)
+  - Feature flags
+  - Structured logging with requestId/correlationId
+  - Per-module rate limiting
+  - Search optimization plan hooks
+- Database entities and migrations
+- Infrastructure and scripts
+- Flutter mobile app structure
+
+You can follow this single file as your master structure. Nothing else is required.
+
+
+1. MONOREPO ROOT
+----------------
+
 jibble/
 │
 ├── apps/                                  # All runtime applications
@@ -11,14 +35,14 @@ jibble/
 │   │   │   │   └── README.md
 │   │   │   └── images/
 │   │   │       └── README.md
-│   │   ├── lib/                           # See Section 5 for full structure
+│   │   ├── lib/                           # See Section 5
 │   │   ├── test/
 │   │   │   └── widget_test.dart
 │   │   ├── pubspec.yaml
 │   │   ├── analysis_options.yaml
 │   │   └── README.md
 │   │
-│   └── admin_panel/                       # Future web-based admin panel
+│   └── admin_panel/                       # Future web/admin console (optional)
 │       ├── src/
 │       │   ├── index.tsx
 │       │   ├── App.tsx
@@ -31,27 +55,39 @@ jibble/
 │       ├── package.json
 │       └── README.md
 │
-├── backend/                               # Node.js + Express + Socket.io API
+├── backend/                               # Node.js + Express + Socket.io
 │   ├── src/
-│   │   ├── index.ts                       # Entrypoint: loads env, starts server
-│   │   ├── app.ts                         # Express app setup (middlewares, routes)
+│   │   ├── index.ts                       # Entrypoint: loads env, creates server
+│   │   ├── app.ts                         # Express app (middlewares, v1 routes)
 │   │   ├── server.ts                      # HTTP server + Socket.io bootstrap
 │   │   ├── config/
 │   │   │   ├── env.ts                     # dotenv + validation (zod/joi)
-│   │   │   ├── db.ts                      # Neon PostgreSQL client / ORM
+│   │   │   ├── db.ts                      # Neon Postgres client / ORM
 │   │   │   ├── redis.ts                   # Redis client
-│   │   │   ├── s3.ts                      # AWS S3 client + bucket setup
+│   │   │   ├── s3.ts                      # AWS S3 client + bucket helpers
 │   │   │   ├── cloudfront.ts              # CloudFront URL helpers
-│   │   │   ├── logger.ts                  # Winston/Pino logger
+│   │   │   ├── featureFlags.ts            # feature flag definitions & helpers
+│   │   │   ├── logger.ts                  # Winston/Pino logger (structured)
+│   │   │   ├── requestContext.ts          # requestId / correlationId utilities
 │   │   │   └── socket.ts                  # Socket.io server setup
+│   │   ├── api/                           # API versioning entry
+│   │   │   ├── v1/
+│   │   │   │   ├── index.ts               # attach v1 module routes under /api/v1
+│   │   │   │   └── routes.ts              # optional aggregator
+│   │   │   └── v2/                        # (future)
 │   │   ├── middlewares/
-│   │   │   ├── auth.middleware.ts         # JWT verification, attach user to req
-│   │   │   ├── rbac.middleware.ts         # Role-based access control
-│   │   │   ├── rate_limiter.middleware.ts # Login, messaging, global limits
-│   │   │   ├── error.middleware.ts        # Centralized error handler
-│   │   │   └── validate.middleware.ts     # Request validation wrapper
+│   │   │   ├── auth.middleware.ts         # JWT verification, attach user
+│   │   │   ├── rbac.middleware.ts         # role-based access control
+│   │   │   ├── rateLimiter.global.ts      # global/basic rate limits
+│   │   │   ├── rateLimiter.auth.ts        # stricter login/signup limits
+│   │   │   ├── rateLimiter.chat.ts        # tuned for chat messaging
+│   │   │   ├── rateLimiter.post.ts        # posting/engagement limits
+│   │   │   ├── requestLogger.middleware.ts# logs with requestId/correlationId
+│   │   │   ├── correlation.middleware.ts  # generates requestId/correlationId
+│   │   │   ├── error.middleware.ts        # centralized error handler
+│   │   │   └── validate.middleware.ts     # request validation wrapper
 │   │   ├── db/
-│   │   │   ├── schema.prisma              # Or ORM schema definition
+│   │   │   ├── schema.prisma              # or ORM schema definition
 │   │   │   ├── migrations/
 │   │   │   │   ├── 001_init.sql
 │   │   │   │   ├── 002_add_posts.sql
@@ -65,70 +101,89 @@ jibble/
 │   │   │   │   ├── seed_categories.ts
 │   │   │   │   ├── seed_circle_data.ts
 │   │   │   │   └── seed_demo_content.ts
-│   │   │   └── index.ts                   # Exports DB client/ORM instance
+│   │   │   └── index.ts                   # Export DB client/ORM instance
+│   │   ├── queues/                        # Background jobs & workers
+│   │   │   ├── email.queue.ts             # email enqueue logic
+│   │   │   ├── notification.queue.ts      # push/in-app notification jobs
+│   │   │   ├── analytics.queue.ts         # async analytics aggregation
+│   │   │   ├── queues.config.ts           # BullMQ/RabbitMQ setup
+│   │   │   └── worker.ts                  # job processing worker entry
+│   │   ├── search/                        # search infra & optimization
+│   │   │   ├── search.config.ts           # toggles: Postgres FTS vs Elastic
+│   │   │   ├── search.indexer.ts          # background indexing jobs
+│   │   │   └── search.strategy.md         # notes on indexes, FTS strategy
 │   │   ├── utils/
-│   │   │   ├── response.ts                # Standard API response helpers
-│   │   │   ├── crypto.ts                  # Hashing, token creation
-│   │   │   ├── pagination.ts              # Page, limit, cursor logic
-│   │   │   ├── s3_helpers.ts              # File key generators, presigned URLs
-│   │   │   ├── time.ts                    # Date/time helpers
-│   │   │   └── constants.ts               # Shared constants/enums
+│   │   │   ├── response.ts                # standard API response
+│   │   │   ├── crypto.ts                  # hashing, tokens
+│   │   │   ├── pagination.ts              # page/limit helpers
+│   │   │   ├── s3_helpers.ts              # object key builders
+│   │   │   ├── time.ts                    # time/date helpers
+│   │   │   ├── id.ts                      # ID/UUID helpers
+│   │   │   └── constants.ts               # shared enums/consts
 │   │   ├── types/
-│   │   │   ├── common.ts                  # Generic types
-│   │   │   └── express.d.ts               # Augment Express Request with user
-│   │   ├── modules/                       # Feature-based modules
+│   │   │   ├── common.ts                  # generic types
+│   │   │   └── express.d.ts               # extend Request with user, ids
+│   │   ├── modules/                       # Feature-based modules (DDD-ish)
 │   │   │   ├── auth/
 │   │   │   │   ├── auth.controller.ts
-│   │   │   │   ├── auth.routes.ts
-│   │   │   │   ├── auth.service.ts
-│   │   │   │   ├── auth.validation.ts     # Signup, login, OTP, reset
-│   │   │   │   ├── auth.types.ts          # Auth DTOs
-│   │   │   │   └── auth.constants.ts      # Token expiries, limits
+│   │   │   │   ├── auth.routes.ts         # mounted under /api/v1/auth
+│   │   │   │   ├── auth.service.ts        # business logic
+│   │   │   │   ├── auth.repository.ts     # DB operations for sessions/users
+│   │   │   │   ├── auth.validation.ts     # signup/login/OTP schemas
+│   │   │   │   ├── auth.types.ts          # DTOs
+│   │   │   │   └── auth.constants.ts
 │   │   │   ├── user/
 │   │   │   │   ├── user.controller.ts
-│   │   │   │   ├── user.routes.ts
+│   │   │   │   ├── user.routes.ts         # /api/v1/users
 │   │   │   │   ├── user.service.ts
+│   │   │   │   ├── user.repository.ts     # DB access for users
 │   │   │   │   ├── user.validation.ts
 │   │   │   │   ├── user.types.ts
-│   │   │   │   └── user.mapper.ts         # DB row ↔ API response
+│   │   │   │   └── user.mapper.ts
 │   │   │   ├── profile/
 │   │   │   │   ├── profile.controller.ts
-│   │   │   │   ├── profile.routes.ts
+│   │   │   │   ├── profile.routes.ts      # /api/v1/profiles
 │   │   │   │   ├── profile.service.ts
+│   │   │   │   ├── profile.repository.ts
 │   │   │   │   ├── profile.validation.ts
 │   │   │   │   ├── profile.types.ts
 │   │   │   │   └── profile.mapper.ts
 │   │   │   ├── college/
 │   │   │   │   ├── college.controller.ts
-│   │   │   │   ├── college.routes.ts
+│   │   │   │   ├── college.routes.ts      # /api/v1/colleges
 │   │   │   │   ├── college.service.ts
+│   │   │   │   ├── college.repository.ts
 │   │   │   │   ├── college.validation.ts
 │   │   │   │   └── college.types.ts
 │   │   │   ├── follow/
 │   │   │   │   ├── follow.controller.ts
-│   │   │   │   ├── follow.routes.ts
+│   │   │   │   ├── follow.routes.ts       # /api/v1/follows
 │   │   │   │   ├── follow.service.ts
+│   │   │   │   ├── follow.repository.ts
 │   │   │   │   ├── follow.validation.ts
 │   │   │   │   └── follow.types.ts
 │   │   │   ├── post/
 │   │   │   │   ├── post.controller.ts
-│   │   │   │   ├── post.routes.ts
-│   │   │   │   ├── post.service.ts
+│   │   │   │   ├── post.routes.ts         # /api/v1/posts
+│   │   │   │   ├── post.service.ts        # business logic
+│   │   │   │   ├── post.repository.ts     # DB queries (posts, likes, comments)
 │   │   │   │   ├── post.validation.ts
-│   │   │   │   ├── post.types.ts          # Post, Like, Comment interfaces
+│   │   │   │   ├── post.types.ts
 │   │   │   │   ├── post.mapper.ts
-│   │   │   │   └── post.constants.ts      # Visibility, max length, etc.
+│   │   │   │   └── post.constants.ts
 │   │   │   ├── story/
 │   │   │   │   ├── story.controller.ts
-│   │   │   │   ├── story.routes.ts
+│   │   │   │   ├── story.routes.ts        # /api/v1/stories
 │   │   │   │   ├── story.service.ts
+│   │   │   │   ├── story.repository.ts
 │   │   │   │   ├── story.validation.ts
 │   │   │   │   ├── story.types.ts
 │   │   │   │   └── story.mapper.ts
 │   │   │   ├── circle/
-│   │   │   │   ├── circle.controller.ts       # High-level Circle endpoints
-│   │   │   │   ├── circle.routes.ts
+│   │   │   │   ├── circle.controller.ts       # high-level Circle endpoints
+│   │   │   │   ├── circle.routes.ts          # /api/v1/circles
 │   │   │   │   ├── circle.service.ts
+│   │   │   │   ├── circle.repository.ts
 │   │   │   │   ├── circle.anonymous.service.ts
 │   │   │   │   ├── circle.events.service.ts
 │   │   │   │   ├── circle.groups.service.ts
@@ -138,32 +193,38 @@ jibble/
 │   │   │   │   └── circle.mapper.ts
 │   │   │   ├── chat/
 │   │   │   │   ├── chat.controller.ts
-│   │   │   │   ├── chat.routes.ts
+│   │   │   │   ├── chat.routes.ts           # /api/v1/chats
 │   │   │   │   ├── chat.service.ts
-│   │   │   │   ├── chat.socket.ts            # Socket.io event handlers
+│   │   │   │   ├── chat.repository.ts
+│   │   │   │   ├── chat.socket.ts           # Socket.io events
 │   │   │   │   ├── chat.validation.ts
 │   │   │   │   ├── chat.types.ts
 │   │   │   │   └── chat.constants.ts
 │   │   │   ├── notification/
 │   │   │   │   ├── notification.controller.ts
-│   │   │   │   ├── notification.routes.ts
+│   │   │   │   ├── notification.routes.ts   # /api/v1/notifications
 │   │   │   │   ├── notification.service.ts
+│   │   │   │   ├── notification.repository.ts
 │   │   │   │   ├── notification.validation.ts
 │   │   │   │   └── notification.types.ts
 │   │   │   ├── search/
 │   │   │   │   ├── search.controller.ts
-│   │   │   │   ├── search.routes.ts
-│   │   │   │   └── search.service.ts
+│   │   │   │   ├── search.routes.ts         # /api/v1/search
+│   │   │   │   ├── search.service.ts        # orchestrates queries/indexes
+│   │   │   │   ├── search.repository.ts     # DB FTS / external search engine
+│   │   │   │   └── search.types.ts
 │   │   │   ├── admin/
-│   │   │   │   ├── admin.controller.ts        # Moderation, reports, roles
-│   │   │   │   ├── admin.routes.ts
+│   │   │   │   ├── admin.controller.ts       # moderation, reports, roles
+│   │   │   │   ├── admin.routes.ts          # /api/v1/admin
 │   │   │   │   ├── admin.service.ts
+│   │   │   │   ├── admin.repository.ts
 │   │   │   │   ├── admin.validation.ts
 │   │   │   │   └── admin.types.ts
 │   │   │   └── analytics/
 │   │   │       ├── analytics.controller.ts
-│   │   │       ├── analytics.routes.ts
-│   │   │       └── analytics.service.ts       # DAU, WAU, etc.
+│   │   │       ├── analytics.routes.ts      # /api/v1/analytics
+│   │   │       ├── analytics.service.ts
+│   │   │       └── analytics.repository.ts
 │   │   └── tests/
 │   │       ├── auth.test.ts
 │   │       ├── post.test.ts
@@ -207,13 +268,14 @@ jibble/
 │   ├── schema/
 │   │   ├── erd.png
 │   │   └── schema.sql                     # DDL for all tables
-│   ├── migrations/                        # Optional duplication of backend migrations
-│   ├── seeds/                             # Optional duplication of seed scripts
+│   ├── migrations/                        # optional duplication of backend migrations
+│   ├── seeds/                             # optional duplication of seed scripts
 │   └── README.md
 │
 ├── shared/
 │   ├── constants/
-│   │   └── roles.ts                       # Role names used by backend and admin
+│   │   ├── roles.ts                       # Role names used by backend & admin
+│   │   └── featureFlags.ts                # shared flags if needed on admin
 │   ├── types/
 │   │   └── index.ts
 │   └── utils/
@@ -226,7 +288,7 @@ jibble/
 │   ├── api-design.md                      # All endpoints, request/response
 │   └── changelog.md
 │
-├── .env                                   # Optional root env
+├── .env                                   # optional root env
 ├── .gitignore
 ├── README.md
 └── package.json
@@ -235,7 +297,7 @@ jibble/
 2. DATABASE TABLE CHECKLIST (NEON POSTGRES)
 -------------------------------------------
 
-Minimum tables required to support the PRD:
+Minimum tables required:
 
 - users
 - profiles
@@ -256,14 +318,14 @@ Minimum tables required to support the PRD:
 - reports
 - roles
 - user_roles
-
-Each of these has corresponding columns defined in schema.sql and mapped in the ORM schema.
+- community_components        # which components are enabled per community
+- component_templates         # component library definitions
 
 
 3. BACKEND ENVIRONMENT VARIABLES (.env.example)
 -----------------------------------------------
 
-Example keys stored in backend/.env.example:
+backend/.env.example:
 
 NODE_ENV=
 PORT=8080
@@ -285,8 +347,16 @@ S3_BUCKET_STORIES=
 
 CLOUDFRONT_URL=
 CLIENT_BASE_URL=
+
+BULLMQ_REDIS_URL=             # or QUEUE_REDIS_URL
+
 RATE_LIMIT_WINDOW_MS=60000
-RATE_LIMIT_MAX=100
+RATE_LIMIT_GLOBAL_MAX=100
+RATE_LIMIT_AUTH_MAX=10
+RATE_LIMIT_CHAT_MAX=600
+RATE_LIMIT_POST_MAX=60
+
+FEATURE_FLAGS=                # JSON or comma-separated flags
 
 
 4. FLUTTER MOBILE APP STRUCTURE (lib/)
@@ -359,7 +429,7 @@ apps/mobile_app/lib
  ┃ ┃ ┃   ┣ 📜get_auth_state_changes_usecase.dart
  ┃ ┃ ┃   ┣ 📜get_current_user_usecase.dart
  ┃ ┃ ┃   ┣ 📜sign_in_usecase.dart
- ┃ ┃ ┃   ┣ 📜sign_out_usecase.dart
+ ┃ ��� ┃   ┣ 📜sign_out_usecase.dart
  ┃ ┃ ┃   ┗ 📜sign_up_usecase.dart
  ┃ ┃ ┗ 📂presentation
  ┃ ┃   ┣ 📂provider
@@ -660,3 +730,20 @@ apps/mobile_app/lib
  ┃   ┗ 📜empty_state_widget.dart
  ┗ 📜main.dart
 
+
+5. HOW TO USE THIS FILE
+------------------------
+
+- Treat this as the **master** 10/10 blueprint.
+- Backend:
+  - Controllers → Services → Repositories → DB.
+  - Always use `/api/v1/...` for routes.
+  - Push heavy work to queues.
+  - Use featureFlags for gradual rollout.
+  - Use per-module rate limiters.
+  - Implement search using Postgres FTS first; later swap to Elastic via `search.repository`.
+- Mobile:
+  - Keep data/domain/presentation separated per feature.
+  - Keep folder names in sync with backend modules.
+
+This structure is designed to be scalable, testable, and production-ready.
