@@ -1,0 +1,662 @@
+jibble/
+│
+├── apps/                                  # All runtime applications
+│   ├── mobile_app/                        # Flutter mobile client
+│   │   ├── android/
+│   │   ├── ios/
+│   │   ├── assets/
+│   │   │   ├── fonts/
+│   │   │   │   └── README.md
+│   │   │   ├── icons/
+│   │   │   │   └── README.md
+│   │   │   └── images/
+│   │   │       └── README.md
+│   │   ├── lib/                           # See Section 5 for full structure
+│   │   ├── test/
+│   │   │   └── widget_test.dart
+│   │   ├── pubspec.yaml
+│   │   ├── analysis_options.yaml
+│   │   └── README.md
+│   │
+│   └── admin_panel/                       # Future web-based admin panel
+│       ├── src/
+│       │   ├── index.tsx
+│       │   ├── App.tsx
+│       │   ├── components/
+│       │   │   └── README.md
+│       │   └── pages/
+│       │       └── README.md
+│       ├── public/
+│       │   └── index.html
+│       ├── package.json
+│       └── README.md
+│
+├── backend/                               # Node.js + Express + Socket.io API
+│   ├── src/
+│   │   ├── index.ts                       # Entrypoint: loads env, starts server
+│   │   ├── app.ts                         # Express app setup (middlewares, routes)
+│   │   ├── server.ts                      # HTTP server + Socket.io bootstrap
+│   │   ├── config/
+│   │   │   ├── env.ts                     # dotenv + validation (zod/joi)
+│   │   │   ├── db.ts                      # Neon PostgreSQL client / ORM
+│   │   │   ├── redis.ts                   # Redis client
+│   │   │   ├── s3.ts                      # AWS S3 client + bucket setup
+│   │   │   ├── cloudfront.ts              # CloudFront URL helpers
+│   │   │   ├── logger.ts                  # Winston/Pino logger
+│   │   │   └── socket.ts                  # Socket.io server setup
+│   │   ├── middlewares/
+│   │   │   ├── auth.middleware.ts         # JWT verification, attach user to req
+│   │   │   ├── rbac.middleware.ts         # Role-based access control
+│   │   │   ├── rate_limiter.middleware.ts # Login, messaging, global limits
+│   │   │   ├── error.middleware.ts        # Centralized error handler
+│   │   │   └── validate.middleware.ts     # Request validation wrapper
+│   │   ├── db/
+│   │   │   ├── schema.prisma              # Or ORM schema definition
+│   │   │   ├── migrations/
+│   │   │   │   ├── 001_init.sql
+│   │   │   │   ├── 002_add_posts.sql
+│   │   │   │   ├── 003_add_circle.sql
+│   │   │   │   ├── 004_add_chat.sql
+│   │   │   │   ├── 005_add_notifications.sql
+│   │   │   │   └── 006_add_reports_roles.sql
+│   │   │   ├── seeds/
+│   │   │   │   ├── seed_colleges.ts
+│   │   │   │   ├── seed_users.ts
+│   │   │   │   ├── seed_categories.ts
+│   │   │   │   ├── seed_circle_data.ts
+│   │   │   │   └── seed_demo_content.ts
+│   │   │   └── index.ts                   # Exports DB client/ORM instance
+│   │   ├── utils/
+│   │   │   ├── response.ts                # Standard API response helpers
+│   │   │   ├── crypto.ts                  # Hashing, token creation
+│   │   │   ├── pagination.ts              # Page, limit, cursor logic
+│   │   │   ├── s3_helpers.ts              # File key generators, presigned URLs
+│   │   │   ├── time.ts                    # Date/time helpers
+│   │   │   └── constants.ts               # Shared constants/enums
+│   │   ├── types/
+│   │   │   ├── common.ts                  # Generic types
+│   │   │   └── express.d.ts               # Augment Express Request with user
+│   │   ├── modules/                       # Feature-based modules
+│   │   │   ├── auth/
+│   │   │   │   ├── auth.controller.ts
+│   │   │   │   ├── auth.routes.ts
+│   │   │   │   ├── auth.service.ts
+│   │   │   │   ├── auth.validation.ts     # Signup, login, OTP, reset
+│   │   │   │   ├── auth.types.ts          # Auth DTOs
+│   │   │   │   └── auth.constants.ts      # Token expiries, limits
+│   │   │   ├── user/
+│   │   │   │   ├── user.controller.ts
+│   │   │   │   ├── user.routes.ts
+│   │   │   │   ├── user.service.ts
+│   │   │   │   ├── user.validation.ts
+│   │   │   │   ├── user.types.ts
+│   │   │   │   └── user.mapper.ts         # DB row ↔ API response
+│   │   │   ├── profile/
+│   │   │   │   ├── profile.controller.ts
+│   │   │   │   ├── profile.routes.ts
+│   │   │   │   ├── profile.service.ts
+│   │   │   │   ├── profile.validation.ts
+│   │   │   │   ├── profile.types.ts
+│   │   │   │   └── profile.mapper.ts
+│   │   │   ├── college/
+│   │   │   │   ├── college.controller.ts
+│   │   │   │   ├── college.routes.ts
+│   │   │   │   ├── college.service.ts
+│   │   │   │   ├── college.validation.ts
+│   │   │   │   └── college.types.ts
+│   │   │   ├── follow/
+│   │   │   │   ├── follow.controller.ts
+│   │   │   │   ├── follow.routes.ts
+│   │   │   │   ├── follow.service.ts
+│   │   │   │   ├── follow.validation.ts
+│   │   │   │   └── follow.types.ts
+│   │   │   ├── post/
+│   │   │   │   ├── post.controller.ts
+│   │   │   │   ├── post.routes.ts
+│   │   │   │   ├── post.service.ts
+│   │   │   │   ├── post.validation.ts
+│   │   │   │   ├── post.types.ts          # Post, Like, Comment interfaces
+│   │   │   │   ├── post.mapper.ts
+│   │   │   │   └── post.constants.ts      # Visibility, max length, etc.
+│   │   │   ├── story/
+│   │   │   │   ├── story.controller.ts
+│   │   │   │   ├── story.routes.ts
+│   │   │   │   ├── story.service.ts
+│   │   │   │   ├── story.validation.ts
+│   │   │   │   ├── story.types.ts
+│   │   │   │   └── story.mapper.ts
+│   │   │   ├── circle/
+│   │   │   │   ├── circle.controller.ts       # High-level Circle endpoints
+│   │   │   │   ├── circle.routes.ts
+│   │   │   │   ├── circle.service.ts
+│   │   │   │   ├── circle.anonymous.service.ts
+│   │   │   │   ├── circle.events.service.ts
+│   │   │   │   ├── circle.groups.service.ts
+│   │   │   │   ├── circle.matching.service.ts
+│   │   │   │   ├── circle.validation.ts
+│   │   │   │   ├── circle.types.ts
+│   │   │   │   └── circle.mapper.ts
+│   │   │   ├── chat/
+│   │   │   │   ├── chat.controller.ts
+│   │   │   │   ├── chat.routes.ts
+│   │   │   │   ├── chat.service.ts
+│   │   │   │   ├── chat.socket.ts            # Socket.io event handlers
+│   │   │   │   ├── chat.validation.ts
+│   │   │   │   ├── chat.types.ts
+│   │   │   │   └── chat.constants.ts
+│   │   │   ├── notification/
+│   │   │   │   ├── notification.controller.ts
+│   │   │   │   ├── notification.routes.ts
+│   │   │   │   ├── notification.service.ts
+│   │   │   │   ├── notification.validation.ts
+│   │   │   │   └── notification.types.ts
+│   │   │   ├── search/
+│   │   │   │   ├── search.controller.ts
+│   │   │   │   ├── search.routes.ts
+│   │   │   │   └── search.service.ts
+│   │   │   ├── admin/
+│   │   │   │   ├── admin.controller.ts        # Moderation, reports, roles
+│   │   │   │   ├── admin.routes.ts
+│   │   │   │   ├── admin.service.ts
+│   │   │   │   ├── admin.validation.ts
+│   │   │   │   └── admin.types.ts
+│   │   │   └── analytics/
+│   │   │       ├── analytics.controller.ts
+│   │   │       ├── analytics.routes.ts
+│   │   │       └── analytics.service.ts       # DAU, WAU, etc.
+│   │   └── tests/
+│   │       ├── auth.test.ts
+│   │       ├── post.test.ts
+│   │       ├── chat.test.ts
+│   │       ├── circle.test.ts
+│   │       └── notification.test.ts
+│   │
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── .env.example
+│   └── README.md
+│
+├── infrastructure/
+│   ├── docker/
+│   │   ├── Dockerfile.backend
+│   │   ├── Dockerfile.admin_panel
+│   │   └── docker-compose.dev.yml
+│   ├── nginx/
+│   │   ├── nginx.conf
+│   │   └── sites-enabled/
+│   │       └── jibble.conf
+│   ├── ci-cd/
+│   │   ├── github-actions/
+│   │   │   ├── backend-ci.yml
+│   │   │   └── mobile-ci.yml
+│   │   └── railway/
+│   │       └── railway.json
+│   ├── cloudfront-s3/
+│   │   ├── bucket_policies/
+│   │   │   ├── profile_bucket_policy.json
+│   │   │   ├── posts_bucket_policy.json
+│   │   │   └── stories_bucket_policy.json
+│   │   └── distribution_config.md
+│   └── scripts/
+│       ├── deploy_backend.sh
+│       ├── migrate_db.sh
+│       ├── rollback_db.sh
+│       └── backup_db.sh
+│
+├── database/
+│   ├── schema/
+│   │   ├── erd.png
+│   │   └── schema.sql                     # DDL for all tables
+│   ├── migrations/                        # Optional duplication of backend migrations
+│   ├── seeds/                             # Optional duplication of seed scripts
+│   └── README.md
+│
+├── shared/
+│   ├── constants/
+│   │   └── roles.ts                       # Role names used by backend and admin
+│   ├── types/
+│   │   └── index.ts
+│   └── utils/
+│       └── index.ts
+│
+├── docs/
+│   ├── PRODUCT-REQUIREMENTS-DOCUMENT-JIBBLE-2.pdf
+│   ├── TECHNICAL-REQUIREMENTS-DOCUMENT.pdf
+│   ├── architecture.md
+│   ├── api-design.md                      # All endpoints, request/response
+│   └── changelog.md
+│
+├── .env                                   # Optional root env
+├── .gitignore
+├── README.md
+└── package.json
+
+
+2. DATABASE TABLE CHECKLIST (NEON POSTGRES)
+-------------------------------------------
+
+Minimum tables required to support the PRD:
+
+- users
+- profiles
+- colleges
+- follows
+- posts
+- stories
+- comments
+- likes
+- categories
+- events
+- groups
+- group_members
+- messages
+- skills
+- match_cards
+- notifications
+- reports
+- roles
+- user_roles
+
+Each of these has corresponding columns defined in schema.sql and mapped in the ORM schema.
+
+
+3. BACKEND ENVIRONMENT VARIABLES (.env.example)
+-----------------------------------------------
+
+Example keys stored in backend/.env.example:
+
+NODE_ENV=
+PORT=8080
+
+DATABASE_URL=                 # Neon Postgres URL
+REDIS_URL=                    # Redis URL
+
+JWT_ACCESS_SECRET=
+JWT_REFRESH_SECRET=
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_REGION=
+S3_BUCKET_PROFILE=
+S3_BUCKET_POSTS=
+S3_BUCKET_STORIES=
+
+CLOUDFRONT_URL=
+CLIENT_BASE_URL=
+RATE_LIMIT_WINDOW_MS=60000
+RATE_LIMIT_MAX=100
+
+
+4. FLUTTER MOBILE APP STRUCTURE (lib/)
+--------------------------------------
+
+apps/mobile_app/lib
+
+📦lib
+ ┣ 📂core
+ ┃ ┣ 📂config
+ ┃ ┃ ┣ 📜env_config.dart              # base URLs, environment selection
+ ┃ ┃ ┣ 📜socket_config.dart           # Socket.io endpoints, namespaces
+ ┃ ┃ ┗ 📜flavor_config.dart           # dev/stage/prod flags
+ ┃ ┣ 📂constants
+ ┃ ┃ ┣ 📜api_constants.dart           # path segments, query keys
+ ┃ ┃ ┣ 📜app_constants.dart           # misc constants (limits, durations)
+ ┃ ┃ ┣ 📜asset_constants.dart         # asset paths
+ ┃ ┃ ┣ 📜route_constants.dart         # route names
+ ┃ ┃ ┗ 📜storage_constants.dart       # shared prefs / Hive keys
+ ┃ ┣ 📂di
+ ┃ ┃ ┗ 📜injection_container.dart     # Riverpod/global providers setup
+ ┃ ┣ 📂errors
+ ┃ ┃ ┣ 📜error_handler.dart
+ ┃ ┃ ┣ 📜error_messages.dart
+ ┃ ┃ ┣ 📜exceptions.dart
+ ┃ ┃ ┗ 📜failures.dart
+ ┃ ┣ 📂network
+ ┃ ┃ ┣ 📜api_client.dart              # Dio/http client wrapper
+ ┃ ┃ ┣ 📜api_response.dart
+ ┃ ┃ ┣ 📜endpoints.dart
+ ┃ ┃ ┣ 📜network_info.dart            # connectivity checker
+ ┃ ┃ ┗ 📜network_interceptor.dart     # adds auth headers, logs
+ ┃ ┣ 📂router
+ ┃ ┃ ┗ 📜app_router.dart              # GoRouter / Navigator2
+ ┃ ┣ 📂services
+ ┃ ┃ ┣ 📜analytics_service.dart
+ ┃ ┃ ┣ 📜cache_service.dart
+ ┃ ┃ ┣ 📜notification_service.dart    # FCM/local notifications
+ ┃ ┃ ┣ 📜permission_service.dart
+ ┃ ┃ ┗ 📜storage_service.dart         # SharedPreferences/Hive abstraction
+ ┃ ┣ 📂theme
+ ┃ ┃ ┣ 📜app_colors.dart
+ ┃ ┃ ┣ 📜app_radius.dart
+ ┃ ┃ ┣ 📜app_spacing.dart
+ ┃ ┃ ┣ 📜app_theme.dart
+ ┃ ┃ ┗ 📜text_styles.dart
+ ┃ ┗ 📂utils
+ ┃   ┣ 📜date_utils.dart
+ ┃   ┣ 📜debouncer.dart
+ ┃   ┣ 📜device_utils.dart
+ ┃   ┣ 📜extensions.dart
+ ┃   ┣ 📜logger.dart
+ ┃   ┗ 📜validators.dart
+ ┣ 📂features
+ ┃ ┣ 📂auth
+ ┃ ┃ ┣ 📂data
+ ┃ ┃ ┃ ┣ 📂datasources
+ ┃ ┃ ┃ ┃ ┣ 📜auth_service.dart
+ ┃ ┃ ┃ ┃ ┗ 📜first_launch_service.dart
+ ┃ ┃ ┃ ┣ 📂models
+ ┃ ┃ ┃ ┃ ┗ 📜user_model.dart
+ ┃ ┃ ┃ ┗ 📂repositories
+ ┃ ┃ ┃   ┗ 📜auth_repository_impl.dart
+ ┃ ┃ ┣ 📂domain
+ ┃ ┃ ┃ ┣ 📂entities
+ ┃ ┃ ┃ ┃ ┗ 📜user_entity.dart
+ ┃ ┃ ┃ ┣ 📂repositories
+ ┃ ┃ ┃ ┃ ┗ 📜auth_repository.dart
+ ┃ ┃ ┃ ┗ 📂usecases
+ ┃ ┃ ┃   ┣ 📜get_auth_state_changes_usecase.dart
+ ┃ ┃ ┃   ┣ 📜get_current_user_usecase.dart
+ ┃ ┃ ┃   ┣ 📜sign_in_usecase.dart
+ ┃ ┃ ┃   ┣ 📜sign_out_usecase.dart
+ ┃ ┃ ┃   ┗ 📜sign_up_usecase.dart
+ ┃ ┃ ┗ 📂presentation
+ ┃ ┃   ┣ 📂provider
+ ┃ ┃   ┃ ┗ 📜auth_provider.dart
+ ┃ ┃   ┣ 📂screens
+ ┃ ┃   ┃ ┣ 📂onboarding
+ ┃ ┃   ┃ ┃ ┣ 📜college_page.dart
+ ┃ ┃   ┃ ┃ ┣ 📜date_of_birth_page.dart
+ ┃ ┃   ┃ ┃ ┣ 📜interests_page.dart
+ ┃ ┃   ┃ ┃ ┣ 📜skills_page.dart
+ ┃ ┃   ┃ ┃ ┣ 📜profile_picture_page.dart
+ ┃ ┃   ┃ ┃ ┗ 📜username_page.dart
+ ┃ ┃   ┃ ┣ 📜login_page.dart
+ ┃ ┃   ┃ ┣ 📜register_page.dart
+ ┃ ┃   ┃ ┣ 📜forgot_password_page.dart
+ ┃ ┃   ┃ ┣ 📜otp_verification_page.dart
+ ┃ ┃   ┃ ┗ 📜splash_screen.dart
+ ┃ ┃   ┗ 📂widgets
+ ┃ ┃     ┣ 📜auth_gate.dart
+ ┃ ┃     ┗ 📜onboarding_gate.dart
+ ┃ ┣ 📂home
+ ┃ ┃ ┣ 📂data
+ ┃ ┃ ┃ ┣ 📂datasources
+ ┃ ┃ ┃ ┃ ┗ 📜home_service.dart
+ ┃ ┃ ┃ ┣ 📂models
+ ┃ ┃ ┃ ┃ ┗ 📜feed_item_model.dart
+ ┃ ┃ ┃ ┗ 📂repositories
+ ┃ ┃ ┃   ┗ 📜home_repository_impl.dart
+ ┃ ┃ ┣ 📂domain
+ ┃ ┃ ┃ ┣ 📂entities
+ ┃ ┃ ┃ ┃ ┗ 📜feed_item_entity.dart
+ ┃ ┃ ┃ ┣ 📂repositories
+ ┃ ┃ ┃ ┃ ┗ 📜home_repository.dart
+ ┃ ┃ ┃ ┗ 📂usecases
+ ┃ ┃ ┃   ┣ 📜get_home_feed_usecase.dart
+ ┃ ┃ ┃   ┗ 📜get_category_feed_usecase.dart
+ ┃ ┃ ┗ 📂presentation
+ ┃ ┃   ┣ 📂provider
+ ┃ ┃   ┃ ┗ 📜feed_provider.dart
+ ┃ ┃   ┣ 📂screens
+ ┃ ┃   ┃ ┗ 📜home_page.dart
+ ┃ ┃   ┗ 📂widgets
+ ┃ ┃     ┣ 📜feed_post_card.dart
+ ┃ ┃     ┣ 📜category_chips_row.dart
+ ┃ ┃     ┗ 📜stories_row.dart
+ ┃ ┣ 📂post
+ ┃ ┃ ┣ 📂data
+ ┃ ┃ ┃ ┣ 📂datasources
+ ┃ ┃ ┃ ┃ ┗ 📜post_service.dart
+ ┃ ┃ ┃ ┣ 📂models
+ ┃ ┃ ┃ ┃ ┗ 📜post_model.dart
+ ┃ ┃ ┃ ┗ 📂repositories
+ ┃ ┃ ┃   ┗ 📜post_repository_impl.dart
+ ┃ ┃ ┣ 📂domain
+ ┃ ┃ ┃ ┣ 📂entities
+ ┃ ┃ ┃ ┃ ┗ 📜post_entity.dart
+ ┃ ┃ ┃ ┣ 📂repositories
+ ┃ ┃ ┃ ┃ ┗ 📜post_repository.dart
+ ┃ ┃ ┃ ┗ 📂usecases
+ ┃ ┃ ┃   ┣ 📜create_post_usecase.dart
+ ┃ ┃ ┃   ┣ 📜delete_post_usecase.dart
+ ┃ ┃ ┃   ┣ 📜get_circle_feed_usecase.dart
+ ┃ ┃ ┃   ┣ 📜get_user_posts_usecase.dart
+ ┃ ┃ ┃   ┣ 📜toggle_like_usecase.dart
+ ┃ ┃ ┃   ┗ 📜report_post_usecase.dart
+ ┃ ┃ ┗ 📂presentation
+ ┃ ┃   ┣ 📂provider
+ ┃ ┃   ┃ ┗ 📜post_provider.dart
+ ┃ ┃   ┣ 📂screens
+ ┃ ┃   ┃ ┣ 📜create_post_page.dart
+ ┃ ┃   ┃ ┗ 📜post_detail_page.dart
+ ┃ ┃   ┗ 📂widgets
+ ┃ ┃     ┗ 📜post_card_widget.dart
+ ┃ ┣ 📂stories
+ ┃ ┃ ┣ 📂data
+ ┃ ┃ ┃ ┣ 📂datasources
+ ┃ ┃ ┃ ┃ ┗ 📜story_service.dart
+ ┃ ┃ ┃ ┣ 📂models
+ ┃ ┃ ┃ ┃ ┗ 📜story_model.dart
+ ┃ ┃ ┃ ┗ 📂repositories
+ ┃ ┃ ┃   ┗ 📜story_repository_impl.dart
+ ┃ ┃ ┣ 📂domain
+ ┃ ┃ ┃ ┣ 📂entities
+ ┃ ┃ ┃ ┃ ┗ 📜story_entity.dart
+ ┃ ┃ ┃ ┣ 📂repositories
+ ┃ ┃ ┃ ┃ ┗ 📜story_repository.dart
+ ┃ ┃ ┃ ┗ 📂usecases
+ ┃ ┃ ┃   ┣ 📜create_story_usecase.dart
+ ┃ ┃ ┃   ┣ 📜get_stories_usecase.dart
+ ┃ ┃ ┃   ┗ 📜delete_story_usecase.dart
+ ┃ ┃ ┗ 📂presentation
+ ┃ ┃   ┣ 📂provider
+ ┃ ┃   ┃ ┗ 📜stories_provider.dart
+ ┃ ┃   ┣ 📂screens
+ ┃ ┃   ┃ ┗ 📜story_viewer_page.dart
+ ┃ ┃   ┗ 📂widgets
+ ┃ ┃     ┗ 📜story_bubble_widget.dart
+ ┃ ┣ 📂circle
+ ┃ ┃ ┣ 📂data
+ ┃ ┃ ┃ ┣ 📂datasources
+ ┃ ┃ ┃ ┃ ┣ 📜circle_service.dart
+ ┃ ┃ ┃ ┃ ┣ 📜circle_anonymous_service.dart
+ ┃ ┃ ┃ ┃ ┣ 📜circle_events_service.dart
+ ┃ ┃ ┃ ┃ ┣ 📜circle_groups_service.dart
+ ┃ ┃ ┃ ┃ ┗ 📜circle_matching_service.dart
+ ┃ ┃ ┃ ┣ 📂models
+ ┃ ┃ ┃ ┃ ┣ 📜circle_member_model.dart
+ ┃ ┃ ┃ ┃ ┣ 📜anonymous_post_model.dart
+ ┃ ┃ ┃ ┃ ┣ 📜event_model.dart
+ ┃ ┃ ┃ ┃ ┣ 📜group_model.dart
+ ┃ ┃ ┃ ┃ ┗ 📜match_card_model.dart
+ ┃ ┃ ┃ ┗ 📂repositories
+ ┃ ┃ ┃   ┗ 📜circle_repository_impl.dart
+ ┃ ┃ ┣ 📂domain
+ ┃ ┃ ┃ ┣ 📂entities
+ ┃ ┃ ┃ ┃ ┣ 📜circle_member_entity.dart
+ ┃ ┃ ┃ ┃ ┣ 📜anonymous_post_entity.dart
+ ┃ ┃ ┃ ┃ ┣ 📜event_entity.dart
+ ┃ ┃ ┃ ┃ ┣ 📜group_entity.dart
+ ┃ ┃ ┃ ┃ ┗ 📜match_card_entity.dart
+ ┃ ┃ ┃ ┣ 📂repositories
+ ┃ ┃ ┃ ┃ ┗ 📜circle_repository.dart
+ ┃ ┃ ┃ ┗ 📂usecases
+ ┃ ┃ ┃   ┣ 📜get_circle_members_usecase.dart
+ ┃ ┃ ┃   ┣ 📜get_anonymous_feed_usecase.dart
+ ┃ ┃ ┃   ┣ 📜create_anonymous_post_usecase.dart
+ ┃ ┃ ┃   ┣ 📜get_events_usecase.dart
+ ┃ ┃ ┃   ┣ 📜create_event_usecase.dart
+ ┃ ┃ ┃   ┣ 📜get_groups_usecase.dart
+ ┃ ┃ ┃   ┣ 📜create_group_usecase.dart
+ ┃ ┃ ┃   ┣ 📜get_match_cards_usecase.dart
+ ┃ ┃ ┃   ┗ 📜create_match_card_usecase.dart
+ ┃ ┃ ┗ 📂presentation
+ ┃ ┃   ┣ 📂provider
+ ┃ ┃   ┃ ┗ 📜circle_provider.dart
+ ┃ ┃   ┣ 📂screens
+ ┃ ┃   ┃ ┣ 📜circle_page.dart
+ ┃ ┃   ┃ ┣ 📜anonymous_tab_page.dart
+ ┃ ┃   ┃ ┣ 📜events_tab_page.dart
+ ┃ ┃   ┃ ┣ 📜groups_tab_page.dart
+ ┃ ┃   ┃ ┗ 📜matching_tab_page.dart
+ ┃ ┃   ┗ 📂widgets
+ ┃ ┃     ┣ 📜circle_member_tile.dart
+ ┃ ┃     ┣ 📜circle_event_card.dart
+ ┃ ┃     ┗ 📜circle_group_tile.dart
+ ┃ ┣ 📂chat
+ ┃ ┃ ┣ 📂data
+ ┃ ┃ ┃ ┣ 📂datasources
+ ┃ ┃ ┃ ┃ ┣ 📜chat_service.dart
+ ┃ ┃ ┃ ┃ ┗ 📜group_chat_service.dart
+ ┃ ┃ ┃ ┣ 📂models
+ ┃ ┃ ┃ ┃ ┣ 📜chat_model.dart
+ ┃ ┃ ┃ ┃ ┣ 📜group_message_model.dart
+ ┃ ┃ ┃ ┃ ┣ 📜group_model.dart
+ ┃ ┃ ┃ ┃ ┗ 📜message_model.dart
+ ┃ ┃ ┃ ┗ 📂repositories
+ ┃ ┃ ┃   ┣ 📜chat_repository_impl.dart
+ ┃ ┃ ┃   ┗ 📜group_repository_impl.dart
+ ┃ ┃ ┣ 📂domain
+ ┃ ┃ ┃ ┣ 📂entities
+ ┃ ┃ ┃ ┃ ┣ 📜chat_entity.dart
+ ┃ ┃ ┃ ┃ ┣ 📜group_entity.dart
+ ┃ ┃ ┃ ┃ ┣ 📜group_message_entity.dart
+ ┃ ┃ ┃ ┃ ┗ 📜message_entity.dart
+ ┃ ┃ ┃ ┣ 📂repositories
+ ┃ ┃ ┃ ┃ ┣ 📜chat_repository.dart
+ ┃ ┃ ┃ ┃ ┗ 📜group_repository.dart
+ ┃ ┃ ┃ ┗ 📂usecases
+ ┃ ┃ ┃   ┣ 📜get_recent_chats_usecase.dart
+ ┃ ┃ ┃   ┣ 📜get_messages_stream_usecase.dart
+ ┃ ┃ ┃   ┣ 📜get_messages_usecase.dart
+ ┃ ┃ ┃   ┣ 📜send_message_usecase.dart
+ ┃ ┃ ┃   ┣ 📜create_group_usecase.dart
+ ┃ ┃ ┃   ┣ 📜send_group_message_usecase.dart
+ ┃ ┃ ┃   ┗ 📜mark_as_read_usecase.dart
+ ┃ ┃ ┗ 📂presentation
+ ┃ ┃   ┣ 📂provider
+ ┃ ┃   ┃ ┗ 📜chat_list_provider.dart
+ ┃ ┃   ┣ 📂screens
+ ┃ ┃   ┃ ┣ 📜chat_list_page.dart
+ ┃ ┃   ┃ ┣ 📜chat_arena_page.dart
+ ┃ ┃   ┃ ┣ 📜group_arena_page.dart
+ ┃ ┃   ┃ ┗ 📜create_group_page.dart
+ ┃ ┃   ┗ 📂widgets
+ ┃ ┃     ┣ 📜chat_list_item_widget.dart
+ ┃ ┃     ┗ 📜message_bubble_widget.dart
+ ┃ ┣ 📂follow
+ ┃ ┃ ┣ 📂data
+ ┃ ┃ ┃ ┣ 📂datasources
+ ┃ ┃ ┃ ┃ ┗ 📜follow_service.dart
+ ┃ ┃ ┃ ┣ 📂models
+ ┃ ┃ ┃ ┃ ┗ 📜follow_model.dart
+ ┃ ┃ ┃ ┗ 📂repositories
+ ┃ ┃ ┃   ┗ 📜follow_repository_impl.dart
+ ┃ ┃ ┣ 📂domain
+ ┃ ┃ ┃ ┣ 📂entities
+ ┃ ┃ ┃ ┃ ┗ 📜follow_entity.dart
+ ┃ ┃ ┃ ┣ 📂repositories
+ ┃ ┃ ┃ ┃ ┗ 📜follow_repository.dart
+ ┃ ┃ ┃ ┗ 📂usecases
+ ┃ ┃ ┃   ┣ 📜follow_user_usecase.dart
+ ┃ ┃ ┃   ┣ 📜unfollow_user_usecase.dart
+ ┃ ┃ ┃   ┣ 📜get_followers_usecase.dart
+ ┃ ┃ ┃   ┣ 📜get_following_usecase.dart
+ ┃ ┃ ┃   ┗ 📜is_following_usecase.dart
+ ┃ ┃ ┗ 📂presentation
+ ┃ ┃   ┣ 📂widgets
+ ┃ ┃   ┃ ┣ 📜follow_button_widget.dart
+ ┃ ┃   ┃ ┗ 📜user_list_item_widget.dart
+ ┃ ┃   ┗ 📂provider
+ ┃ ┣ 📂notifications
+ ┃ ┃ ┣ 📂data
+ ┃ ┃ ┃ ┣ 📂datasources
+ ┃ ┃ ┃ ┃ ┗ 📜notification_service_remote.dart
+ ┃ ┃ ┃ ┣ 📂models
+ ┃ ┃ ┃ ┃ ┗ 📜notification_model.dart
+ ┃ ┃ ┃ ┗ 📂repositories
+ ┃ ┃ ┃   ┗ 📜notification_repository_impl.dart
+ ┃ ┃ ┣ 📂domain
+ ┃ ┃ ┃ ┣ 📂entities
+ ┃ ┃ ┃ ┃ ┗ 📜notification_entity.dart
+ ┃ ┃ ┃ ┣ 📂repositories
+ ┃ ┃ ┃ ┃ ┗ 📜notification_repository.dart
+ ┃ ┃ ┃ ┗ 📂usecases
+ ┃ ┃ ┃   ┣ 📜get_notifications_usecase.dart
+ ┃ ┃ ┃   ┗ 📜mark_notification_read_usecase.dart
+ ┃ ┃ ┗ 📂presentation
+ ┃ ┃   ┣ 📂screens
+ ┃ ┃   ┃ ┗ 📜notifications_page.dart
+ ┃ ┃   ┗ 📂widgets
+ ┃ ┃     ┗ 📜notification_tile.dart
+ ┃ ┣ 📂profile
+ ┃ ┃ ┣ 📂data
+ ┃ ┃ ┃ ┣ 📂datasources
+ ┃ ┃ ┃ ┃ ┗ 📜profile_service.dart
+ ┃ ┃ ┃ ┣ 📂models
+ ┃ ┃ ┃ ┃ ┗ 📜profile_model.dart
+ ┃ ┃ ┃ ┗ 📂repositories
+ ┃ ┃ ┃   ┗ 📜profile_repository_impl.dart
+ ┃ ┃ ┣ 📂domain
+ ┃ ┃ ┃ ┣ 📂entities
+ ┃ ┃ ┃ ┃ ┗ 📜profile_entity.dart
+ ┃ ┃ ┃ ┣ 📂repositories
+ ┃ ┃ ┃ ┃ ┗ 📜profile_repository.dart
+ ┃ ┃ ┃ ┗ 📂usecases
+ ┃ ┃ ┃   ┣ 📜get_profile_usecase.dart
+ ┃ ┃ ┃   ┣ 📜update_profile_usecase.dart
+ ┃ ┃ ┃   ┣ 📜is_username_available_usecase.dart
+ ┃ ┃ ┃   ┗ 📜upload_profile_picture_usecase.dart
+ ┃ ┃ ┗ 📂presentation
+ ┃ ┃   ┣ 📂screens
+ ┃ ┃   ┃ ┣ 📜profile_page.dart
+ ┃ ┃   ┃ ┣ 📜edit_profile_page.dart
+ ┃ ┃   ┃ ┣ 📜followers_list_page.dart
+ ┃ ┃   ┃ ┗ 📜user_profile_page.dart
+ ┃ ┃   ┗ 📂widgets
+ ┃ ┣ 📂search
+ ┃ ┃ ┣ 📂data
+ ┃ ┃ ┃ ┣ 📂datasources
+ ┃ ┃ ┃ ┃ ┗ 📜search_service.dart
+ ┃ ┃ ┃ ┣ 📂models
+ ┃ ┃ ┃ ┃ ┗ 📜search_result_model.dart
+ ┃ ┃ ┃ ┗ 📂repositories
+ ┃ ┃ ┃   ┗ 📜search_repository_impl.dart
+ ┃ ┃ ┣ 📂domain
+ ┃ ┃ ┃ ┣ 📂entities
+ ┃ ┃ ┃ ┃ ┗ 📜search_result_entity.dart
+ ┃ ┃ ┃ ┣ 📂repositories
+ ┃ ┃ ┃ ┃ ┗ 📜search_repository.dart
+ ┃ ┃ ┃ ┗ 📂usecases
+ ┃ ┃ ┃   ┣ 📜search_users_usecase.dart
+ ┃ ┃ ┃   ┣ 📜search_groups_usecase.dart
+ ┃ ┃ ┃   ┗ 📜search_events_usecase.dart
+ ┃ ┃ ┗ 📂presentation
+ ┃ ┃   ┣ 📂screens
+ ┃ ┃   ┃ ┗ 📜search_page.dart
+ ┃ ┃   ┗ 📂widgets
+ ┃ ┃     ┗ 📜search_result_tile.dart
+ ┃ ┣ 📂settings
+ ┃ ┃ ┗ 📂presentation
+ ┃ ┃   ┣ 📂screens
+ ┃ ┃   ┃ ┗ 📜settings_page.dart
+ ┃ ┃   ┗ 📂widgets
+ ┃ ┃     ┗ 📜theme_toggle_tile.dart
+ ┃ ┗ 📂admin
+ ┃   ┗ 📂presentation
+ ┃     ┣ 📂screens
+ ┃     ┃ ┗ 📜admin_dashboard_page.dart
+ ┃     ┗ 📂widgets
+ ┣ 📂shared
+ ┃ ┣ 📂components
+ ┃ ┃ ┣ 📜primary_button.dart
+ ┃ ┃ ┣ 📜text_field.dart
+ ┃ ┃ ┗ 📜chip_filter.dart
+ ┃ ┗ 📂widgets
+ ┃   ┣ 📜cached_image_widget.dart
+ ┃   ┣ 📜custom_bottom_nav_bar.dart   # Home / Circle / Create / Chat / Profile
+ ┃   ┗ 📜empty_state_widget.dart
+ ┗ 📜main.dart
+
