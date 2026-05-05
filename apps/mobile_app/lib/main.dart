@@ -1,1 +1,30 @@
-// Flutter app entry point
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import 'core/theme/app_theme.dart';
+import 'features/auth/presentation/screens/splash_screen.dart';
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+    ),
+  );
+  runApp(const JibbleApp());
+}
+
+class JibbleApp extends StatelessWidget {
+  const JibbleApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Jibble',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.darkTheme,
+      home: const SplashScreen(),
+    );
+  }
+}
