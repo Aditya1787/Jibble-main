@@ -1,0 +1,33 @@
+# Node
+node_modules/
+dist/
+.env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Flutter
+apps/mobile_app/.dart_tool/
+apps/mobile_app/.flutter-plugins
+apps/mobile_app/.flutter-plugins-dependencies
+apps/mobile_app/build/
+apps/mobile_app/.packages
+apps/mobile_app/pubspec.lock
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build artifacts
+apps/admin_panel/dist/

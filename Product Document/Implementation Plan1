@@ -1,0 +1,169 @@
+# Jibble Project — Full Monorepo Setup
+
+## Overview
+
+Set up the complete **Jibble** monorepo from scratch based on the filetree blueprint, PRD, admin panel PRD, and technical requirements document. This includes:
+
+- Monorepo root scaffolding
+- **Backend** (Node.js + Express + TypeScript + Socket.io)
+- **Admin Panel** (React + TypeScript + Vite)
+- **Flutter Mobile App** (feature-based clean architecture)
+- **Infrastructure** (Docker, Nginx, CI/CD configs)
+- **Database** (Neon Postgres migrations, seeds, schema)
+- **Shared** utilities and types
+
+> **Scope**: Create all directories and empty files exactly matching the filetree. Install all dependencies. Do NOT write implementation logic inside any file.
+
+---
+
+## Proposed Changes
+
+### 1. Monorepo Root
+
+#### [NEW] Root files
+- `.gitignore` — Node, Flutter, env ignores
+- `README.md` — project overview
+- `package.json` — root workspace config (npm workspaces for backend + admin)
+- `.env` — empty root env placeholder
+
+---
+
+### 2. Backend (`backend/`)
+
+**Tech stack:** Node.js 20, Express 5, TypeScript 5, Socket.io 4, Prisma ORM, BullMQ, Winston, Zod
+
+#### Dependencies to install (backend):
+```
+express socket.io cors helmet express-rate-limit
+@prisma/client bullmq ioredis winston zod jsonwebtoken
+bcryptjs multer aws-sdk uuid dotenv
+```
+
+#### Dev dependencies:
+```
+typescript ts-node nodemon @types/node @types/express
+@types/cors @types/jsonwebtoken @types/bcryptjs @types/multer
+@types/uuid prisma jest ts-jest @types/jest supertest @types/supertest
+```
+
+#### Files to create (all empty):
+- `backend/src/index.ts`
+- `backend/src/app.ts`
+- `backend/src/server.ts`
+- `backend/src/config/` — env.ts, db.ts, redis.ts, s3.ts, cloudfront.ts, featureFlags.ts, logger.ts, requestContext.ts, socket.ts
+- `backend/src/api/v1/index.ts`, `routes.ts`
+- `backend/src/api/v2/` (future placeholder)
+- `backend/src/middlewares/` — 9 middleware files
+- `backend/src/db/schema.prisma`, migrations (6 .sql files), seeds (5 .ts files), index.ts
+- `backend/src/queues/` — 5 files
+- `backend/src/search/` — 3 files
+- `backend/src/utils/` — 7 files
+- `backend/src/types/` — 2 files
+- `backend/src/modules/` — auth, user, profile, college, follow, post, story, circle, chat, notification, search, admin, analytics (each with controller/routes/service/repository/validation/types)
+- `backend/src/tests/` — 5 test files
+- `backend/package.json`, `tsconfig.json`, `.env.example`, `README.md`
+
+---
+
+### 3. Admin Panel (`apps/admin_panel/`)
+
+**Tech stack:** React 18, TypeScript 5, Vite 5
+
+#### Dependencies to install:
+```
+react react-dom react-router-dom axios zustand @tanstack/react-query
+recharts date-fns
+```
+
+#### Dev dependencies:
+```
+typescript vite @vitejs/plugin-react @types/react @types/react-dom
+eslint
+```
+
+#### Files to create (all empty):
+- `apps/admin_panel/src/index.tsx`
+- `apps/admin_panel/src/App.tsx`
+- `apps/admin_panel/src/components/README.md`
+- `apps/admin_panel/src/pages/README.md`
+- `apps/admin_panel/public/index.html`
+- `apps/admin_panel/package.json`, `README.md`
+
+---
+
+### 4. Flutter Mobile App (`apps/mobile_app/`)
+
+**Flutter version:** 3.x (Dart 3)
+
+#### pubspec.yaml packages:
+```yaml
+flutter_riverpod, riverpod_annotation, go_router, dio, retrofit,
+socket_io_client, firebase_core, firebase_messaging, hive, hive_flutter,
+shared_preferences, cached_network_image, image_picker, flutter_cache_manager,
+logger, equatable, dartz, get_it, injectable, connectivity_plus,
+flutter_local_notifications, intl, uuid
+```
+
+#### Files to create (all empty):
+- Full lib/ structure per filetree section 4: core (config, constants, di, errors, network, router, services, theme, utils), features (auth, home, post, stories, circle, chat, follow, notifications, profile, search, settings, admin), shared (components, widgets), main.dart
+- `apps/mobile_app/assets/fonts/README.md`
+- `apps/mobile_app/assets/icons/README.md`
+- `apps/mobile_app/assets/images/README.md`
+- `apps/mobile_app/test/widget_test.dart`
+- `apps/mobile_app/pubspec.yaml`
+- `apps/mobile_app/analysis_options.yaml`
+- `apps/mobile_app/README.md`
+
+---
+
+### 5. Infrastructure (`infrastructure/`)
+
+#### Files to create (all empty):
+- Docker: `Dockerfile.backend`, `Dockerfile.admin_panel`, `docker-compose.dev.yml`
+- Nginx: `nginx.conf`, `sites-enabled/jibble.conf`
+- CI/CD: `github-actions/backend-ci.yml`, `github-actions/mobile-ci.yml`, `railway/railway.json`
+- CloudFront-S3: `bucket_policies/profile_bucket_policy.json`, `posts_bucket_policy.json`, `stories_bucket_policy.json`, `distribution_config.md`
+- Scripts: `deploy_backend.sh`, `migrate_db.sh`, `rollback_db.sh`, `backup_db.sh`
+
+---
+
+### 6. Database (`database/`)
+
+#### Files to create:
+- `database/schema/erd.png` — placeholder
+- `database/schema/schema.sql` — empty
+- `database/migrations/` — empty folder
+- `database/seeds/` — empty folder
+- `database/README.md`
+
+---
+
+### 7. Shared (`shared/`)
+
+#### Files to create (all empty):
+- `shared/constants/roles.ts`
+- `shared/constants/featureFlags.ts`
+- `shared/types/index.ts`
+- `shared/utils/index.ts`
+
+---
+
+### 8. Docs (`docs/`)
+
+#### Files to create:
+- `docs/architecture.md`
+- `docs/api-design.md`
+- `docs/changelog.md`
+
+---
+
+## Verification Plan
+
+### Automated
+- `cd backend && npm install` → zero errors
+- `cd apps/admin_panel && npm install` → zero errors
+- `cd backend && npx tsc --noEmit` → compiles (empty files, no errors)
+- `cd apps/mobile_app && flutter pub get` → packages resolved
+
+### Manual
+- Confirm all directories and files exist per the filetree blueprint

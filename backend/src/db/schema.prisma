@@ -1,0 +1,20 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// MODELS — to be implemented
+// ============================================================
+// Tables required:
+//   users, profiles, colleges, follows, posts, stories,
+//   comments, likes, categories, events, groups, group_members,
+//   messages, skills, match_cards, notifications, reports,
+//   roles, user_roles, community_components, component_templates

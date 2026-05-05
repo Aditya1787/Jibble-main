@@ -1,0 +1,1 @@
+// chat list item widget

@@ -1,0 +1,1 @@
+// circle member entity

@@ -1,0 +1,1 @@
+// group message entity

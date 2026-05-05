@@ -1,0 +1,16 @@
+{
+  "name": "jibble",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Jibble — College Social Platform Monorepo",
+  "workspaces": [
+    "backend",
+    "apps/admin_panel"
+  ],
+  "scripts": {
+    "backend:dev": "npm run dev --workspace=backend",
+    "admin:dev": "npm run dev --workspace=apps/admin_panel",
+    "backend:install": "npm install --workspace=backend",
+    "admin:install": "npm install --workspace=apps/admin_panel"
+  }
+}
