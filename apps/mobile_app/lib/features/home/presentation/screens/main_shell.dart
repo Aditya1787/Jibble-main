@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../home/presentation/screens/home_page.dart';
-import '../../circle/presentation/screens/circle_page.dart';
-import '../../post/presentation/screens/create_post_page.dart';
-import '../../chat/presentation/screens/chat_list_page.dart';
-import '../../profile/presentation/screens/profile_page.dart';
+import 'home_page.dart';
+import '../../../circle/presentation/screens/circle_page.dart';
+import '../../../post/presentation/screens/create_post_page.dart';
+import '../../../chat/presentation/screens/chat_list_page.dart';
+import '../../../profile/presentation/screens/profile_page.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
