@@ -1,61 +1,21 @@
 /**
- * @file types/common.ts
- * @description Shared type utilities and response envelope types.
+ * @file common.ts
+ * @description Generic shared types used across the backend.
  */
 
-// ---------------------------------------------------------------------------
-// API response envelope
-// ---------------------------------------------------------------------------
-
-export interface ApiSuccessResponse<T = unknown> {
-  success: true;
-  data: T;
-  message?: string;
-  meta?: PaginationMeta;
+export interface ServiceResult<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
 }
 
-export interface ApiErrorResponse {
-  success: false;
-  error: {
-    code: string;
-    message: string;
-    details?: unknown;
-    correlationId: string;
-    timestamp: string;
-  };
+export interface DbRow {
+  id: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export type ApiResponse<T = unknown> = ApiSuccessResponse<T> | ApiErrorResponse;
-
-// ---------------------------------------------------------------------------
-// Pagination
-// ---------------------------------------------------------------------------
-
-export interface PaginationMeta {
-  page: number;
-  limit: number;
+export interface ListResult<T> {
+  items: T[];
   total: number;
-  totalPages: number;
-  hasNextPage: boolean;
-  hasPrevPage: boolean;
 }
-
-export interface PaginationQuery {
-  page?: number;
-  limit?: number;
-  cursor?: string;
-}
-
-// ---------------------------------------------------------------------------
-// Utility helpers
-// ---------------------------------------------------------------------------
-
-/** Make selected keys required in a type */
-export type RequireFields<T, K extends keyof T> = Omit<T, K> &
-  Required<Pick<T, K>>;
-
-/** Nullable helper */
-export type Nullable<T> = T | null;
-
-/** ID type — used throughout for entity primary keys */
-export type EntityId = string;

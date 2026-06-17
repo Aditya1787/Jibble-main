@@ -1,80 +1,64 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../screens/login_page.dart';
+import 'package:lottie/lottie.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SplashScreen extends StatefulWidget {
+/// Splash screen shown while [AuthNotifier.checkAuth] runs.
+///
+/// Once auth state settles (authenticated → /home, unauthenticated → /login)
+/// GoRouter's redirect logic handles navigation automatically.
+/// This widget just displays the branding animation.
+class SplashScreen extends ConsumerWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnim;
-  late Animation<double> _opacityAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
-    _scaleAnim   = Tween<double>(begin: 0.6, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
-    _opacityAnim = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
-    _controller.forward();
-    Timer(const Duration(seconds: 3), () {
-      if (!mounted) return;
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginPage()));
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF0A0F1E), Color(0xFF1A0A3B)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Center(
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (_, __) => Opacity(
-              opacity: _opacityAnim.value,
-              child: Transform.scale(
-                scale: _scaleAnim.value,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 90, height: 90,
-                      decoration: BoxDecoration(
-                        gradient: AppColors.accentGradient,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [BoxShadow(color: AppColors.accent.withOpacity(0.5), blurRadius: 40, spreadRadius: 4)],
-                      ),
-                      child: const Center(
-                        child: Text('J', style: TextStyle(fontSize: 48, fontWeight: FontWeight.w900, color: Colors.white)),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text('Jibble', style: TextStyle(fontSize: 36, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -1)),
-                    const SizedBox(height: 8),
-                    const Text('Your college. Your circle.', style: TextStyle(fontSize: 15, color: AppColors.textSecondary, fontWeight: FontWeight.w400)),
-                  ],
-                ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // ── Lottie animation ─────────────────────────────────────────
+            Lottie.asset(
+              'assets/Lottie Animations/Handshake Loop.json',
+              width: 220,
+              height: 220,
+              fit: BoxFit.contain,
+              repeat: true,
+            ),
+            const SizedBox(height: 28),
+
+            // ── Logo text ────────────────────────────────────────────────
+            Text(
+              'Jibble',
+              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                    fontFamily: 'Dancing_Script',
+                    fontSize: 52,
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.primary,
+                    letterSpacing: 1.5,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Your Campus, Your Vibe',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    letterSpacing: 1.3,
+                    color: Colors.grey[500],
+                  ),
+            ),
+            const SizedBox(height: 48),
+
+            // ── Loading indicator ────────────────────────────────────────
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

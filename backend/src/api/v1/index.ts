@@ -6,17 +6,41 @@
 
 import { Router } from 'express';
 import { healthRouter } from './health.route';
+import { authRouter } from '../../modules/auth/auth.routes';
+import { userRouter } from '../../modules/user/user.routes';
+import { collegeRouter } from '../../modules/college/college.routes';
+import { profileRouter } from '../../modules/profile/profile.routes';
+import { postRouter } from '../../modules/post/post.routes';
+import { globalRateLimiter } from '../../middlewares/rateLimiter.global';
 
 export const v1Router = Router();
 
-// ── Health ────────────────────────────────────────────────────────────────
+// ── Global rate limit on all v1 endpoints ────────────────────────────────────
+v1Router.use(globalRateLimiter);
+
+// ── Health ────────────────────────────────────────────────────────────────────
 v1Router.use('/health', healthRouter);
 
-// ── Future module routes (Day 3+) ─────────────────────────────────────────
-// v1Router.use('/auth',     authRouter);
-// v1Router.use('/users',    userRouter);
-// v1Router.use('/posts',    postRouter);
-// v1Router.use('/stories',  storyRouter);
-// v1Router.use('/messages', messageRouter);
-// v1Router.use('/search',   searchRouter);
-// v1Router.use('/admin',    adminRouter);
+// ── Auth ──────────────────────────────────────────────────────────────────────
+v1Router.use('/auth', authRouter);
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+v1Router.use('/users', userRouter);
+
+// ── Colleges ──────────────────────────────────────────────────────────────────
+v1Router.use('/colleges', collegeRouter);
+
+// ── Profiles ──────────────────────────────────────────────────────────────────
+v1Router.use('/profiles', profileRouter);
+
+// ── Posts ─────────────────────────────────────────────────────────────────────
+v1Router.use('/posts', postRouter);
+
+// ── Future module routes ──────────────────────────────────────────────────────
+// v1Router.use('/stories',        storyRouter);
+// v1Router.use('/circles',        circleRouter);
+// v1Router.use('/chats',          chatRouter);
+// v1Router.use('/notifications',  notificationRouter);
+// v1Router.use('/search',         searchRouter);
+// v1Router.use('/admin',          adminRouter);
+// v1Router.use('/analytics',      analyticsRouter);

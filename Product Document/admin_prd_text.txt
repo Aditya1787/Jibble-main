@@ -1,0 +1,393 @@
+JIBBLE ADMIN PANEL PRODUCT REQUIREMENTS DOCUMENT (PRD)
+=============================================================
+Version: 1.0
+Date: 2026-05-04
+--------------------------------------------------
+1. PRODUCT OVERVIEW
+--------------------------------------------------
+Product name: Jibble Admin Panel
+Type: Web-based administration console for the Jibble ecosystem
+Primary users: Head Admin (founder/owner), Global Admins, Community Admins, Read-only Analysts (later phase)
+Purpose:
+The Jibble Admin Panel is a secure web application used to manage all communities (colleges, offices, bootcamps, etc.), admins, Circle co
+Core idea:
+- Only approved admins can access the admin panel.
+- A single Head Admin (you) acts as the top-level owner who can add or remove other admins and see their activity.
+- Admins use the panel to configure communities (circles), control which components (Events, Anonymous, Groups, Matching, Tasks, etc.
+--------------------------------------------------
+2. OBJECTIVES AND GOALS
+--------------------------------------------------
+2.1 Business Objectives
+-----------------------
+- Centralize control of all Jibble communities (colleges, organizations) in one secure admin interface.
+- Allow the Head Admin to delegate management to trusted admins while retaining full oversight and control.
+- Make it easy to onboard new colleges/organizations and configure their Circle experience using prebuilt components.
+- Provide clear analytics on user growth, engagement, and community health (DAU, MAU, active circles, etc.).
+- Support future monetization (e.g., promoted events, premium analytics) by exposing the relevant admin tools.
+2.2 User Goals (Admin Personas)
+-------------------------------
+- Head Admin:
+- Manage the entire system: admins, communities, component library, global configs.
+- See activity logs for all other admins.
+- Monitor key metrics at a global level.
+- Global Admin:
+- Help Head Admin manage communities and resolve issues.
+- Create/edit communities, configure Circle components, and oversee moderation.
+- Community Admin (College/Org Admin):
+- Manage a specific community (college or organization).
+- Configure that communityns Circle components.
+- View community-level analytics and moderate local content.
+- Analyst (later phase):
+- View dashboards and export reports without changing configurations.
+--------------------------------------------------
+3. ROLES AND PERMISSIONS MODEL
+--------------------------------------------------
+3.1 Role Definitions
+--------------------
+1) Head Admin
+
+-- 1 of 8 --
+
+- Single primary owner account (you).
+- Full permissions across the entire system.
+- Can add, edit, and remove all other admin accounts.
+- Can change roles of other admins (promote/demote).
+- Can see all admin activity logs.
+- Can access and modify any community configuration.
+2) Global Admin
+- Appointed by Head Admin.
+- Permissions:
+- Manage all communities (create, edit, archive) except deleting ones locked by Head Admin.
+- Configure component library and Circle components per community (unless restricted by Head Admin for specific communities).
+- View global analytics dashboards (users, communities, DAU/MAU, etc.).
+- View admin activity logs (but cannot see Head Adminns secure actions labels, only timestamps and general description).
+- Cannot:
+- Remove or edit the Head Admin account.
+- Change Head Admin role.
+3) Community Admin
+- Scoped to one or more specific communities (e.g., a college or company).
+- Permissions:
+- Edit community details (name, logo, description, type: college, office, bootcamp, etc.).
+- Configure Circle components only for their assigned communities.
+- View analytics for their communities (local DAU/MAU, posts, events, reports).
+- Process reports and moderate content for their communities.
+- Cannot:
+- See or edit other communities they do not own.
+- Manage global component library.
+- Manage other admins (except inviting local moderators, later phase).
+4) Read-Only Analyst (later phase)
+- View-only access for analytics.
+- No configuration or moderation permissions.
+3.2 Permission Matrix (High-Level)
+----------------------------------
+- Manage Admin Accounts:
+- Head Admin: CREATE / READ / UPDATE / DELETE (all admins & roles).
+- Global Admin: READ only.
+- Community Admin: No access.
+- Manage Communities:
+- Head Admin: CRUD for all communities.
+- Global Admin: CRUD for most communities (except ones marked restricted by Head Admin).
+- Community Admin: UPDATE their own communities only.
+- Configure Circle Components:
+- Head Admin: Global and per-community configuration.
+- Global Admin: Global and per-community configuration (subject to restrictions).
+- Community Admin: Per-community configuration only for assigned communities.
+- View Analytics:
+- Head Admin: Global + per-community.
+- Global Admin: Global + per-community.
+- Community Admin: Assigned communities only.
+- View Admin Activity Logs:
+- Head Admin: Full visibility of all admin actions.
+- Global Admin: All actions except some sensitive Head Admin actions may be anonymized.
+- Community Admin: No access.
+
+-- 2 of 8 --
+
+--------------------------------------------------
+4. SCOPE AND NON-SCOPE (ADMIN PANEL)
+--------------------------------------------------
+In-scope (v1):
+- Secure login for admins (separate from user-facing mobile auth).
+- Role-based access control for Head Admin, Global Admins, Community Admins.
+- Admin account management (create, edit, deactivate, role changes) by Head Admin.
+- Community management: create, edit, archive colleges/organizations.
+- Circle component configuration per community (attach/detach components).
+- Component library management (prebuilt modules like Events, Anonymous, Groups, Matching, Tasks, etc.).
+- Content and user moderation views (reports, actions).
+- Analytics dashboards:
+- User metrics (total users, DAU, MAU, retention basics).
+- Community metrics (number of communities, active communities, per-community DAU/MAU).
+- Circle component usage (how often Events, Anonymous, Groups, etc. are used).
+- Admin activity logging and viewing (who did what and when).
+Out-of-scope (v1):
+- Public user-facing web app.
+- Advanced BI-style analytics (cohort analysis, funnels, etc.).
+- Complex admin notification systems (basic email alerts only if needed).
+- Payment/billing configuration (handled later with separate tooling).
+--------------------------------------------------
+5. KEY FEATURES
+--------------------------------------------------
+5.1 Admin Authentication & Access Control
+----------------------------------------
+Description:
+A secure login system for admins only, separate from end-user authentication.
+Requirements:
+- Email/password login for admin accounts.
+- Strong password rules + optional 2FA (later phase).
+- Admin login rate limiting and IP logging.
+- Password reset via email.
+- Session management with JWT or secure cookies.
+- Automatic session expiry and re-authentication prompts.
+5.2 Admin Account Management (Head Admin Only)
+----------------------------------------------
+Description:
+Head Admin manages all admin-level users from a single screen.
+Requirements:
+- Admin List:
+- Table with: Name, Email, Role (Head/Global/Community/Analyst), Status (Active/Inactive), Last Login, Assigned Communities.
+- Filters by role, status, and search by name/email.
+- Create Admin:
+- Form fields: name, email, initial role, assigned communities (for Community Admin), notes.
+- Send invitation email with temporary password or activation link.
+- Edit Admin:
+- Change role (e.g., Community Admin → Global Admin).
+- Update assigned communities.
+
+-- 3 of 8 --
+
+- Activate/deactivate account.
+- Remove Admin:
+- Ability to deactivate or revoke admin role.
+- Optionally transfer community responsibilities to another admin.
+- Constraints:
+- Head Admin account cannot be deleted or downgraded by any other admin.
+5.3 Admin Activity Logs & Monitoring
+------------------------------------
+Description:
+Head Admin (and partially Global Admin) can see all important actions done by admins.
+Requirements:
+- Activity log entries should include:
+- Actor (admin user).
+- Timestamp.
+- Action type (e.g., "Created community", "Changed role", "Edited components", "Suspended user").
+- Target entity (community, user, component, etc.).
+- Optional metadata (old value → new value).
+- Activity Log Screen:
+- Filters by admin, date range, action type, community.
+- Search by email, community name.
+- Pagination or infinite scroll.
+- Visibility rules:
+- Head Admin: sees full logs.
+- Global Admin: sees logs except for sensitive Head Admin-only operations (e.g., billing if added later).
+- Community Admin: no access.
+5.4 Community Management
+------------------------
+Description:
+Create and manage communities (colleges, offices, bootcamps, etc.), which correspond to Circles in the mobile app.
+Requirements:
+- Communities List:
+- Columns: Name, Type (College/Office/Bootcamp/etc.), Status, Member count, Active Components.
+- Filter by type, status, region.
+- Create Community:
+- Fields: name, slug, type, logo, description, region/country, default language.
+- Select default components (from component library) to be attached at creation.
+- Edit Community:
+- Update any of the above fields.
+- Change status: Active/Paused/Archived.
+- Archive Community:
+- Prevent new sign-ups into that community.
+- Existing data remains for analytics; read-only access for admins.
+- Behavior with Mobile App:
+- When a user selects a community during onboarding, they are mapped to this communityns ID.
+- Mobile app uses community configuration to render Circle tabs.
+
+-- 4 of 8 --
+
+5.5 Circle Component Library & Configuration
+--------------------------------------------
+Description:
+A library of prebuilt modules that can be attached as components to each communityns Circle.
+Example components:
+- Anonymous: anonymous posting feed.
+- Events: event listings and RSVPs.
+- Groups: group directory + group feeds and chats.
+- Matching: skill-based matchmaking.
+- Tasks: basic tasks/todos for office or project teams.
+- Announcements: official posts from admins.
+- Jobs/Internships: opportunities board.
+- Resources: links and documents.
+- Marketplace: buy/sell/exchange.
+- Polls: survey and polls.
+- Q&A: structured question/answer board.
+- Custom Page: simple content or external link.
+Requirements:
+- Component Library Screen (Head/Global Admin):
+- List of all component templates with name, description, category, allowed community types, status.
+- Add/Edit components (for future extension), including labels and capabilities.
+- Community Components Screen (per community):
+- Left panel: available components from library.
+- Right panel: active components for this community (ordered list representing tabs order in mobile app).
+- Add/remove components via toggle or drag-and-drop.
+- Save configuration to backend.
+- Rules:
+- Default college template: Anonymous, Events, Groups, Matching pre-selected.
+- Offices/companies: no default; admin chooses components.
+- Head/Global Admin can define which components are allowed for each community type.
+5.6 User Management (View & Control)
+------------------------------------
+Description:
+Admins can view user-level information and take basic actions (suspend, reset, etc.).
+Requirements:
+- Users List Screen:
+- Columns: Name, Username, Email, Community, Role (if any), Status (Active/Suspended), Join Date, Last Active.
+- Filters: community, status, date range, text search.
+- User Detail Screen:
+- Basic profile: name, username, community, year/branch (if college), roles.
+- Activity summary: number of posts, comments, reports against them, groups.
+- Actions:
+- Suspend/unsuspend account.
+- Reset password (send reset email).
+- View recent reports involving this user.
+- Permissions:
+- Head/Global Admin: can act on any user.
+- Community Admin: can act only on users in their own community.
+5.7 Content Moderation Console
+------------------------------
+
+-- 5 of 8 --
+
+Description:
+Central place to process reports and moderate posts, comments, stories, groups, etc.
+Requirements:
+- Reports Queue Screen:
+- List of open reports with type (post/comment/story/chat/profile/group/event), reporter, reason, timestamp, community.
+- Filters by type, community, status (Open/Resolved), severity.
+- Report Detail View:
+- Show reported content, context (e.g., full post, comment thread).
+- Show history of previous reports for same user/content.
+- Actions:
+- Hide or delete content.
+- Warn user (send warning message/email).
+- Suspend user (temporary or permanent).
+- Mark report as resolved/closed with resolution notes.
+- Audit:
+- All actions taken in moderation console are logged in admin activity logs.
+5.8 Analytics & Reporting
+-------------------------
+Description:
+Dashboards for Head Admin and other admins to see system health and usage.
+Key metrics:
+- Global metrics (Head/Global Admin):
+- Total users.
+- DAU (Daily Active Users) and MAU (Monthly Active Users).
+- Number of active communities.
+- Average posts per user per week.
+- Total messages sent per day.
+- Total events created and RSVPs.
+- Community metrics (Head/Global/Community Admin):
+- Users in that community.
+- DAU/MAU in community.
+- Posts per day/week.
+- Active groups, events, and match cards.
+- Number of anonymous posts and associated reports.
+- Component usage metrics:
+- For each component (e.g., Events, Anonymous, Groups, Matching, Tasks):
+- How many communities have it enabled.
+- Usage stats (e.g., events created, anonymous posts per day, tasks completed).
+Requirements:
+- Analytics Dashboard Screen:
+- Tabs: Overview, Communities, Components.
+- Filters: date range (last 7 days, 30 days, custom), community selection.
+- Charts (basic) and tables (precise numbers).
+- Data export (later phase):
+- CSV export for selected views (Overview, Community metrics).
+5.9 Settings & System Configuration
+-----------------------------------
+Description:
+
+-- 6 of 8 --
+
+Global configuration for the Jibble platform managed by Head Admin and Global Admins.
+Requirements:
+- Global Settings Screen:
+- Toggle features on/off globally (e.g., temporary disable new registrations).
+- Configure global limits (max communities, max posts/day per user, etc.).
+- Manage default templates for new communities (college template, office template, etc.).
+--------------------------------------------------
+6. USER FLOWS & NAVIGATION (ADMIN PANEL)
+--------------------------------------------------
+6.1 High-Level Navigation
+-------------------------
+Top-level navigation (example):
+- Dashboard
+- Admins
+- Communities
+- Components
+- Users
+- Moderation
+- Analytics
+- Settings
+6.2 Example Flow: Head Admin Adds a New Community Admin
+-------------------------------------------------------
+1. Head Admin logs into admin panel.
+2. Navigates to "Admins" section.
+3. Clicks "Add Admin".
+4. Fills in name, email, role = Community Admin, assigns one or more communities.
+5. Clicks "Create" → system sends invitation email.
+6. The action is logged in activity logs.
+6.3 Example Flow: Configure Circle Components for a Community
+-------------------------------------------------------------
+1. Admin goes to "Communities" → selects a community.
+2. Opens "Components" tab.
+3. Sees active components on the right, available components on the left.
+4. Drags "Tasks" and "Announcements" into active list, removes "Marketplace" if not needed.
+5. Saves configuration.
+6. Mobile app Circle screen updates to reflect new component tabs.
+6.4 Example Flow: Head Admin Reviews Admin Activity
+---------------------------------------------------
+1. Head Admin opens "Analytics" → "Admin Activity" or "Activity Logs".
+2. Filters by date range (e.g., last 7 days).
+3. Sees a list of admin actions (who changed what, when).
+4. Clicks an entry to see details (old value vs new value).
+--------------------------------------------------
+7. UX & DESIGN PRINCIPLES (ADMIN PANEL)
+--------------------------------------------------
+- Web-first, responsive design (desktop-optimized, usable on tablet).
+- Clean, minimal interface focused on data tables, filters, and clear actions.
+- Consistent use of colors and typography aligned with Jibble brand.
+- Clear status indicators (e.g., Active/Inactive, Enabled/Disabled).
+- Strong emphasis on confirmation dialogs for destructive actions (delete, suspend, remove admin).
+
+-- 7 of 8 --
+
+--------------------------------------------------
+8. SECURITY, PRIVACY, AND AUDIT
+--------------------------------------------------
+- All admin panel traffic over HTTPS.
+- Strong authentication and session management.
+- Role-based access control enforced at backend route level.
+- Audit logs for all sensitive actions (admin changes, community changes, moderation actions).
+- Principle of least privilege for all roles.
+- Protection against basic web threats (CSRF, XSS, SQL injection, etc.).
+--------------------------------------------------
+9. NON-FUNCTIONAL REQUIREMENTS
+--------------------------------------------------
+- Availability: Admin panel should target >99% uptime (backed by backend uptime).
+- Performance: Key pages (Admins, Communities, Analytics summary) should load within 2–3 seconds on a normal connection.
+- Scalability: Support hundreds of communities and tens of thousands of users across them.
+- Observability: Logging and basic monitoring for admin panel usage and errors.
+--------------------------------------------------
+10. ASSUMPTIONS AND RISKS
+--------------------------------------------------
+Assumptions:
+- The Head Admin is trusted and will manage admin roles responsibly.
+- Community Admins are vetted by the Head/Global Admins.
+- Internet connectivity for admins is stable.
+Risks:
+- Misconfigured roles (e.g., giving too much access to a Community Admin) leading to unintended changes.
+- Analytics may initially be basic and need iterative improvement.
+- High moderation workload as communities scale.
+END OF DOCUMENT
+
+-- 8 of 8 --
+

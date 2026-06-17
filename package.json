@@ -12,5 +12,8 @@
     "admin:dev": "npm run dev --workspace=apps/admin_panel",
     "backend:install": "npm install --workspace=backend",
     "admin:install": "npm install --workspace=apps/admin_panel"
+  },
+  "dependencies": {
+    "pdf-parse": "^2.4.5"
   }
 }

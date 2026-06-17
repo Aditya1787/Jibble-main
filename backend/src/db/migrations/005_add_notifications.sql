@@ -1,1 +1,0 @@
-// add notifications table

@@ -1,0 +1,634 @@
+1. Product Overview 
+ 
+Product name: Jibble   
+Type: Mobile-first social media app for closed communities (primarily 
+colleges/universities)   
+Platforms (v1): Android (Flutter), later iOS 
+ 
+Elevator pitch:   
+Jibble is a focused, non-addictive social media app for colleges and other closed 
+communities where members can:   
+- Connect with real classmates and colleagues   
+- Post both openly and anonymously   
+- Join events and groups   
+- Match based on skills and interests   
+All within a safe, private, organization-centric environment rather than an open, global 
+network. 
+ 
+Problem statement:   
+Existing social apps (Instagram, etc.) are global, addictive, and not optimized for closed 
+communities such as colleges, schools, or companies. Students cannot easily:   
+- Interact only within their college community   
+- Share sensitive content anonymously but safely   
+- Discover events, groups, and opportunities centered around their campus   
+- Match with peers based on skills for projects, events, or hiring 
+ 
+High-level goals: 
+- Build a dedicated social layer for closed communities (starting with colleges).   
+- Reduce “doom-scrolling” by offering category-based, filterable feeds and community-
+focused content.   
+- Help creators reach a more relevant audience by category, community, and skills.   
+- Enable anonymous but controlled sharing within a trusted community. 
+ 
+2. Target Users and Use Cases 
+ 
+Primary audience: 
+- College and university students (UG/PG).   
+- Secondary: Schools, companies, organizations, any closed group with limited members 
+(e.g., training institutes, bootcamps, hostels). 
+ 
+Key personas: 
+1. Student (Member) – “Aarav” 
+   - Wants a place to see campus events, join groups, post memes, ask doubts, and vent 
+anonymously. 
+   - Needs safe, non-toxic, non-addictive environment. 
+ 
+2. Society/Class Representative / Community Admin – “Neha” 
+   - Manages clubs, events, and groups. 
+   - Needs tools to announce events, create groups, and keep discussions in one place. 
+ 
+3. Skill-based Creator / Mentor – “Rohan” 
+   - Posts educational or skill-based content (coding, design, etc.). 
+   - Wants a relevant audience, discovery based on category/skills, and maybe 
+hiring/connect opportunities later. 
+ 
+Core use cases: 
+- Student joins Jibble, selects college, sets profile, and starts browsing a focused home feed.   
+- Student posts content (public or anonymous) for their college and followers.   
+- Student joins “Circle” to see college-specific anonymous posts, groups, events, and skill 
+matching.   
+- Members chat 1:1 or in groups, coordinate events, and network skill-wise.   
+- Admins promote events, manage groups, and moderate content.   
+ 
+3. Scope and Non-Scope (v1) 
+ 
+In-scope (v1): 
+- Single college / organization per account (multi-org later).   
+- Auth, onboarding, college selection, profile creation.   
+- Feed with posts (text, images, possibly short video later).   
+- Category-based filtering (comedy, horror, academic, etc.).   
+- Likes, comments, shares, following.   
+- Anonymous posts within the college community.   
+- Circle (college-only): anonymous stream, events, groups, skill matching.   
+- Real-time chat (1:1 and basic groups).   
+- Stories (simple, images or short clips).   
+- Basic notifications.   
+- Basic moderation/reporting. 
+ 
+Out-of-scope (initially): 
+- Web app.   
+- Advanced creator monetization payouts.   
+- Complex recommendation engine (full ML).   
+- Cross-college discovery.   
+- Public, internet-wide content. 
+ 
+4. Core Features and Requirements 
+ 
+4.1 User Authentication 
+ 
+Description: Secure login and signup, supporting email/phone (and optionally college 
+email).   
+ 
+Requirements: 
+- Signup with email/phone, password, and OTP verification.   
+- Optional verification via college domain email for “verified student” badge (future 
+iteration).   
+- Login with credential + secure session tokens (JWT).   
+- Forgot password flow (email/OTP reset).   
+- Logout on all devices option.   
+- Enforcement of strong password policy and rate limiting on login attempts. 
+ 
+4.2 Onboarding and College/Organization Selection 
+ 
+Description: Map each user to one primary community (college/organization). 
+ 
+Requirements: 
+- On first login: collect name, username, college/university (or organization), 
+year/department (optional), DOB.   
+- Searchable list of colleges/organizations; if not found, “Request to add” flow (added by 
+Jibble team, not users).   
+- Users cannot create communities; only Jibble admins can create/approve communities.   
+- Option to select interests and categories (comedy, academics, sports, etc.) to tune default 
+feed. 
+ 
+4.3 Profile Creation and Management 
+ 
+Description: Public-facing identity plus some private fields. 
+ 
+Requirements: 
+- Fields: name, username (unique), profile photo, bio, college, year/branch, skills/interests, 
+optional social links.   
+- Show counts: followers, following, posts.   
+- Edit profile with validation and update history.   
+- Privacy options:   
+  - Public profile within community vs restricted (Followers-only).   
+  - Show/hide certain details (year, branch, etc.).   
+- View others’ profiles (tabbed: Posts, Stories, Circle involvement, etc.). 
+ 
+4.4 Post Creation 
+ 
+Description: Create posts to share text/media to feed and/or Circle. 
+ 
+Requirements: 
+- Create post with: text, one or multiple images, optional category (comedy, academic, etc.), 
+visibility (public-in-college, followers only, or Circle).   
+- Toggle for anonymous posting within college/Circle (identity hidden to other users but 
+logged internally).   
+- Media upload to AWS S3; compression and upload progress.   
+- Ability to tag category and possibly location (college-specific).   
+- Draft saving (optional v1).   
+- Basic content validation (length limits, media size, content type). 
+ 
+4.5 Feed and Discovery 
+ 
+Description: Main consumption surface for content. 
+ 
+Requirements: 
+- Home feed:   
+  - Posts from followed users.   
+  - Relevant posts from same college community.   
+  - Suggested posts from creators based on interests/categories.   
+- Category filters:   
+  - Option to switch feed view by category (comedy, horror, academics, events, etc.).   
+  - Users can select multiple categories to focus the feed.   
+- “Not addictive” principles (v1 ideas):   
+  - No endless scroll; optional content “batch” pagination with “Show more” button.   
+  - Daily time insights; optional “time limit reminders”.   
+- Highlight posts from college-specific Circle items (events, top anonymous posts) in a 
+separate section or tab. 
+ 
+4.6 Reactions: Likes, Comments, Shares, Follow 
+ 
+Description: Basic social interactions. 
+ 
+Requirements: 
+- Like/unlike posts (count visible).   
+- Comment on posts (threaded comments optional later).   
+- Share post internally (to chats, groups) and copy-link (if allowed).   
+- Follow/unfollow users.   
+- Block/mute users.   
+- For anonymous posts:   
+  - Allow like/comment but indicate “Anonymous” as author; user identity hidden from 
+others. 
+ 
+4.7 Stories 
+ 
+Description: Ephemeral content similar to Instagram Stories but scoped to community. 
+ 
+Requirements: 
+- Post story (image/video up to N seconds).   
+- Story viewer UI with progress bar and swipe navigation.   
+- Stories visible for 24 hours.   
+- Option to post story to: followers only or entire college.   
+- Report story and mute story from a user. 
+ 
+4.8 Circle – College Community Hub 
+ 
+Description: A dedicated page/tab for each college community, containing four main areas: 
+Anonymous, Events, Groups, Matching. 
+ 
+Circle root screen: 
+- Tabs or sections:   
+  - Anonymous   
+  - Events   
+  - Groups   
+  - Matching   
+ 
+4.8.1 Circle – Anonymous 
+ 
+Requirements: 
+- Anonymous post feed scoped to the user’s college.   
+- Post anonymously with text and optional media.   
+- Reactions: likes, comments, report.   
+- Strong moderation: quick ability to hide content and penalize users internally. 
+ 
+4.8.2 Circle – Events 
+ 
+Requirements: 
+- List of upcoming and past events in the college.   
+- Event card: title, date/time, location, organizer, description, cover image, RSVP count.   
+- Create event:   
+  - Only approved roles (e.g., Jibble admin or college ambassador/club heads).   
+  - Fields for registration link and contact details.   
+- RSVP/Interested button and attendee list (counts visible, names optional).   
+- Send reminders via notifications (before event). 
+ 
+4.8.3 Circle – Groups 
+ 
+Requirements: 
+- Directory of groups (clubs, classes, project teams) for the college.   
+- Group types: public (anyone in college can join) or request-only.   
+- Group page: description, admins, members count, posts feed and chat link.   
+- Group chat or pinned chat link.   
+- Group creation:   
+  - Initially restricted to Jibble-approved roles (ambassadors/admins).   
+  - Users can request new group; Jibble team or campus ambassador approves. 
+ 
+4.8.4 Circle – Matching (Skills) 
+ 
+Requirements: 
+- Skill profile: each user can list skills and interests (e.g., Flutter, design, public speaking).   
+- Matching screen:   
+  - Swipe-style or list-style UI to discover people with complementary/interested skills.   
+  - Filters: skill, year, role (looking for project teammates, looking for internships, etc.).   
+- “Make card” screen:   
+  - User creates a short profile card with: skills, what they’re looking for (project team, 
+startup partner, study group, etc.), short bio.   
+- Ability to send connection request or direct message from matching. 
+ 
+4.9 Real-Time Chat 
+ 
+Description: Messaging for 1:1 and groups. 
+ 
+Requirements: 
+- Chat list with pinned chats, unread indicators.   
+- 1:1 chat: text, emojis, images (and later voice notes).   
+- Group chat: created via groups in Circle or manually between multiple users.   
+- Real-time via WebSocket (Socket.io) or similar.   
+- Message status: sent, delivered, seen.   
+- Basic moderation:   
+  - Block users; no messages from blocked users.   
+  - Report chat message.   
+- Messages stored securely with retention policy (e.g., optional archive after 1 year). 
+ 
+4.10 Notifications 
+ 
+Description: Keep users updated without spamming. 
+ 
+Requirements: 
+- Types: new followers, likes, comments, mentions, event reminders, group invites, chat 
+messages, skill match requests.   
+- In-app notification center with read/unread state.   
+- Push notifications with per-category toggle in settings.   
+- Do-not-disturb window option. 
+ 
+4.11 Search 
+ 
+Description: Discover users, groups, events, and posts. 
+ 
+Requirements: 
+- Search bar for: users, groups, events, skills, and categories.   
+- Filter by type and by community (within own college by default).   
+- Search results page with clear sections. 
+ 
+4.12 Admin & Moderation Tools (MVP) 
+ 
+Requirements: 
+- Role-based admin (global Jibble admin, college ambassador, group admin).   
+- Admin capabilities:   
+  - Delete or hide posts and comments.   
+  - Temporarily or permanently suspend accounts.   
+  - Manage event and group creation approvals.   
+- Abuse reporting dashboard (maybe basic API + admin web panel later). 
+ 
+4.13 Monetization (Phase-wise) 
+ 
+Overall principle: Monetization must not break trust or create spammy experience. 
+ 
+Features: 
+1. Ads (Later phase): 
+   - Non-intrusive, category-relevant ads.   
+   - Only in specific placements (between feed batches, event section, etc.). 
+ 
+2. Premium features: 
+   - Verified creator profile.   
+   - Advanced analytics for creators (reach, engagement by category).   
+   - Extra visibility/boost in matching or events.   
+ 
+3. Event promotions: 
+   - Paid promotion for events to appear higher in event lists or home suggestions within that 
+college. 
+ 
+4. Skill-based hiring connections: 
+   - For companies or senior students to pay for access to curated skill-based profiles (opt-in 
+only from users).   
+   - Separate access rules to protect student privacy. 
+ 
+5. App Flow and Navigation 
+ 
+High-Level App Flow: 
+1. Install app.   
+2. Splash screen with Jibble branding.   
+3. Authentication screen (login/signup).   
+4. Signup → OTP / verification → onboarding.   
+5. Onboarding steps:   
+   - Choose college/organization.   
+   - Enter personal details & username.   
+   - Select interests and skills.   
+   - Basic tutorial (optional).   
+6. Land on Home page (feed).   
+7. From bottom navigation or tabs, user can go to:   
+   - Home (feed)   
+   - Circle (community)   
+   - Post creation (central FAB/button)   
+   - Chat   
+   - Profile   
+8. From Circle, access Anonymous, Events, Groups, Matching.   
+9. From Home/Profile/Circle, user can tap into: post detail, story viewer, profiles, event 
+details, group pages.   
+10. Settings accessible from Profile or top-right menu. 
+ 
+Navigation Structure: 
+- Bottom navigation (recommended): 
+  - Home   
+  - Circle   
+  - Create Post (center FAB)   
+  - Chat   
+  - Profile   
+ 
+- Global actions:   
+  - Search icon at top of Home and Circle.   
+  - Notification bell at top-right.   
+ 
+6. Screen-by-Screen Requirements (UI/UX) 
+ 
+6.1 Splash Screen 
+ 
+- Jibble logo and tagline.   
+- Smooth short animation (max 2–3 seconds).   
+- Auto-navigate to Auth screen or Home if already logged in. 
+ 
+6.2 Authentication Screen 
+ 
+- Tabs or toggle: Login / Sign Up.   
+- Fields: email/phone, password; “Forgot password”; “Send OTP” if using phone.   
+- “Continue” button with clear disabled/enabled states.   
+- Links to Terms and Privacy Policy.   
+ 
+6.3 Onboarding Screens 
+ 
+- Step 1: Basic info (name, username, profile pic; validation for unique username).   
+- Step 2: College/organization selection (searchable dropdown).   
+- Step 3: Interests and categories selection (chips/tags).   
+- Step 4: Skills selection and optional short bio.   
+- Progress indicator for steps. 
+ 
+6.4 Home Screen (Feed) 
+ 
+- Top area:   
+  - App logo, search icon, notification icon.   
+  - Category filter chips horizontally scrollable.   
+- Stories row: user’s story + others’.   
+- Main feed: cards with post content, author (or “Anonymous”), college, category, 
+timestamp, like/comment/share icons.   
+- Floating action button for post creation (if not in bottom nav).   
+- Pull-to-refresh, and “You’re all caught up” state. 
+ 
+6.5 Post Screen (Create/Edit) 
+ 
+- Text input area (multi-line).   
+- Media picker (gallery/camera; show selected thumbnails).   
+- Category dropdown/chips.   
+- Visibility: Followers, College, Circle-only.   
+- Anonymous toggle (if allowed by visibility).   
+- Post button and progress indication when uploading.   
+ 
+6.6 Post Detail Screen 
+ 
+- Full content with media, text, category, and meta-data.   
+- Like/comment/share.   
+- Comments list with input at the bottom.   
+- Report button and save/bookmark (optional).   
+ 
+6.7 Circle Screen 
+ 
+- Tabs for Anonymous, Events, Groups, Matching.   
+ 
+Anonymous tab: 
+- Similar to feed but only anonymous posts.   
+- “New anonymous post” button. 
+ 
+Events tab: 
+- Event list with upcoming at top.   
+- Filter by date and category.   
+- Event detail screen: full description, RSVP button, share, add to calendar (optional). 
+ 
+Groups tab: 
+- List of groups with join/request button.   
+- Group detail: description, members count, join status, open group feed and chat. 
+ 
+Matching tab: 
+- “Create card” CTA if user has no card.   
+- List/swipe of profile cards: show skills, looking-for, action buttons (Connect / Message). 
+ 
+6.8 Chat Screen 
+ 
+Chat List: 
+- List of recent chats with name, last message, time, unread badge.   
+- New chat button: search user or open group list. 
+ 
+Chat Detail: 
+- Messages in bubble style, time stamps.   
+- Input bar: text, emoji, attachment.   
+- Options: view profile, block, report, leave group. 
+ 
+6.9 Profile Screen 
+ 
+- Header: profile image, name, username, college, year/branch.   
+- Stats row: posts, followers, following.   
+- Edit profile button (for self).   
+- Tabs: Posts, Stories highlights (later), Circle activity (events/groups).   
+- Settings icon. 
+ 
+6.10 Settings Screen 
+ 
+- Account: email/phone, password change, logout.   
+- Privacy: profile visibility, block list.   
+- Notifications: toggles per category.   
+- Data & privacy: download my data, delete my account.   
+- Help & support: FAQs, report issue. 
+ 
+7. Design Style 
+ 
+Visual style: 
+- Modern, minimal, clean layout.   
+- Use dark and light theme with easy toggle in settings.   
+- Glassmorphism / subtle glass-like panels for cards and overlays.   
+- Smooth micro-animations: button presses, screen transitions, like animations.   
+ 
+Brand & feel: 
+- College-centric, youthful, yet professional.   
+- Avoid overly bright or aggressive colors that feel stressful.   
+- Typography simple and highly readable.   
+ 
+UX principles: 
+- Reduce clutter; one primary action per screen.   
+- Emphasize community and usefulness over endless entertainment.   
+- Consistent iconography and spacing across all screens. 
+ 
+8. Security and Privacy Rules 
+ 
+8.1 Post Visibility Rules 
+ 
+- Define clear visibility options:   
+  - Followers-only.   
+  - Entire college community.   
+  - Circle-only (college community within Circle features).   
+- Anonymous posts visible only inside the appropriate scope (college/Circle).   
+- No global public visibility (outside organization) in v1. 
+ 
+8.2 Messaging Rules 
+ 
+- Only users who follow each other or share a group can message by default (optional 
+setting).   
+- Blocked users cannot send messages or see profile content.   
+- Rate limiting to prevent spam messages.   
+- Detect mass messaging / spam patterns and temporarily restrict. 
+ 
+8.3 User Reporting System 
+ 
+- Users can report: posts, comments, stories, chats, profiles, groups, events.   
+- Mandatory reason selection and optional description.   
+- Reports go into moderation system with ability to:   
+  - Hide content.   
+  - Warn or suspend users.   
+- Repeated violations lead to progressive penalties (temporary bans to permanent bans). 
+ 
+8.4 User Data Protection 
+ 
+- Store user passwords with strong hashing (e.g., bcrypt/argon2).   
+- Secure transmission via HTTPS everywhere.   
+- Minimize sensitive data stored (e.g., no plain-text DOB, no unnecessary PII).   
+- Regular backups of PostgreSQL database with secure access control. 
+ 
+8.5 Access Control 
+ 
+- Role-based access (RBAC):   
+  - User, Creator (optional), Group admin, College ambassador, Super admin.   
+- Backend routes guarded by auth middleware and RBAC checks.   
+- Separate admin APIs from user APIs with stricter authentication. 
+ 
+8.6 Data Usage Transparency 
+ 
+- Clear Privacy Policy explaining what data is collected, why, and how it’s used.   
+- In-app explanation for sensitive features (anonymous posts, matching, hiring).   
+- Explicit consent for using data in skill-based hiring/monetization. 
+ 
+8.7 Data Deletion Policy 
+ 
+- Users can request account deletion from app.   
+- On deletion:   
+  - Anonymize personal data (name/username) from posts/comments but keep content if 
+necessary, or hard-delete according to policy.   
+  - Remove tokens, sessions, and access rights.   
+- Retain logs and abuse reports for a limited period only for security/legal reasons. 
+ 
+8.8 Authentication Security 
+ 
+- Enforce strong password rules and optional 2FA later.   
+- Rate limiting on login/OTP endpoints.   
+- Refresh token with short-lived access token mechanism.   
+- Automatic logout of old sessions after password change. 
+ 
+8.9 Notification Privacy 
+ 
+- Push notifications should show minimal information (e.g., “You have a new message” 
+instead of full message text, configurable).   
+- Option to disable preview content in notifications.   
+- Respect OS-level notification settings. 
+ 
+9. Tech Stack and Architecture 
+ 
+9.1 Frontend 
+ 
+- Framework: Flutter.   
+- Platforms: Android (initial), iOS later.   
+- State management: Provider / Riverpod / Bloc (to be finalized).   
+- Theming: Support for dark and light themes. 
+ 
+9.2 Backend 
+ 
+- Runtime: Node.js.   
+- Hosting: Railway (PaaS).   
+- Architecture: RESTful APIs for CRUD operations; WebSocket (e.g., Socket.io) for real-time 
+chat and notifications.   
+- Authentication: JWT-based auth, with refresh tokens.   
+- Services:   
+  - Auth service.   
+  - User/profile service.   
+  - Feed/posts service.   
+  - Circle service (anonymous, events, groups, matching).   
+  - Chat service.   
+  - Notification service.   
+ 
+9.3 Database 
+ 
+- DB: PostgreSQL.   
+- Provider: Neon (serverless Postgres hosting).   
+- Schema (high-level entities):   
+  - Users, Profiles, Colleges/Organizations, Follows, Posts, Stories, Comments, Likes, 
+Categories, Circles, Events, Groups, GroupMembers, Messages, Skills, MatchCards, 
+Notifications, Reports, Roles.   
+ 
+9.4 Storage 
+ 
+- Provider: AWS S3.   
+- Use separate buckets/folders for: profile images, posts media, stories media.   
+- Store only URLs in DB, not raw files. 
+ 
+9.5 Caching Layer 
+ 
+- Cache: Redis.   
+- Use cases:   
+  - Session tokens or blacklist.   
+  - Frequently accessed feeds.   
+  - Rate-limiting counters.   
+ 
+9.6 Other Infrastructure 
+ 
+- Logging: centralized logs (e.g., Railway logs + external logging).   
+- Monitoring: basic uptime and performance monitoring.   
+- CI/CD: automatic builds and deployments for backend and Flutter app (later). 
+ 
+ 
+ 
+ 
+10. Non-Functional Requirements 
+ 
+Performance: 
+- Home feed should load first content within 1–2 seconds on good network.   
+- Chat messages should appear within near real-time. 
+ 
+Scalability: 
+- Design to support tens of thousands of users per college over time.   
+- Use pagination and lazy loading for all large lists. 
+ 
+Availability: 
+- Aim for >99% backend uptime.   
+- Graceful fallback when some services fail (e.g., feed loads but matching temporarily down). 
+ 
+Reliability: 
+- Idempotent APIs where possible.   
+- Safe error handling on frontend with clear messages and retry options. 
+ 
+Accessibility: 
+- Proper contrast in both dark and light themes.   
+- Support dynamic text sizes and basic screen reader compatibility. 
+ 
+ 
+ 
+ 
+11. Analytics and Success Metrics 
+ 
+Key metrics: 
+- Daily active users (DAU), weekly active users (WAU) per college.   
+- Average session duration (target: healthy engagement without extreme addiction).   
+- Number of posts per user per week (including anonymous).   
+- Events created and RSVPs per college.   
+- Matches initiated via Matching feature.   
+- Chat messages per user per week.   
+- Reports per 1000 posts (to monitor abuse). 
+ 
+12. Assumptions and Risks 
+ 
+Assumptions: 
+- Users have smartphones and stable internet.   
+- Colleges are willing to allow/encourage students to use such an app.   
+- Initial growth will be campus-by-campus via ambassadors. 
+ 
+Risks: 
+- Misuse of anonymous posting (bullying, harassment).   
+- Difficulty controlling addiction despite design intentions.   
+- Moderation load as communities grow.   
+- Legal and privacy compliance requirements in different regions. 
+ 
