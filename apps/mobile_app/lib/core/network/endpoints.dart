@@ -30,8 +30,10 @@ class Endpoints {
 
   // ── Posts ───────────────────────────────────────────────────────────────────
   static const String posts        = '/posts';
+  static const String postFeed     = '/posts/feed';
   static String postById(String id) => '/posts/$id';
   static String postLike(String id) => '/posts/$id/like';
+  static String userPosts(String username) => '/posts/user/$username';
 
   // ── Stories ─────────────────────────────────────────────────────────────────
   static const String stories = '/stories';

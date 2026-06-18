@@ -7,7 +7,7 @@ import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/presentation/screens/login_page.dart';
 import '../../features/auth/presentation/screens/register_page.dart';
 import '../../features/auth/presentation/screens/otp_verification_page.dart';
-import '../../features/auth/presentation/screens/auth_gate.dart';
+import '../../features/home/presentation/screens/main_shell.dart';
 
 // ── Route path constants ───────────────────────────────────────────────────────
 
@@ -115,7 +115,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: Routes.home,
         name: 'home',
         pageBuilder: (context, state) => const MaterialPage(
-          child: AuthGate(),
+          child: MainShell(),
         ),
       ),
     ],
