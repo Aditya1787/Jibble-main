@@ -7,7 +7,11 @@ import '../../data/models/user_model.dart';
 // ── Infrastructure providers ──────────────────────────────────────────────────
 
 final secureStorageProvider = Provider<FlutterSecureStorage>(
-  (_) => const FlutterSecureStorage(),
+  (_) => const FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+    ),
+  ),
 );
 
 final apiClientProvider = Provider<ApiClient>((ref) {
@@ -75,18 +79,30 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Called on startup — tries to restore session from secure storage.
   Future<void> checkAuth() async {
+    print('DEBUG: [checkAuth] started');
     state = AuthState.loading();
     try {
+      print('DEBUG: [checkAuth] reading access_token from storage...');
       final token = await _storage.read(key: 'access_token');
+      print('DEBUG: [checkAuth] access_token read complete. token: $token');
       if (token == null) {
+        print('DEBUG: [checkAuth] token is null. Waiting 2 seconds for splash design...');
+        await Future.delayed(const Duration(seconds: 2));
+        print('DEBUG: [checkAuth] transitioning to unauthenticated.');
         state = AuthState.unauthenticated();
         return;
       }
       // Token exists — fetch current user to validate it
+      print('DEBUG: [checkAuth] token exists. fetching current user...');
       final user = await _authService.getMe();
+      print('DEBUG: [checkAuth] current user fetched. authenticated as: ${user.email}');
       state = AuthState.authenticated(user);
-    } catch (_) {
+    } catch (e) {
+      print('DEBUG: [checkAuth] error occurred: $e');
+      print('DEBUG: [checkAuth] Waiting 2 seconds for splash design...');
+      await Future.delayed(const Duration(seconds: 2));
       // Token invalid or expired — clear it and go unauthenticated
+      print('DEBUG: [checkAuth] deleting stored tokens due to error.');
       await _storage.delete(key: 'access_token');
       await _storage.delete(key: 'refresh_token');
       state = AuthState.unauthenticated();

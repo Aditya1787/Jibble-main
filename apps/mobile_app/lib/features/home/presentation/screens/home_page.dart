@@ -5,6 +5,7 @@ import '../provider/feed_provider.dart';
 import '../widgets/stories_row.dart';
 import '../widgets/category_chips_row.dart';
 import '../widgets/feed_post_card.dart';
+import '../widgets/home_drawer.dart';
 
 /// HomePage rendering Stories, Category filters, and Jibble posts with pagination.
 class HomePage extends ConsumerStatefulWidget {
@@ -42,6 +43,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final feedState = ref.watch(feedProvider);
 
     return Scaffold(
+      drawer: const HomeDrawer(),
       appBar: AppBar(
         title: const Text(
           'Jibble',
@@ -52,11 +54,11 @@ class _HomePageState extends ConsumerState<HomePage> {
             color: AppColors.accent,
           ),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.notifications_none_rounded, size: 26),
-          onPressed: () {},
-        ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_none_rounded, size: 26),
+            onPressed: () {},
+          ),
           IconButton(
             icon: const Icon(Icons.search_rounded, size: 26),
             onPressed: () {},

@@ -43,24 +43,32 @@ class RouterNotifier extends ChangeNotifier {
     final status = authState.status;
     final loc = state.matchedLocation;
 
-    final isAuthRoute = loc == Routes.login ||
-        loc == Routes.register ||
-        loc == Routes.splash ||
-        loc == Routes.otp;
-
-    // Still booting — go to splash and wait
+    // 1. Still booting — keep or redirect to splash
     if (status == AuthStatus.initial || status == AuthStatus.loading) {
       return loc == Routes.splash ? null : Routes.splash;
     }
 
-    // Not logged in — push to login unless already on an auth route
+    // 2. Unauthenticated — force to login if not already on an auth page
     if (status == AuthStatus.unauthenticated || status == AuthStatus.error) {
-      return isAuthRoute ? null : Routes.login;
+      final isAuthPage = loc == Routes.login ||
+          loc == Routes.register ||
+          loc == Routes.otp;
+      if (!isAuthPage) {
+        return Routes.login;
+      }
+      return null;
     }
 
-    // Logged in — send away from auth screens
-    if (status == AuthStatus.authenticated && isAuthRoute) {
-      return Routes.home;
+    // 3. Authenticated — force to home if on splash or auth pages
+    if (status == AuthStatus.authenticated) {
+      final isAuthOrSplashPage = loc == Routes.login ||
+          loc == Routes.register ||
+          loc == Routes.otp ||
+          loc == Routes.splash;
+      if (isAuthOrSplashPage) {
+        return Routes.home;
+      }
+      return null;
     }
 
     return null; // no redirect needed
