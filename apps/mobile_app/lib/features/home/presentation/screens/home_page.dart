@@ -18,6 +18,8 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   final ScrollController _scrollController = ScrollController();
+  bool _showStories = true;
+  double _lastScrollOffset = 0.0;
 
   @override
   void initState() {
@@ -33,9 +35,28 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.9) {
+    final currentOffset = _scrollController.position.pixels;
+
+    // Load more when reaching bottom
+    if (currentOffset >= _scrollController.position.maxScrollExtent * 0.9) {
       ref.read(feedProvider.notifier).loadMore();
     }
+
+    // Instagram-style scroll-to-hide stories behavior
+    if (currentOffset > _lastScrollOffset && currentOffset > 40) {
+      if (_showStories) {
+        setState(() {
+          _showStories = false;
+        });
+      }
+    } else if (currentOffset < _lastScrollOffset || currentOffset <= 10) {
+      if (!_showStories) {
+        setState(() {
+          _showStories = true;
+        });
+      }
+    }
+    _lastScrollOffset = currentOffset;
   }
 
   @override
@@ -48,7 +69,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         backgroundColor: AppColors.background,
         elevation: 0,
         centerTitle: true,
-        toolbarHeight: 64,
+        toolbarHeight: 68,
         leading: Builder(
           builder: (context) => Padding(
             padding: const EdgeInsets.only(left: 14),
@@ -64,14 +85,22 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
           ),
         ),
-        title: const Text(
-          'Jibble',
-          style: TextStyle(
-            fontFamily: 'Dancing_Script',
-            fontSize: 34,
-            fontWeight: FontWeight.w800,
-            color: AppColors.accent,
-            letterSpacing: 1.0,
+        // Stylized Neumorphic App Logo & Brand Title
+        title: NeumorphicBox(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+          borderRadius: 22,
+          child: ShaderMask(
+            shaderCallback: (bounds) => AppColors.accentGradient.createShader(bounds),
+            child: const Text(
+              'Jibble',
+              style: TextStyle(
+                fontFamily: 'DancingScript',
+                fontSize: 32,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                letterSpacing: 1.2,
+              ),
+            ),
           ),
         ),
         actions: [
@@ -165,10 +194,16 @@ class _HomePageState extends ConsumerState<HomePage> {
         itemCount: state.posts.length + 3,
         itemBuilder: (context, index) {
           if (index == 0) {
-            // Stories Section
-            return const Padding(
-              padding: EdgeInsets.only(bottom: 12),
-              child: StoriesRow(),
+            // Stories Section (Instagram style auto hide on scroll down)
+            return AnimatedSize(
+              duration: const Duration(milliseconds: 280),
+              curve: Curves.easeInOut,
+              child: _showStories
+                  ? const Padding(
+                      padding: EdgeInsets.only(bottom: 12),
+                      child: StoriesRow(),
+                    )
+                  : const SizedBox(width: double.infinity, height: 0),
             );
           }
 

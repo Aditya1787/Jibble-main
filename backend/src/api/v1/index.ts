@@ -13,6 +13,9 @@ import { profileRouter } from '../../modules/profile/profile.routes';
 import { postRouter } from '../../modules/post/post.routes';
 import { globalRateLimiter } from '../../middlewares/rateLimiter.global';
 
+import { storyRouter } from '../../modules/story/story.routes';
+import { circleRouter } from '../../modules/circle/circle.routes';
+
 export const v1Router = Router();
 
 // ── Global rate limit on all v1 endpoints ────────────────────────────────────
@@ -36,9 +39,13 @@ v1Router.use('/profiles', profileRouter);
 // ── Posts ─────────────────────────────────────────────────────────────────────
 v1Router.use('/posts', postRouter);
 
+// ── Stories ───────────────────────────────────────────────────────────────────
+v1Router.use('/stories', storyRouter);
+
+// ── Circles ───────────────────────────────────────────────────────────────────
+v1Router.use('/circles', circleRouter);
+
 // ── Future module routes ──────────────────────────────────────────────────────
-// v1Router.use('/stories',        storyRouter);
-// v1Router.use('/circles',        circleRouter);
 // v1Router.use('/chats',          chatRouter);
 // v1Router.use('/notifications',  notificationRouter);
 // v1Router.use('/search',         searchRouter);

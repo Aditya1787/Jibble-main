@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/presentation/widgets/neumorphic_box.dart';
 import '../../../auth/presentation/provider/auth_provider.dart';
 import '../../../home/presentation/provider/feed_provider.dart';
 import '../../data/models/post_model.dart';
@@ -225,15 +226,20 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // X/Twitter Style Text Composer Input
-                  TextField(
-                    controller: _captionController,
-                    maxLines: null,
-                    style: const TextStyle(color: AppColors.textPrimary, fontSize: 17, height: 1.35),
-                    decoration: const InputDecoration(
-                      hintText: 'What is happening on your campus?',
-                      hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 16),
-                      border: InputBorder.none,
+                  // Neumorphic Text Composer Input Card
+                  NeumorphicBox(
+                    isRecessed: true,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    borderRadius: 20,
+                    child: TextField(
+                      controller: _captionController,
+                      maxLines: null,
+                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, height: 1.35),
+                      decoration: const InputDecoration(
+                        hintText: 'What is happening in your community?',
+                        hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 15),
+                        border: InputBorder.none,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),

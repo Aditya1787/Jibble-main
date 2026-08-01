@@ -48,7 +48,7 @@ class _MainShellState extends State<MainShell> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
           child: NeumorphicBox(
-            borderRadius: 30,
+            borderRadius: 32,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -68,7 +68,7 @@ class _MainShellState extends State<MainShell> {
                   index: 1,
                   isSelected: _currentIndex == 1,
                   label: 'Circle',
-                  isCircleFeature: true,
+                  isSpecialFeature: true,
                   activeIcon: Icons.bubble_chart_rounded,
                   inactiveIcon: Icons.bubble_chart_outlined,
                   onTap: () => _onTabTapped(1),
@@ -85,23 +85,25 @@ class _MainShellState extends State<MainShell> {
                   onTap: () => _onTabTapped(2),
                 ),
 
-                // 4. Reels Tab
+                // 4. Reels Tab (Vibrant Neumorphic Media Badge)
                 _AnimatedBottomBarTab(
                   index: 3,
                   isSelected: _currentIndex == 3,
                   label: 'Reels',
-                  activeIcon: Icons.video_library_rounded,
-                  inactiveIcon: Icons.video_library_outlined,
+                  isReelsTab: true,
+                  activeIcon: Icons.play_circle_fill_rounded,
+                  inactiveIcon: Icons.play_circle_outline_rounded,
                   onTap: () => _onTabTapped(3),
                 ),
 
-                // 5. Chat Tab
+                // 5. Chat Tab (Vibrant Neumorphic Chat Badge)
                 _AnimatedBottomBarTab(
                   index: 4,
                   isSelected: _currentIndex == 4,
                   label: 'Chat',
-                  activeIcon: Icons.chat_bubble_rounded,
-                  inactiveIcon: Icons.chat_bubble_outline_rounded,
+                  isChatTab: true,
+                  activeIcon: Icons.forum_rounded,
+                  inactiveIcon: Icons.forum_outlined,
                   onTap: () => _onTabTapped(4),
                 ),
               ],
@@ -113,7 +115,7 @@ class _MainShellState extends State<MainShell> {
   }
 }
 
-/// Interactive Animated Bottom Bar Tab with elastic growing & pulling physics on hold.
+/// Interactive Animated Bottom Bar Tab with elastic pop-out upwards physics on hold.
 class _AnimatedBottomBarTab extends StatefulWidget {
   final int index;
   final bool isSelected;
@@ -121,8 +123,10 @@ class _AnimatedBottomBarTab extends StatefulWidget {
   final IconData activeIcon;
   final IconData inactiveIcon;
   final VoidCallback onTap;
-  final bool isCircleFeature;
+  final bool isSpecialFeature;
   final bool isCreateButton;
+  final bool isReelsTab;
+  final bool isChatTab;
 
   const _AnimatedBottomBarTab({
     required this.index,
@@ -131,8 +135,10 @@ class _AnimatedBottomBarTab extends StatefulWidget {
     required this.activeIcon,
     required this.inactiveIcon,
     required this.onTap,
-    this.isCircleFeature = false,
+    this.isSpecialFeature = false,
     this.isCreateButton = false,
+    this.isReelsTab = false,
+    this.isChatTab = false,
   });
 
   @override
@@ -144,18 +150,13 @@ class _AnimatedBottomBarTabState extends State<_AnimatedBottomBarTab> {
 
   @override
   Widget build(BuildContext context) {
-    // Dynamic scale physics: when held, grows big (1.28x) with vertical elastic stretch (pulled feel)
-    final double scaleX = _isHeld ? 1.15 : (widget.isSelected ? 1.08 : 1.0);
-    final double scaleY = _isHeld ? 1.32 : (widget.isSelected ? 1.08 : 1.0);
-    final double translateY = _isHeld ? -6.0 : (widget.isSelected ? -2.0 : 0.0);
-
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTapDown: (_) {
         setState(() {
           _isHeld = true;
         });
-        widget.onTap(); // Instant responsive tab trigger
+        widget.onTap();
       },
       onTapUp: (_) {
         setState(() {
@@ -167,92 +168,111 @@ class _AnimatedBottomBarTabState extends State<_AnimatedBottomBarTab> {
           _isHeld = false;
         });
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
+      child: AnimatedScale(
+        scale: _isHeld ? 1.20 : (widget.isSelected ? 1.08 : 1.0),
+        duration: const Duration(milliseconds: 200),
         curve: Curves.easeOutBack,
-        transform: Matrix4.identity()
-          ..translateByDouble(0.0, translateY, 0.0, 1.0)
-          ..scaleByDouble(scaleX, scaleY, 0.0, 1.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (widget.isCreateButton)
-              // Center 3D Neumorphic FAB Create Button
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: AppColors.accentGradient,
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.accent.withValues(alpha: _isHeld ? 0.6 : 0.4),
-                      blurRadius: _isHeld ? 14 : 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+        child: AnimatedSlide(
+          offset: Offset(0, _isHeld ? -0.15 : (widget.isSelected ? -0.04 : 0.0)),
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutBack,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (widget.isCreateButton)
+                // Center 3D Neumorphic FAB Create Button
+                Container(
+                  padding: const EdgeInsets.all(11),
+                  decoration: BoxDecoration(
+                    gradient: AppColors.accentGradient,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.accent.withValues(alpha: _isHeld ? 0.7 : 0.45),
+                        blurRadius: _isHeld ? 18 : 10,
+                        offset: Offset(0, _isHeld ? 8 : 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    widget.activeIcon,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                )
+              else if (widget.isSpecialFeature || widget.isReelsTab || widget.isChatTab)
+                // Neumorphic Feature Plate for Circle, Reels, and Chat
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: (widget.isSelected || _isHeld)
+                        ? AppColors.accentGradient
+                        : null,
+                    color: (widget.isSelected || _isHeld)
+                        ? null
+                        : AppColors.accent.withValues(alpha: 0.12),
+                    boxShadow: (widget.isSelected || _isHeld)
+                        ? [
+                            BoxShadow(
+                              color: AppColors.accent.withValues(alpha: _isHeld ? 0.6 : 0.4),
+                              blurRadius: _isHeld ? 16 : 10,
+                              offset: Offset(0, _isHeld ? 6 : 3),
+                            ),
+                          ]
+                        : [
+                            const BoxShadow(
+                              color: Colors.white,
+                              blurRadius: 6,
+                              offset: Offset(-2, -2),
+                            ),
+                            BoxShadow(
+                              color: const Color(0xFFD2CDC3).withValues(alpha: 0.5),
+                              blurRadius: 6,
+                              offset: const Offset(2, 2),
+                            ),
+                          ],
+                  ),
+                  child: Icon(
+                    widget.isSelected || _isHeld ? widget.activeIcon : widget.inactiveIcon,
+                    color: widget.isSelected || _isHeld ? Colors.white : AppColors.accent,
+                    size: 22,
+                  ),
+                )
+              else
+                // Standard Tab Icons with Neumorphic subtle indicator
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: widget.isSelected
+                        ? AppColors.accent.withValues(alpha: 0.12)
+                        : Colors.transparent,
+                  ),
+                  child: Icon(
+                    widget.isSelected ? widget.activeIcon : widget.inactiveIcon,
+                    color: widget.isSelected ? AppColors.accent : AppColors.textMuted,
+                    size: 22,
+                  ),
                 ),
-                child: Icon(
-                  widget.activeIcon,
-                  color: Colors.white,
-                  size: 22,
-                ),
-              )
-            else if (widget.isCircleFeature)
-              // CIRCLE FLAGSHIP FEATURE BUTTON: Vibrant Neumorphic Halo Plate
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: widget.isSelected || _isHeld ? AppColors.accentGradient : null,
-                  color: widget.isSelected || _isHeld ? null : AppColors.accent.withValues(alpha: 0.12),
-                  boxShadow: (widget.isSelected || _isHeld)
-                      ? [
-                          BoxShadow(
-                            color: AppColors.accent.withValues(alpha: 0.45),
-                            blurRadius: 12,
-                            spreadRadius: 1,
-                            offset: const Offset(0, 3),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Icon(
-                  widget.isSelected || _isHeld ? widget.activeIcon : widget.inactiveIcon,
-                  color: widget.isSelected || _isHeld ? Colors.white : AppColors.accent,
-                  size: 22,
-                ),
-              )
-            else
-              // Standard Tab Icons with Neumorphic subtle indicator
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: widget.isSelected ? AppColors.accent.withValues(alpha: 0.12) : Colors.transparent,
-                ),
-                child: Icon(
-                  widget.isSelected ? widget.activeIcon : widget.inactiveIcon,
-                  color: widget.isSelected ? AppColors.accent : AppColors.textMuted,
-                  size: 22,
+
+              const SizedBox(height: 3),
+
+              // Tab Label Text
+              Text(
+                widget.label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: widget.isSelected || _isHeld || widget.isSpecialFeature
+                      ? FontWeight.bold
+                      : FontWeight.w500,
+                  color: (widget.isSpecialFeature || widget.isReelsTab || widget.isChatTab)
+                      ? AppColors.accent
+                      : (widget.isSelected ? AppColors.accent : AppColors.textMuted),
                 ),
               ),
-
-            const SizedBox(height: 3),
-
-            // Tab Label Text
-            Text(
-              widget.label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: widget.isSelected || _isHeld || widget.isCircleFeature
-                    ? FontWeight.bold
-                    : FontWeight.w500,
-                color: widget.isCircleFeature
-                    ? AppColors.accent
-                    : (widget.isSelected ? AppColors.accent : AppColors.textMuted),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
