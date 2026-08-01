@@ -2,20 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/router/app_router.dart';
+import 'package:jibble_mobile/shared/presentation/widgets/neumorphic_box.dart';
+import 'package:jibble_mobile/core/router/app_router.dart';
+import 'package:jibble_mobile/core/theme/app_colors.dart';
 import '../provider/auth_provider.dart';
 
-/// Auth gate — the home placeholder shown at [Routes.home].
-///
-/// If somehow auth is lost while on this screen, listen and redirect via GoRouter.
-/// Full BottomNavigationBar shell will replace this in a later sprint.
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // The RouterNotifier already handles redirecting away from /home
-    // when unauthenticated. This listener is a safety net for edge cases.
     ref.listen<AuthState>(authProvider, (_, next) {
       if (next.status == AuthStatus.unauthenticated ||
           next.status == AuthStatus.error) {
@@ -26,117 +22,111 @@ class AuthGate extends ConsumerWidget {
     final user = ref.watch(authProvider).user;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(28),
+      backgroundColor: AppColors.background,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: NeumorphicBox(
+            borderRadius: 28,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // ── Avatar ─────────────────────────────────────────────
-                Container(
-                  width: 88,
-                  height: 88,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        Theme.of(context).colorScheme.primary,
-                        Theme.of(context).colorScheme.secondary,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                // Avatar plate
+                NeumorphicBox(
+                  shape: BoxShape.circle,
+                  padding: const EdgeInsets.all(12),
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.accent,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withOpacity(0.35),
-                        blurRadius: 24,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.person_rounded,
-                    size: 44,
-                    color: Colors.white,
+                    child: const Icon(
+                      Icons.person_rounded,
+                      size: 40,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
 
-                // ── Welcome text ───────────────────────────────────────
+                // Welcome text
                 Text(
                   'Welcome to Jibble! 🎉',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.accentDark,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 if (user?.email.isNotEmpty == true)
                   Text(
                     user!.email,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.grey[400],
-                        ),
-                  ),
-                const SizedBox(height: 40),
-
-                // ── Status card ────────────────────────────────────────
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primary
-                          .withOpacity(0.25),
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
+                const SizedBox(height: 32),
+
+                // Status card inside recessed plate
+                NeumorphicBox(
+                  isRecessed: true,
+                  borderRadius: 18,
+                  padding: const EdgeInsets.all(18),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(children: [
-                        Icon(Icons.check_circle_outline_rounded,
-                            color: Theme.of(context).colorScheme.primary,
-                            size: 20),
+                        const Icon(Icons.check_circle_outline_rounded,
+                            color: AppColors.accent,
+                            size: 22),
                         const SizedBox(width: 8),
-                        Text('Auth is working!',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
-                                  color:
-                                      Theme.of(context).colorScheme.primary,
-                                )),
+                        Text('Authentication Active!',
+                            style: TextStyle(
+                              color: AppColors.accentDark,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            )),
                       ]),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       Text(
-                        'Full home feed, navigation shell, and profile '
-                        'will be built in the next sprint.',
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        'Your profile setup is complete. The full home feed and campus portals will load in the next sprint.',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                          height: 1.4,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 36),
 
-                // ── Logout ─────────────────────────────────────────────
-                OutlinedButton.icon(
-                  onPressed: () =>
-                      ref.read(authProvider.notifier).logout(),
-                  icon: const Icon(Icons.logout_rounded),
-                  label: const Text('Logout'),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                // Logout Button
+                GestureDetector(
+                  onTap: () => ref.read(authProvider.notifier).logout(),
+                  child: NeumorphicBox(
+                    color: AppColors.danger,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    borderRadius: 16,
+                    child: const Center(
+                      child: Text(
+                        'Logout',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
                     ),
                   ),
                 ),

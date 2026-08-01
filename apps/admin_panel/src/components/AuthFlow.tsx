@@ -281,8 +281,17 @@ const foodOptions = [
 export default function AuthFlow() {
   const store = useAuthStore()
   
+  // Toggle between 'login' and 'register'
+  const [activeMode, setActiveMode] = useState<'login' | 'register'>('login')
+  
+  // Registration step flow: step 1: credentials & role, 2: email OTP, 3: mobile OTP, 4: onboarding, 5: success
   const [step, setStep] = useState(1)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  
+  // Login States
+  const [loginEmail, setLoginEmail] = useState('')
+  const [loginPassword, setLoginPassword] = useState('')
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
   
   // Step 1 States
   const [email, setEmail] = useState('')
@@ -329,7 +338,7 @@ export default function AuthFlow() {
     setUsernameStatus('checking')
     const t = setTimeout(() => {
       if (username.length < 3) {
-        setUsernameStatus('taken') // treated as invalid
+        setUsernameStatus('taken')
       } else {
         setUsernameStatus('available')
       }
@@ -339,24 +348,23 @@ export default function AuthFlow() {
 
   // Email Timer
   useEffect(() => {
-    if (step === 2 && emailTimer > 0) {
+    if (activeMode === 'register' && step === 2 && emailTimer > 0) {
       const interval = setInterval(() => setEmailTimer((t) => t - 1), 1000)
       return () => clearInterval(interval)
     }
-  }, [step, emailTimer])
+  }, [step, emailTimer, activeMode])
 
   // Mobile Timer
   useEffect(() => {
-    if (step === 3 && mobileOtpSent && mobileTimer > 0) {
+    if (activeMode === 'register' && step === 3 && mobileOtpSent && mobileTimer > 0) {
       const interval = setInterval(() => setMobileTimer((t) => t - 1), 1000)
       return () => clearInterval(interval)
     }
-  }, [step, mobileOtpSent, mobileTimer])
+  }, [step, mobileOtpSent, mobileTimer, activeMode])
 
   // Step 5 Redirect Countdown & Confetti
   useEffect(() => {
-    if (step === 5) {
-      // Confetti logic
+    if (activeMode === 'register' && step === 5) {
       const canvas = canvasRef.current
       if (canvas) {
         const ctx = canvas.getContext('2d')
@@ -424,11 +432,11 @@ export default function AuthFlow() {
         }
       }
     }
-  }, [step])
+  }, [step, activeMode])
 
   // Countdown timer for automatic completion in step 5
   useEffect(() => {
-    if (step === 5) {
+    if (activeMode === 'register' && step === 5) {
       if (redirectCount > 0) {
         const timer = setTimeout(() => setRedirectCount(redirectCount - 1), 1000)
         return () => clearTimeout(timer)
@@ -436,7 +444,38 @@ export default function AuthFlow() {
         handleFinalSubmit()
       }
     }
-  }, [step, redirectCount])
+  }, [step, redirectCount, activeMode])
+
+  // Login handler
+  const handleLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const newErrors: Record<string, string> = {}
+    if (!loginEmail) {
+      newErrors.loginEmail = 'Email is required.'
+    } else if (!/\S+@\S+\.\S+/.test(loginEmail)) {
+      newErrors.loginEmail = 'Enter a valid email address.'
+    }
+    
+    if (!loginPassword) {
+      newErrors.loginPassword = 'Password is required.'
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
+    }
+
+    setIsLoggingIn(true)
+    setTimeout(() => {
+      const success = store.login(loginEmail, loginPassword)
+      setIsLoggingIn(false)
+      if (!success) {
+        setErrors({ loginGeneral: 'Invalid email or password.' })
+      } else {
+        setErrors({})
+      }
+    }, 1000)
+  }
 
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {}
@@ -467,7 +506,7 @@ export default function AuthFlow() {
   const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault()
     if (validateStep1()) {
-      store.setCredentials(email, selRole, selCategory, selSubcategory || undefined)
+      store.setCredentials(email, password, selRole, selCategory, selSubcategory || undefined)
       setStep(2)
     }
   }
@@ -477,7 +516,7 @@ export default function AuthFlow() {
     index: number,
     value: string
   ) => {
-    if (!/^\d*$/.test(value)) return // only numbers
+    if (!/^\d*$/.test(value)) return
     const updatedOtp = otpType === 'email' ? [...emailOtp] : [...mobileOtp]
     updatedOtp[index] = value.slice(-1)
     
@@ -487,7 +526,6 @@ export default function AuthFlow() {
       setMobileOtp(updatedOtp)
     }
 
-    // Auto-focus next field
     if (value && index < 5) {
       const nextInput = document.getElementById(`${otpType}-otp-${index + 1}`)
       if (nextInput) nextInput.focus()
@@ -513,7 +551,6 @@ export default function AuthFlow() {
       setErrors({ emailOtp: 'Please enter all 6 digits.' })
       return
     }
-    // Accept 123456 as specific OTP or any OTP for simple static testing
     store.verifyEmailOTP()
     setErrors({})
     setStep(3)
@@ -600,7 +637,6 @@ export default function AuthFlow() {
     })
   }
 
-  // Helper selectors for Step 1 category layout
   const selectedCategoryData = jobRoleData.find((c) => c.category === selCategory)
   
   return (
@@ -609,36 +645,29 @@ export default function AuthFlow() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'var(--bg-primary)',
       padding: '40px 20px',
       color: 'var(--text-primary)',
       position: 'relative',
       overflow: 'hidden',
     }}>
-      {/* Background Shapes */}
-      <div style={{
-        position: 'absolute', top: '-10%', left: '-10%',
-        width: '40vw', height: '40vw', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(51,102,89,0.06) 0%, transparent 70%)',
-        zIndex: 0
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '-10%', right: '-10%',
-        width: '45vw', height: '45vw', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(194,141,56,0.05) 0%, transparent 70%)',
-        zIndex: 0
-      }} />
+      {/* Spatial UI Floating Drifting Background Blobs */}
+      <div className="spatial-bg">
+        <div className="spatial-orb orb-1" />
+        <div className="spatial-orb orb-2" />
+        <div className="spatial-orb orb-3" />
+      </div>
 
-      {step === 5 && (
+      {activeMode === 'register' && step === 5 && (
         <canvas ref={canvasRef} style={{
           position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
           pointerEvents: 'none', zIndex: 99
         }} />
       )}
 
-      <div className="nm-card animate-pop-in" style={{
+      {/* Main Glass Panel */}
+      <div className="spatial-panel animate-pop-in" style={{
         width: '100%',
-        maxWidth: step === 1 ? '680px' : '560px',
+        maxWidth: (activeMode === 'register' && step === 1) ? '680px' : '520px',
         padding: '36px',
         display: 'flex',
         flexDirection: 'column',
@@ -647,14 +676,14 @@ export default function AuthFlow() {
         position: 'relative',
       }}>
         {/* Brand Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', marginBottom: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', marginBottom: '4px' }}>
           <div style={{
             width: '44px', height: '44px',
             background: 'var(--accent)',
             borderRadius: '14px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '22px', fontWeight: '800', color: '#ffffff',
-            boxShadow: '4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light)',
+            boxShadow: '4px 4px 10px rgba(51, 102, 89, 0.25), -4px -4px 10px rgba(255, 255, 255, 0.4)',
           }}>J</div>
           <div>
             <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1.1 }}>Jibble</h2>
@@ -662,32 +691,175 @@ export default function AuthFlow() {
           </div>
         </div>
 
-        {/* Progress Tracker */}
-        <div style={{ display: 'flex', gap: '10px', width: '100%', padding: '0 8px' }}>
-          {[1, 2, 3, 4, 5].map((s) => {
-            const isCompleted = step > s
-            const isActive = step === s
-            return (
-              <div key={s} style={{
+        {/* Spatial Mode Switcher Tab (only show on login or step 1 registration) */}
+        {((activeMode === 'login') || (activeMode === 'register' && step === 1)) && (
+          <div className="nm-card-inset" style={{
+            display: 'flex',
+            padding: '6px',
+            borderRadius: '16px',
+            width: '100%',
+            background: 'rgba(243, 239, 232, 0.5)',
+          }}>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveMode('login')
+                setErrors({})
+              }}
+              className={activeMode === 'login' ? 'nm-card' : ''}
+              style={{
                 flex: 1,
-                height: '6px',
-                borderRadius: '3px',
-                background: isCompleted || isActive ? 'var(--accent)' : 'var(--shadow-dark)',
-                boxShadow: isCompleted || isActive 
-                  ? '0 0 6px rgba(51, 102, 89, 0.4)' 
-                  : 'inset 1px 1px 2px var(--shadow-dark)',
-                transition: 'all 0.4s ease',
-              }} />
-            )
-          })}
-        </div>
+                padding: '10px',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                background: activeMode === 'login' ? 'var(--bg-primary)' : 'transparent',
+                color: activeMode === 'login' ? 'var(--accent)' : 'var(--text-secondary)',
+                boxShadow: activeMode === 'login' ? 'var(--nm-flat-xs)' : 'none',
+                transition: 'all 0.2s',
+              }}
+            >
+              🔑 Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveMode('register')
+                setStep(1)
+                setErrors({})
+              }}
+              className={activeMode === 'register' ? 'nm-card' : ''}
+              style={{
+                flex: 1,
+                padding: '10px',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                background: activeMode === 'register' ? 'var(--bg-primary)' : 'transparent',
+                color: activeMode === 'register' ? 'var(--accent)' : 'var(--text-secondary)',
+                boxShadow: activeMode === 'register' ? 'var(--nm-flat-xs)' : 'none',
+                transition: 'all 0.2s',
+              }}
+            >
+              📝 Register
+            </button>
+          </div>
+        )}
 
-        {/* ================= STEP 1: CREDENTIALS & ROLE ================= */}
-        {step === 1 && (
+        {/* Progress Tracker (only visible in register steps 2, 3, 4, 5) */}
+        {activeMode === 'register' && step > 1 && (
+          <div style={{ display: 'flex', gap: '10px', width: '100%', padding: '0 8px' }}>
+            {[1, 2, 3, 4, 5].map((s) => {
+              const isCompleted = step > s
+              const isActive = step === s
+              return (
+                <div key={s} style={{
+                  flex: 1,
+                  height: '6px',
+                  borderRadius: '3px',
+                  background: isCompleted || isActive ? 'var(--accent)' : 'var(--shadow-dark)',
+                  boxShadow: isCompleted || isActive 
+                    ? '0 0 6px rgba(51, 102, 89, 0.4)' 
+                    : 'inset 1px 1px 2px var(--shadow-dark)',
+                  transition: 'all 0.4s ease',
+                }} />
+              )
+            })}
+          </div>
+        )}
+
+        {/* ================= MODE: LOGIN ================= */}
+        {activeMode === 'login' && (
+          <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ textAlign: 'center' }}>
+              <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)' }}>Welcome Back</h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>Sign in to access corporate workspace console.</p>
+            </div>
+
+            {errors.loginGeneral && (
+              <div className="nm-card-inset" style={{
+                padding: '12px',
+                borderRadius: '12px',
+                background: 'rgba(179,74,74,0.06)',
+                border: '1px solid rgba(179,74,74,0.15)',
+                color: 'var(--danger)',
+                fontSize: '13px',
+                fontWeight: 600,
+                textAlign: 'center'
+              }}>
+                ⚠️ {errors.loginGeneral}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* Email */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-secondary)' }}>Corporate Email ID</label>
+                <input
+                  type="email"
+                  className="nm-input-glass"
+                  placeholder="admin@jibble.com"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                />
+                {errors.loginEmail && <span style={{ color: 'var(--danger)', fontSize: '11px', marginTop: '4px', display: 'block', fontWeight: 600 }}>{errors.loginEmail}</span>}
+              </div>
+
+              {/* Password */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-secondary)' }}>Password</label>
+                <input
+                  type="password"
+                  className="nm-input-glass"
+                  placeholder="••••••••"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                />
+                {errors.loginPassword && <span style={{ color: 'var(--danger)', fontSize: '11px', marginTop: '4px', display: 'block', fontWeight: 600 }}>{errors.loginPassword}</span>}
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="nm-btn-accent"
+              disabled={isLoggingIn}
+              style={{ marginTop: '10px' }}
+            >
+              {isLoggingIn ? 'Verifying Account... ⏳' : 'Sign In to Workspace →'}
+            </button>
+
+            {/* Quick credentials details box */}
+            <div className="nm-card-inset" style={{
+              padding: '12px 16px',
+              borderRadius: '12px',
+              fontSize: '12px',
+              color: 'var(--text-secondary)',
+              background: 'rgba(243, 239, 232, 0.4)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              lineHeight: 1.4
+            }}>
+              <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>🔑 Demo Account Details:</span>
+              <span>Username: <strong style={{ color: 'var(--accent)' }}>admin@jibble.com</strong></span>
+              <span>Password: <strong style={{ color: 'var(--accent)' }}>admin123</strong></span>
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 600 }}>
+                💡 Or sign up with a new account, then use it here to sign back in!
+              </span>
+            </div>
+          </form>
+        )}
+
+        {/* ================= MODE: REGISTER (STEP 1: CREDENTIALS & ROLE) ================= */}
+        {activeMode === 'register' && step === 1 && (
           <form onSubmit={handleStep1Submit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ textAlign: 'center' }}>
-              <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)' }}>Account Registration</h3>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Provide credentials and choose your corporate job role.</p>
+              <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)' }}>Create Workspace Profile</h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Provide email, password, and select your corporate category role.</p>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -696,7 +868,7 @@ export default function AuthFlow() {
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-secondary)' }}>Personal Email ID</label>
                 <input
                   type="email"
-                  className="nm-input"
+                  className="nm-input-glass"
                   placeholder="name@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -710,7 +882,7 @@ export default function AuthFlow() {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-secondary)' }}>Password</label>
                   <input
                     type="password"
-                    className="nm-input"
+                    className="nm-input-glass"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -721,7 +893,7 @@ export default function AuthFlow() {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-secondary)' }}>Confirm Password</label>
                   <input
                     type="password"
-                    className="nm-input"
+                    className="nm-input-glass"
                     placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -735,11 +907,11 @@ export default function AuthFlow() {
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-secondary)' }}>Job Role</label>
                 <button
                   type="button"
-                  className="nm-input"
+                  className="nm-input-glass"
                   style={{
                     textAlign: 'left',
                     cursor: 'pointer',
-                    background: 'var(--bg-primary)',
+                    background: 'rgba(243, 239, 232, 0.3)',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
@@ -747,7 +919,7 @@ export default function AuthFlow() {
                   }}
                   onClick={() => setRoleMenuOpen(!roleMenuOpen)}
                 >
-                  <span style={{ color: selRole ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                  <span style={{ color: selRole ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: 600 }}>
                     {selRole ? `${selCategory} ${selSubcategory ? '› ' + selSubcategory : ''} › ${selRole}` : 'Select your Category & Job Role'}
                   </span>
                   <span>{roleMenuOpen ? '▲' : '▼'}</span>
@@ -756,19 +928,19 @@ export default function AuthFlow() {
 
                 {/* Dropdown Menu Container */}
                 {roleMenuOpen && (
-                  <div className="nm-card animate-pop-in" style={{
+                  <div className="spatial-panel animate-pop-in" style={{
                     position: 'absolute',
                     top: 'calc(100% + 10px)',
                     left: 0,
                     width: '100%',
-                    maxHeight: '340px',
+                    maxHeight: '320px',
                     overflowY: 'auto',
                     zIndex: 100,
                     padding: '16px',
                     display: 'grid',
                     gridTemplateColumns: '1fr 1.2fr',
                     gap: '12px',
-                    boxShadow: '12px 12px 24px var(--shadow-dark), -12px -12px 24px var(--shadow-light)',
+                    boxShadow: '0 20px 40px rgba(61,61,61,0.12), 6px 6px 15px var(--shadow-dark), -6px -6px 15px var(--shadow-light)',
                   }}>
                     {/* Left Column: Categories */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderRight: '1px solid var(--border)', paddingRight: '8px' }}>
@@ -821,7 +993,7 @@ export default function AuthFlow() {
                                     fontWeight: 700,
                                     color: 'var(--accent)',
                                     padding: '2px 6px',
-                                    background: 'var(--border)',
+                                    background: 'rgba(51, 102, 89, 0.08)',
                                     borderRadius: '4px',
                                     width: 'fit-content',
                                     margin: '4px 0 2px'
@@ -884,7 +1056,7 @@ export default function AuthFlow() {
                         </>
                       ) : (
                         <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
-                          Select a category on the left
+                          Select category on left
                         </div>
                       )}
                     </div>
@@ -899,8 +1071,8 @@ export default function AuthFlow() {
           </form>
         )}
 
-        {/* ================= STEP 2: EMAIL OTP VERIFICATION ================= */}
-        {step === 2 && (
+        {/* ================= REGISTER STEP 2: EMAIL OTP ================= */}
+        {activeMode === 'register' && step === 2 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ textAlign: 'center' }}>
               <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)' }}>Email Verification</h3>
@@ -921,7 +1093,7 @@ export default function AuthFlow() {
                     value={digit}
                     onChange={(e) => handleOtpChange('email', idx, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown('email', idx, e)}
-                    className="nm-input"
+                    className="nm-input-glass"
                     style={{
                       width: '46px',
                       height: '52px',
@@ -977,8 +1149,8 @@ export default function AuthFlow() {
           </div>
         )}
 
-        {/* ================= STEP 3: MOBILE OTP VERIFICATION ================= */}
-        {step === 3 && (
+        {/* ================= REGISTER STEP 3: MOBILE OTP ================= */}
+        {activeMode === 'register' && step === 3 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ textAlign: 'center' }}>
               <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)' }}>Mobile Authentication</h3>
@@ -992,7 +1164,7 @@ export default function AuthFlow() {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-secondary)' }}>Mobile Number</label>
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <select
-                      className="nm-input"
+                      className="nm-input-glass"
                       style={{
                         width: '90px',
                         cursor: 'pointer',
@@ -1011,7 +1183,7 @@ export default function AuthFlow() {
                     </select>
                     <input
                       type="tel"
-                      className="nm-input"
+                      className="nm-input-glass"
                       placeholder="98765 43210"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
@@ -1037,7 +1209,7 @@ export default function AuthFlow() {
                         value={digit}
                         onChange={(e) => handleOtpChange('mobile', idx, e.target.value)}
                         onKeyDown={(e) => handleOtpKeyDown('mobile', idx, e)}
-                        className="nm-input"
+                        className="nm-input-glass"
                         style={{
                           width: '46px',
                           height: '52px',
@@ -1112,21 +1284,21 @@ export default function AuthFlow() {
           </div>
         )}
 
-        {/* ================= STEP 4: ONBOARDING SCREEN ================= */}
-        {step === 4 && (
+        {/* ================= REGISTER STEP 4: ONBOARDING SCREEN ================= */}
+        {activeMode === 'register' && step === 4 && (
           <form onSubmit={handleOnboardingSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ textAlign: 'center' }}>
               <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)' }}>Personalize Profile</h3>
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Welcome to Jibble! Let the team know a little about you.</p>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '380px', overflowY: 'auto', paddingRight: '6px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '340px', overflowY: 'auto', paddingRight: '6px' }}>
               {/* Place / Hometown */}
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-secondary)' }}>Where do you belong?</label>
                 <input
                   type="text"
-                  className="nm-input"
+                  className="nm-input-glass"
                   placeholder="New Delhi, India"
                   value={hometown}
                   onChange={(e) => setHometown(e.target.value)}
@@ -1140,7 +1312,7 @@ export default function AuthFlow() {
                 <div style={{ position: 'relative' }}>
                   <input
                     type="text"
-                    className="nm-input"
+                    className="nm-input-glass"
                     placeholder="aditya_17"
                     value={username}
                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
@@ -1148,7 +1320,7 @@ export default function AuthFlow() {
                   <div style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', fontWeight: 700 }}>
                     {usernameStatus === 'checking' && <span style={{ color: 'var(--text-muted)' }}>⏳</span>}
                     {usernameStatus === 'available' && <span style={{ color: 'var(--success)' }}>✓ Available</span>}
-                    {usernameStatus === 'taken' && <span style={{ color: 'var(--danger)' }}>✗ Invalid / Too Short</span>}
+                    {usernameStatus === 'taken' && <span style={{ color: 'var(--danger)' }}>✗ Invalid / Short</span>}
                   </div>
                 </div>
                 {errors.username && <span style={{ color: 'var(--danger)', fontSize: '11px', marginTop: '4px', display: 'block', fontWeight: 600 }}>{errors.username}</span>}
@@ -1185,7 +1357,7 @@ export default function AuthFlow() {
                         style={{
                           width: '32px', height: '32px',
                           border: 'none', borderRadius: '50%',
-                          background: avatar === av && !customAvatar ? 'var(--bg-hover)' : 'var(--bg-primary)',
+                          background: avatar === av && !customAvatar ? 'var(--bg-hover)' : 'rgba(243,239,232,0.3)',
                           boxShadow: avatar === av && !customAvatar ? 'var(--nm-inset-sm)' : 'var(--nm-flat-xs)',
                           fontSize: '16px', cursor: 'pointer',
                           display: 'flex', alignItems: 'center', justifyContent: 'center'
@@ -1204,10 +1376,10 @@ export default function AuthFlow() {
                 {/* Drag and Drop box */}
                 <div style={{
                   padding: '10px',
-                  borderRadius: '10px',
+                  borderRadius: '12px',
                   boxShadow: 'var(--nm-inset-sm)',
                   textAlign: 'center',
-                  background: 'transparent',
+                  background: 'rgba(243,239,232,0.2)',
                   position: 'relative',
                   border: '1px dashed var(--border)'
                 }}>
@@ -1235,7 +1407,7 @@ export default function AuthFlow() {
                         key={food}
                         type="button"
                         style={{
-                          background: isSelected ? 'var(--accent)' : 'var(--bg-primary)',
+                          background: isSelected ? 'var(--accent)' : 'rgba(243,239,232,0.4)',
                           color: isSelected ? '#ffffff' : 'var(--text-secondary)',
                           border: 'none',
                           borderRadius: '16px',
@@ -1258,7 +1430,7 @@ export default function AuthFlow() {
                   <button
                     type="button"
                     style={{
-                      background: favFood === 'Other' ? 'var(--accent)' : 'var(--bg-primary)',
+                      background: favFood === 'Other' ? 'var(--accent)' : 'rgba(243,239,232,0.4)',
                       color: favFood === 'Other' ? '#ffffff' : 'var(--text-secondary)',
                       border: 'none',
                       borderRadius: '16px',
@@ -1276,7 +1448,7 @@ export default function AuthFlow() {
                 {favFood === 'Other' && (
                   <input
                     type="text"
-                    className="nm-input"
+                    className="nm-input-glass"
                     placeholder="Enter your favorite cuisine/dish..."
                     value={otherFood}
                     onChange={(e) => setOtherFood(e.target.value)}
@@ -1296,7 +1468,7 @@ export default function AuthFlow() {
                         key={hobby}
                         type="button"
                         style={{
-                          background: isSelected ? 'var(--accent)' : 'var(--bg-primary)',
+                          background: isSelected ? 'var(--accent)' : 'rgba(243,239,232,0.4)',
                           color: isSelected ? '#ffffff' : 'var(--text-secondary)',
                           border: 'none',
                           borderRadius: '16px',
@@ -1339,8 +1511,8 @@ export default function AuthFlow() {
           </form>
         )}
 
-        {/* ================= STEP 5: CELEBRATION / REDIRECT ================= */}
-        {step === 5 && (
+        {/* ================= REGISTER STEP 5: SUCCESS CELEBRATION ================= */}
+        {activeMode === 'register' && step === 5 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', alignItems: 'center', textAlign: 'center' }}>
             <div style={{
               width: '80px', height: '80px',
@@ -1355,13 +1527,13 @@ export default function AuthFlow() {
             </div>
 
             <div>
-              <h3 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-primary)' }}>Registration Successful!</h3>
+              <h3 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-primary)' }}>Profile Verified!</h3>
               <p style={{ fontSize: '14px', color: 'var(--accent)', fontWeight: 600, marginTop: '4px' }}>
-                Welcome to the Jibble family, @{username}!
+                Welcome to Jibble corporate console, @{username}!
               </p>
             </div>
 
-            {/* User details card summary */}
+            {/* User summary card */}
             <div className="nm-card-inset" style={{
               width: '100%',
               padding: '20px',
@@ -1369,6 +1541,7 @@ export default function AuthFlow() {
               display: 'flex',
               flexDirection: 'column',
               gap: '12px',
+              background: 'rgba(243, 239, 232, 0.45)',
             }}>
               <div style={{ display: 'flex', gap: '14px', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
                 <div style={{
@@ -1388,7 +1561,7 @@ export default function AuthFlow() {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '8px 16px', fontSize: '13px' }}>
-                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Role:</span>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Company Role:</span>
                 <span style={{ fontWeight: 700, color: 'var(--accent)' }}>{selRole} ({selCategory})</span>
 
                 <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Belongs to:</span>
@@ -1414,7 +1587,7 @@ export default function AuthFlow() {
                 Go to Dashboard Now →
               </button>
               <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>
-                Redirecting automatically in {redirectCount} seconds...
+                Entering dashboard in {redirectCount} seconds...
               </p>
             </div>
           </div>

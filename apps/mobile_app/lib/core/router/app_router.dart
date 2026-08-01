@@ -7,6 +7,7 @@ import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/presentation/screens/login_page.dart';
 import '../../features/auth/presentation/screens/register_page.dart';
 import '../../features/auth/presentation/screens/otp_verification_page.dart';
+import '../../features/auth/presentation/screens/onboarding/college_page.dart';
 import '../../features/home/presentation/screens/main_shell.dart';
 
 // ── Route path constants ───────────────────────────────────────────────────────
@@ -14,11 +15,12 @@ import '../../features/home/presentation/screens/main_shell.dart';
 class Routes {
   Routes._();
 
-  static const splash   = '/';
-  static const login    = '/login';
-  static const register = '/register';
-  static const otp      = '/otp';
-  static const home     = '/home';
+  static const splash     = '/';
+  static const login      = '/login';
+  static const register   = '/register';
+  static const otp        = '/otp';
+  static const onboarding = '/onboarding';
+  static const home       = '/home';
 }
 
 // ── RouterNotifier ────────────────────────────────────────────────────────────
@@ -44,7 +46,7 @@ class RouterNotifier extends ChangeNotifier {
     final loc = state.matchedLocation;
 
     // 1. Still booting — keep or redirect to splash
-    if (status == AuthStatus.initial || status == AuthStatus.loading) {
+    if (status == AuthStatus.initial) {
       return loc == Routes.splash ? null : Routes.splash;
     }
 
@@ -59,12 +61,21 @@ class RouterNotifier extends ChangeNotifier {
       return null;
     }
 
-    // 3. Authenticated — force to home if on splash or auth pages
+    // 3. Authenticated — force to onboarding or home
     if (status == AuthStatus.authenticated) {
+      if (authState.needsOnboarding) {
+        final isOnboardingOrOtp = loc == Routes.onboarding || loc == Routes.otp;
+        if (!isOnboardingOrOtp) {
+          return Routes.onboarding;
+        }
+        return null;
+      }
+
       final isAuthOrSplashPage = loc == Routes.login ||
           loc == Routes.register ||
           loc == Routes.otp ||
-          loc == Routes.splash;
+          loc == Routes.splash ||
+          loc == Routes.onboarding;
       if (isAuthOrSplashPage) {
         return Routes.home;
       }
@@ -118,6 +129,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final email = state.uri.queryParameters['email'] ?? '';
           return MaterialPage(child: OtpVerificationPage(email: email));
         },
+      ),
+      GoRoute(
+        path: Routes.onboarding,
+        name: 'onboarding',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: CollegePage(),
+        ),
       ),
       GoRoute(
         path: Routes.home,

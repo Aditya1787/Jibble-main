@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:jibble_mobile/shared/presentation/widgets/neumorphic_box.dart';
+import 'package:jibble_mobile/core/theme/app_colors.dart';
 import 'profile_picture_page.dart';
 
-/// Onboarding step 5 — User picks a unique username.
 class UsernamePage extends StatefulWidget {
   const UsernamePage({super.key});
   @override
@@ -32,54 +33,90 @@ class _UsernamePageState extends State<UsernamePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _ProgressBar(step: 5, total: 6),
-              const SizedBox(height: 32),
-              Text('Choose a Username',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary)),
-              const SizedBox(height: 6),
-              Text('Your unique handle on Jibble',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[400])),
-              const SizedBox(height: 40),
-              TextField(
-                controller: _ctrl,
-                onChanged: _validate,
-                textInputAction: TextInputAction.done,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9_.]')),
-                  LengthLimitingTextInputFormatter(30),
-                ],
-                decoration: InputDecoration(
-                  labelText: 'Username',
-                  prefixText: '@',
-                  prefixIcon: const Icon(Icons.alternate_email_rounded),
-                  errorText: _error,
-                  suffixIcon: _valid
-                      ? Icon(Icons.check_circle_rounded,
-                          color: Theme.of(context).colorScheme.primary)
-                      : null,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: NeumorphicBox(
+            borderRadius: 24,
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _ProgressBar(step: 5, total: 6),
+                const SizedBox(height: 24),
+                
+                Text('Choose a Username',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.accentDark,
+                    )),
+                const SizedBox(height: 4),
+                Text('Your unique handle on Jibble',
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 32),
+                
+                // Recessed Username input
+                NeumorphicBox(
+                  isRecessed: true,
+                  borderRadius: 16,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: TextField(
+                    controller: _ctrl,
+                    onChanged: _validate,
+                    textInputAction: TextInputAction.done,
+                    style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9_.]')),
+                      LengthLimitingTextInputFormatter(30),
+                    ],
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      labelText: 'Username',
+                      floatingLabelBehavior: FloatingLabelBehavior.auto,
+                      prefixText: '@',
+                      prefixStyle: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.accent, fontSize: 16),
+                      prefixIcon: const Icon(Icons.alternate_email_rounded, color: AppColors.textMuted),
+                      errorText: _error,
+                      suffixIcon: _valid
+                          ? const Icon(Icons.check_circle_rounded,
+                              color: AppColors.accent)
+                          : null,
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text('Lowercase letters, numbers, underscores and dots only.',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500])),
-              const Spacer(),
-              ElevatedButton(
-                onPressed: !_valid
-                    ? null
-                    : () => Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => const ProfilePicturePage())),
-                child: const Text('Continue'),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text('Lowercase letters, numbers, underscores and dots only.',
+                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.bold)),
+                
+                const Spacer(),
+
+                // Next Button
+                GestureDetector(
+                  onTap: !_valid
+                      ? null
+                      : () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const ProfilePicturePage())),
+                  child: Opacity(
+                    opacity: !_valid ? 0.5 : 1.0,
+                    child: NeumorphicBox(
+                      color: AppColors.accent,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      borderRadius: 16,
+                      child: const Center(
+                        child: Text(
+                          'Continue',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -88,23 +125,27 @@ class _UsernamePageState extends State<UsernamePage> {
 }
 
 class _ProgressBar extends StatelessWidget {
-  final int step, total;
+  final int step;
+  final int total;
   const _ProgressBar({required this.step, required this.total});
+
   @override
-  Widget build(BuildContext context) => Row(
-      children: List.generate(
-          total,
-          (i) => Expanded(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  height: 4,
-                  margin: EdgeInsets.only(right: i < total - 1 ? 4 : 0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(2),
-                    color: i < step
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.surface,
-                  ),
-                ),
-              )));
+  Widget build(BuildContext context) {
+    return Row(
+      children: List.generate(total, (i) {
+        final active = i < step;
+        return Expanded(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            height:  6,
+            margin:  EdgeInsets.only(right: i < total - 1 ? 6 : 0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(3),
+              color: active ? AppColors.accent : const Color(0xFFDCD7CE),
+            ),
+          ),
+        );
+      }),
+    );
+  }
 }

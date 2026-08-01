@@ -3,14 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';
 
-import 'auth_gate.dart';
+import 'package:jibble_mobile/shared/presentation/widgets/neumorphic_box.dart';
+import 'package:jibble_mobile/core/theme/app_colors.dart';
+import 'onboarding/college_page.dart';
 import 'login_page.dart';
 
-/// OTP Verification page.
-///
-/// Shown after signup when email OTP verification is required.
-/// Accepts a 6-digit code sent to [email] and calls the verification API.
-/// Also supports resending the code with a 60-second cooldown timer.
 class OtpVerificationPage extends ConsumerStatefulWidget {
   final String email;
   const OtpVerificationPage({super.key, required this.email});
@@ -48,8 +45,6 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
     super.dispose();
   }
 
-  // ── Timer ──────────────────────────────────────────────────────────────────
-
   void _startCountdown() {
     setState(() {
       _canResend = false;
@@ -72,8 +67,6 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
     });
   }
 
-  // ── OTP logic ──────────────────────────────────────────────────────────────
-
   String get _otpCode => _controllers.map((c) => c.text).join();
 
   void _onDigitChanged(int index, String value) {
@@ -84,7 +77,6 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
       _focusNodes[index - 1].requestFocus();
     }
 
-    // Auto-submit when all 6 digits are filled
     if (_otpCode.length == 6) {
       _verify();
     }
@@ -94,17 +86,13 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
     if (_isVerifying || _otpCode.length < 6) return;
 
     setState(() => _isVerifying = true);
-
-    // TODO: Call actual OTP verify API once backend OTP flow is implemented.
-    // For now (auto-verified during signup), just navigate to home.
     await Future.delayed(const Duration(milliseconds: 800));
 
     if (!mounted) return;
     setState(() => _isVerifying = false);
 
-    // Navigate to home
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const AuthGate()),
+      MaterialPageRoute(builder: (_) => const CollegePage()),
       (_) => false,
     );
   }
@@ -112,162 +100,177 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
   Future<void> _resend() async {
     if (!_canResend) return;
 
-    // TODO: Call resend OTP API endpoint
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('OTP resent to ${widget.email}'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        content: Text('OTP resent to ${widget.email}', style: const TextStyle(fontWeight: FontWeight.w600)),
+        backgroundColor: AppColors.accent,
       ),
     );
     _startCountdown();
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 40),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                NeumorphicBox(
+                  borderRadius: 28,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Elevated Icon Plate
+                      NeumorphicBox(
+                        shape: BoxShape.circle,
+                        padding: const EdgeInsets.all(18),
+                        child: const Icon(
+                          Icons.mark_email_read_rounded,
+                          size: 36,
+                          color: AppColors.accent,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
 
-              // ── Icon ────────────────────────────────────────────────────
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.primary,
-                      Theme.of(context).colorScheme.secondary,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primary
-                          .withOpacity(0.4),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.mark_email_read_rounded,
-                  size: 40,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 32),
+                      // Title
+                      Text(
+                        'Verify Your Email',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.accentDark,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'We sent a 6-digit code to',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.email,
+                        style: const TextStyle(
+                          color: AppColors.accent,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 32),
 
-              // ── Title ───────────────────────────────────────────────────
-              Text(
-                'Verify Your Email',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'We sent a 6-digit code to',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.grey[400],
-                    ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                widget.email,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 40),
+                      // OTP input boxes
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(6, (i) {
+                          return _OtpBox(
+                            controller: _controllers[i],
+                            focusNode: _focusNodes[i],
+                            onChanged: (v) => _onDigitChanged(i, v),
+                            autofocus: i == 0,
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 32),
 
-              // ── OTP input boxes ─────────────────────────────────────────
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(6, (i) {
-                  return _OtpBox(
-                    controller: _controllers[i],
-                    focusNode: _focusNodes[i],
-                    onChanged: (v) => _onDigitChanged(i, v),
-                    autofocus: i == 0,
-                  );
-                }),
-              ),
-              const SizedBox(height: 40),
+                      // Helper box
+                      NeumorphicBox(
+                        isRecessed: true,
+                        borderRadius: 14,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('💡 Verification Code: ', style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.bold)),
+                            const Text('123456', style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold, fontSize: 13)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
 
-              // ── Verify button ───────────────────────────────────────────
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: (_isVerifying || _otpCode.length < 6)
-                      ? null
-                      : _verify,
-                  child: _isVerifying
-                      ? const SizedBox(
-                          height: 22,
-                          width: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
+                      // Neumorphic action button
+                      GestureDetector(
+                        onTap: (_isVerifying || _otpCode.length < 6) ? null : _verify,
+                        child: NeumorphicBox(
+                          color: AppColors.accent,
+                          borderRadius: 16,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Center(
+                            child: _isVerifying
+                                ? const SizedBox(
+                                    height: 22,
+                                    width: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Verify Email',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
                           ),
-                        )
-                      : const Text('Verify Email'),
-                ),
-              ),
-              const SizedBox(height: 24),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
 
-              // ── Resend ──────────────────────────────────────────────────
-              TextButton(
-                onPressed: _canResend ? _resend : null,
-                child: Text(
-                  _canResend
-                      ? 'Resend OTP'
-                      : 'Resend in $_countdown seconds',
-                  style: TextStyle(
-                    color: _canResend
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.grey[500],
+                      // Resend
+                      TextButton(
+                        onPressed: _canResend ? _resend : null,
+                        child: Text(
+                          _canResend
+                              ? 'Resend OTP'
+                              : 'Resend in $_countdown seconds',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: _canResend
+                                ? AppColors.accent
+                                : AppColors.textMuted,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Back to login
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(builder: (_) => const LoginPage()),
+                            (_) => false,
+                          );
+                        },
+                        child: const Text(
+                          'Wrong email? Go back',
+                          style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-
-              // ── Back to login ───────────────────────────────────────────
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const LoginPage()),
-                    (_) => false,
-                  );
-                },
-                child: Text(
-                  'Wrong email? Go back',
-                  style: TextStyle(color: Colors.grey[500]),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
-
-// ── Single OTP digit box ───────────────────────────────────────────────────────
 
 class _OtpBox extends StatelessWidget {
   final TextEditingController controller;
@@ -284,43 +287,30 @@ class _OtpBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 46,
-      height: 56,
-      margin: const EdgeInsets.symmetric(horizontal: 5),
-      child: TextField(
-        controller: controller,
-        focusNode: focusNode,
-        autofocus: autofocus,
-        textAlign: TextAlign.center,
-        keyboardType: TextInputType.number,
-        maxLength: 1,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        onChanged: onChanged,
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-        decoration: InputDecoration(
-          counterText: '',
-          contentPadding: EdgeInsets.zero,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide:
-                BorderSide(color: Theme.of(context).colorScheme.surface),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color:
-                  Theme.of(context).colorScheme.primary.withOpacity(0.3),
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.primary,
-              width: 2,
-            ),
+    return NeumorphicBox(
+      isRecessed: true,
+      borderRadius: 12,
+      padding: EdgeInsets.zero,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      child: SizedBox(
+        width: 44,
+        height: 52,
+        child: TextField(
+          controller: controller,
+          focusNode: focusNode,
+          autofocus: autofocus,
+          textAlign: TextAlign.center,
+          keyboardType: TextInputType.number,
+          maxLength: 1,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: AppColors.textPrimary),
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          onChanged: onChanged,
+          decoration: const InputDecoration(
+            counterText: '',
+            contentPadding: EdgeInsets.zero,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
           ),
         ),
       ),

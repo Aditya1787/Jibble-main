@@ -1,19 +1,16 @@
 1. Product Overview 
  
 Product name: Jibble   
-Type: Mobile-first social media app for closed communities (primarily 
-colleges/universities)   
+Type: Community application for creators, clubs, and interest groups where anyone can request and create a community.   
 Platforms (v1): Android (Flutter), later iOS 
  
 Elevator pitch:   
-Jibble is a focused, non-addictive social media app for colleges and other closed 
-communities where members can:   
-- Connect with real classmates and colleagues   
+Jibble is a focused, non-addictive community application where anyone (including creators) can request, check, and create public or private communities where members can:   
+- Connect with other members, creators, and colleagues   
 - Post both openly and anonymously   
-- Join events and groups   
+- Join events, groups, and collaborative circles   
 - Match based on skills and interests   
-All within a safe, private, organization-centric environment rather than an open, global 
-network. 
+All within a safe, dedicated community environment. 
  
 Problem statement:   
 Existing social apps (Instagram, etc.) are global, addictive, and not optimized for closed 
@@ -98,18 +95,19 @@ iteration).
 - Logout on all devices option.   
 - Enforcement of strong password policy and rate limiting on login attempts. 
  
-4.2 Onboarding and College/Organization Selection 
+4.2 Onboarding and Community Selection/Creation
  
-Description: Map each user to one primary community (college/organization). 
+Description: Map each user to a primary interest, creator, or organization community.
  
 Requirements: 
-- On first login: collect name, username, college/university (or organization), 
-year/department (optional), DOB.   
-- Searchable list of colleges/organizations; if not found, “Request to add” flow (added by 
-Jibble team, not users).   
-- Users cannot create communities; only Jibble admins can create/approve communities.   
-- Option to select interests and categories (comedy, academics, sports, etc.) to tune default 
-feed. 
+- On first login: collect name, username, community selection, DOB.   
+- Searchable list of communities; if a community is not found, trigger the "Create/Request Community" flow:
+  - User submits a proposed community name.
+  - User lists key features, description, and tags.
+  - The system checks if a similar community already exists.
+  - If a match exists, display the existing community and prompt to join.
+  - If no match exists, enable the user to instantiate and create the new community.
+- Option to select interests and categories (comedy, design, tech, sports, etc.) to tune the default feed. 
  
 4.3 Profile Creation and Management 
  

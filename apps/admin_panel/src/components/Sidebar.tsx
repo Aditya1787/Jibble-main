@@ -21,26 +21,31 @@ export default function Sidebar({ activePage, onNavigate }: Props) {
   return (
     <aside style={{
       width: 'var(--sidebar-width)',
-      height: '100vh',
-      background: 'var(--bg-secondary)',
-      boxShadow: '4px 0 15px var(--shadow-dark), 1px 0 0 rgba(255,255,255,0.5)',
+      height: 'calc(100vh - 32px)',
+      background: 'rgba(243, 239, 232, 0.6)',
+      backdropFilter: 'blur(20px)',
+      border: '1px solid rgba(255, 255, 255, 0.55)',
+      boxShadow: '0 20px 40px rgba(61, 61, 61, 0.05), var(--nm-flat)',
       position: 'fixed',
-      top: 0,
-      left: 0,
+      top: '16px',
+      left: '16px',
+      borderRadius: '24px',
       display: 'flex',
       flexDirection: 'column',
       zIndex: 100,
-      padding: '12px',
+      padding: '16px',
+      transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
     }}>
       {/* Logo Card */}
       <div className="nm-card-inset" style={{
-        padding: '16px',
+        padding: '14px',
         marginBottom: '20px',
         borderRadius: '16px',
+        background: 'rgba(243, 239, 232, 0.3)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{
-            width: 38, height: 38,
+            width: 36, height: 36,
             background: 'var(--accent)',
             borderRadius: 12,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -80,12 +85,12 @@ export default function Sidebar({ activePage, onNavigate }: Props) {
                 fontWeight: active ? 700 : 500,
                 textAlign: 'left',
                 boxShadow: active ? 'var(--nm-inset-sm)' : 'none',
-                background: active ? 'var(--bg-primary)' : 'transparent',
+                background: active ? 'rgba(243, 239, 232, 0.4)' : 'transparent',
                 transition: 'all 0.2s',
               }}
               onMouseEnter={e => {
                 if (!active) {
-                  e.currentTarget.style.background = 'var(--bg-hover)'
+                  e.currentTarget.style.background = 'rgba(243, 239, 232, 0.7)'
                   e.currentTarget.style.boxShadow = 'var(--nm-flat-xs)'
                 }
               }}
@@ -112,6 +117,7 @@ export default function Sidebar({ activePage, onNavigate }: Props) {
           display: 'flex',
           flexDirection: 'column',
           gap: '10px',
+          background: 'rgba(243, 239, 232, 0.4)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {/* Avatar */}

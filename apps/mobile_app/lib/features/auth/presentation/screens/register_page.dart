@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jibble_mobile/shared/presentation/widgets/neumorphic_box.dart';
+import 'package:jibble_mobile/core/theme/app_colors.dart';
 import '../provider/auth_provider.dart';
 import 'login_page.dart';
 
-/// Register screen — GoRouter handles navigation away automatically.
-/// When [authProvider] status becomes [AuthStatus.authenticated],
-/// [RouterNotifier] fires GoRouter's redirect → user lands on /home.
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
 
@@ -46,8 +45,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   void _showSnack(String msg, {bool error = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content:         Text(msg),
-        backgroundColor: error ? Colors.red[700] : null,
+        content: Text(msg, style: const TextStyle(fontWeight: FontWeight.w600)),
+        backgroundColor: error ? AppColors.danger : AppColors.accent,
       ),
     );
   }
@@ -56,7 +55,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
-    // Show errors — GoRouter handles the /home redirect on authenticated state
     ref.listen<AuthState>(authProvider, (_, next) {
       if (next.status == AuthStatus.error && next.errorMessage != null) {
         _showSnack(next.errorMessage!, error: true);
@@ -64,146 +62,226 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     });
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── Branding ───────────────────────────────────────────
+                // Branding
                 Text(
                   'Jibble',
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                        fontFamily: 'Dancing_Script',
-                        fontSize: 52,
-                        fontWeight: FontWeight.w700,
-                        color: Theme.of(context).colorScheme.primary,
-                        letterSpacing: 1.5,
-                      ),
+                  style: TextStyle(
+                    fontFamily: 'Dancing_Script',
+                    fontSize: 56,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.accent,
+                    letterSpacing: 1.5,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 Text(
                   'Your Campus, Your Vibe',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        letterSpacing: 1.1,
-                        color: Colors.grey[500],
-                      ),
+                  style: TextStyle(
+                    letterSpacing: 1.1,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 36),
 
-                // ── Heading ────────────────────────────────────────────
-                Text(
-                  'Join Jibble',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary,
+                // Main Neumorphic Card Plate
+                NeumorphicBox(
+                  borderRadius: 28,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Heading
+                      Text(
+                        'Join Jibble',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.accentDark,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Create an account and connect with your campus',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[400],
+                      const SizedBox(height: 6),
+                      Text(
+                        'Create an account and connect with your campus',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 40),
+                      const SizedBox(height: 32),
 
-                // ── Full name ──────────────────────────────────────────
-                TextField(
-                  controller:           _nameCtrl,
-                  textInputAction:      TextInputAction.next,
-                  textCapitalization:   TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText:  'Full Name',
-                    prefixIcon: Icon(Icons.person_outline),
+                      // Full Name Recessed Box
+                      NeumorphicBox(
+                        isRecessed: true,
+                        borderRadius: 16,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        child: TextField(
+                          controller: _nameCtrl,
+                          textInputAction: TextInputAction.next,
+                          textCapitalization: TextCapitalization.words,
+                          style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            labelText: 'Full Name',
+                            floatingLabelBehavior: FloatingLabelBehavior.auto,
+                            prefixIcon: Icon(Icons.person_outline, color: AppColors.textMuted),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Email Recessed Box
+                      NeumorphicBox(
+                        isRecessed: true,
+                        borderRadius: 16,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        child: TextField(
+                          controller: _emailCtrl,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            labelText: 'Email',
+                            floatingLabelBehavior: FloatingLabelBehavior.auto,
+                            prefixIcon: Icon(Icons.email_outlined, color: AppColors.textMuted),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Password Recessed Box
+                      NeumorphicBox(
+                        isRecessed: true,
+                        borderRadius: 16,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        child: TextField(
+                          controller: _passCtrl,
+                          obscureText: _obscurePass,
+                          textInputAction: TextInputAction.next,
+                          style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            labelText: 'Password',
+                            floatingLabelBehavior: FloatingLabelBehavior.auto,
+                            helperText: 'Min 8 chars, 1 uppercase, 1 number',
+                            helperStyle: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 11),
+                            prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textMuted),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePass
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: AppColors.textMuted,
+                              ),
+                              onPressed: () =>
+                                  setState(() => _obscurePass = !_obscurePass),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Confirm Password Recessed Box
+                      NeumorphicBox(
+                        isRecessed: true,
+                        borderRadius: 16,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        child: TextField(
+                          controller: _confirmPassCtrl,
+                          obscureText: _obscureConfirm,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _signup(),
+                          style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            labelText: 'Confirm Password',
+                            floatingLabelBehavior: FloatingLabelBehavior.auto,
+                            prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textMuted),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureConfirm
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: AppColors.textMuted,
+                              ),
+                              onPressed: () =>
+                                  setState(() => _obscureConfirm = !_obscureConfirm),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Neumorphic Green Button
+                      GestureDetector(
+                        onTap: authState.isLoading ? null : _signup,
+                        child: NeumorphicBox(
+                          color: AppColors.accent,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          borderRadius: 16,
+                          child: Center(
+                            child: authState.isLoading
+                                ? const SizedBox(
+                                    height: 22, width: 22,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2.5, color: Colors.white),
+                                  )
+                                : const Text(
+                                    'Create Account',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
 
-                // ── Email ──────────────────────────────────────────────
-                TextField(
-                  controller:     _emailCtrl,
-                  keyboardType:   TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText:  'Email',
-                    prefixIcon: Icon(Icons.email_outlined),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // ── Password ───────────────────────────────────────────
-                TextField(
-                  controller:      _passCtrl,
-                  obscureText:     _obscurePass,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText:   'Password',
-                    helperText:  'Min 8 chars, 1 uppercase, 1 number',
-                    prefixIcon:  const Icon(Icons.lock_outline),
-                    suffixIcon:  IconButton(
-                      icon: Icon(
-                        _obscurePass
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                      ),
-                      onPressed: () =>
-                          setState(() => _obscurePass = !_obscurePass),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // ── Confirm password ───────────────────────────────────
-                TextField(
-                  controller:      _confirmPassCtrl,
-                  obscureText:     _obscureConfirm,
-                  textInputAction: TextInputAction.done,
-                  onSubmitted:     (_) => _signup(),
-                  decoration: InputDecoration(
-                    labelText:  'Confirm Password',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirm
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                      ),
-                      onPressed: () =>
-                          setState(() => _obscureConfirm = !_obscureConfirm),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                // ── Create account button ──────────────────────────────
-                ElevatedButton(
-                  onPressed: authState.isLoading ? null : _signup,
-                  child: authState.isLoading
-                      ? const SizedBox(
-                          height: 22, width: 22,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text('Create Account'),
-                ),
-                const SizedBox(height: 20),
-
-                // ── Login link ─────────────────────────────────────────
+                // Login Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text('Already have an account?',
-                        style: TextStyle(color: Colors.grey[500])),
+                        style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 13)),
                     TextButton(
-                      onPressed: () => Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (_) => const LoginPage()),
+                      onPressed: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                              builder: (_) => const LoginPage()),
+                        );
+                      },
+                      child: const Text(
+                        'Log in',
+                        style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.accent),
                       ),
-                      child: const Text('Log in'),
                     ),
                   ],
                 ),

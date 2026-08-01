@@ -32,14 +32,24 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)', position: 'relative' }}>
+      {/* Drifting Spatial Orbs */}
+      <div className="spatial-bg">
+        <div className="spatial-orb orb-1" />
+        <div className="spatial-orb orb-2" />
+        <div className="spatial-orb orb-3" />
+      </div>
+
       <Sidebar activePage={activePage} onNavigate={setActivePage} />
+      
       <main style={{
-        marginLeft: 'var(--sidebar-width)',
+        marginLeft: 'calc(var(--sidebar-width) + 24px)',
         flex: 1,
         minHeight: '100vh',
-        background: 'var(--bg-primary)',
+        background: 'transparent',
         overflowY: 'auto',
+        position: 'relative',
+        zIndex: 10,
       }}>
         {renderPage()}
       </main>

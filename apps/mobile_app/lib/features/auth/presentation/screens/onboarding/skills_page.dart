@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:jibble_mobile/shared/presentation/widgets/neumorphic_box.dart';
+import 'package:jibble_mobile/core/theme/app_colors.dart';
 import 'username_page.dart';
 
-/// Onboarding step 4 — User selects their skills.
 class SkillsPage extends StatefulWidget {
   const SkillsPage({super.key});
   @override
@@ -23,78 +24,116 @@ class _SkillsPageState extends State<SkillsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _ProgressBar(step: 4, total: 6),
-              const SizedBox(height: 32),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: NeumorphicBox(
+            borderRadius: 24,
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _ProgressBar(step: 4, total: 6),
+                const SizedBox(height: 24),
 
-              Text('Your Skills',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary,
-                      )),
-              const SizedBox(height: 6),
-              Text('Add skills to connect with the right people',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[400])),
-              const SizedBox(height: 24),
+                Text('Your Skills',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.accentDark,
+                    )),
+                const SizedBox(height: 4),
+                Text('Add skills to connect with the right people',
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
 
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Wrap(
-                    spacing: 10, runSpacing: 10,
-                    children: _allSkills.map((skill) {
-                      final on = _selected.contains(skill);
-                      return FilterChip(
-                        label:     Text(skill),
-                        selected:  on,
-                        onSelected: (_) => setState(() {
-                          if (on) _selected.remove(skill);
-                          else    _selected.add(skill);
-                        }),
-                        selectedColor:
-                            Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                        checkmarkColor:
-                            Theme.of(context).colorScheme.primary,
-                        side: BorderSide(
-                          color: on
-                              ? Theme.of(context).colorScheme.primary
-                              : Colors.white12,
+                // Chip Grid
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Wrap(
+                        spacing: 10,
+                        runSpacing: 12,
+                        children: _allSkills.map((skill) {
+                          final on = _selected.contains(skill);
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                if (on) {
+                                  _selected.remove(skill);
+                                } else {
+                                  _selected.add(skill);
+                                }
+                              });
+                            },
+                            child: NeumorphicBox(
+                              color: on ? AppColors.accent : AppColors.background,
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              borderRadius: 16,
+                              child: Text(
+                                skill,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: on ? Colors.white : AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Skip & Continue Neumorphic Buttons
+                const SizedBox(height: 16),
+                Text('${_selected.length} selected',
+                    style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 13)),
+                const SizedBox(height: 12),
+                Row(children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const UsernamePage()),
+                      ),
+                      child: NeumorphicBox(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        borderRadius: 16,
+                        child: const Center(
+                          child: Text(
+                            'Skip',
+                            style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
                         ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-              Text('${_selected.length} selected',
-                  style: TextStyle(color: Colors.grey[500])),
-              const SizedBox(height: 12),
-              Row(children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const UsernamePage()),
+                      ),
                     ),
-                    child: const Text('Skip'),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const UsernamePage()),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const UsernamePage()),
+                      ),
+                      child: NeumorphicBox(
+                        color: AppColors.accent,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        borderRadius: 16,
+                        child: const Center(
+                          child: Text(
+                            'Continue',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ),
+                      ),
                     ),
-                    child: const Text('Continue'),
                   ),
-                ),
-              ]),
-            ],
+                ]),
+              ],
+            ),
           ),
         ),
       ),
@@ -103,21 +142,27 @@ class _SkillsPageState extends State<SkillsPage> {
 }
 
 class _ProgressBar extends StatelessWidget {
-  final int step, total;
+  final int step;
+  final int total;
   const _ProgressBar({required this.step, required this.total});
+
   @override
-  Widget build(BuildContext context) => Row(
-        children: List.generate(total, (i) => Expanded(
+  Widget build(BuildContext context) {
+    return Row(
+      children: List.generate(total, (i) {
+        final active = i < step;
+        return Expanded(
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            height: 4, margin: EdgeInsets.only(right: i < total - 1 ? 4 : 0),
+            height:  6,
+            margin:  EdgeInsets.only(right: i < total - 1 ? 6 : 0),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(2),
-              color: i < step
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(3),
+              color: active ? AppColors.accent : const Color(0xFFDCD7CE),
             ),
           ),
-        )),
-      );
+        );
+      }),
+    );
+  }
 }

@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import '../auth_gate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-/// Onboarding step 6 — User uploads a profile picture (optional).
-class ProfilePicturePage extends StatefulWidget {
+import 'package:jibble_mobile/shared/presentation/widgets/neumorphic_box.dart';
+import 'package:jibble_mobile/core/theme/app_colors.dart';
+import 'package:jibble_mobile/core/router/app_router.dart';
+import 'package:jibble_mobile/features/auth/presentation/provider/auth_provider.dart';
+
+class ProfilePicturePage extends ConsumerStatefulWidget {
   const ProfilePicturePage({super.key});
   @override
-  State<ProfilePicturePage> createState() => _ProfilePicturePageState();
+  ConsumerState<ProfilePicturePage> createState() => _ProfilePicturePageState();
 }
 
-class _ProfilePicturePageState extends State<ProfilePicturePage> {
+class _ProfilePicturePageState extends ConsumerState<ProfilePicturePage> {
   File? _image;
   final bool _uploading = false;
 
@@ -28,9 +33,9 @@ class _ProfilePicturePageState extends State<ProfilePicturePage> {
   void _showSourceSheet() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: AppColors.background,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -39,28 +44,28 @@ class _ProfilePicturePageState extends State<ProfilePicturePage> {
             Container(
               width: 40, height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[600],
+                color: AppColors.textMuted.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             const SizedBox(height: 16),
             ListTile(
-              leading: const Icon(Icons.camera_alt_rounded),
-              title: const Text('Take a photo'),
+              leading: const Icon(Icons.camera_alt_rounded, color: AppColors.accent),
+              title: const Text('Take a photo', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.camera);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_rounded),
-              title: const Text('Choose from gallery'),
+              leading: const Icon(Icons.photo_library_rounded, color: AppColors.accent),
+              title: const Text('Choose from gallery', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.gallery);
               },
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -68,99 +73,123 @@ class _ProfilePicturePageState extends State<ProfilePicturePage> {
   }
 
   void _finish() {
-    // TODO: upload _image to S3 via PUT presigned URL, then update profile
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const AuthGate()),
-      (_) => false,
-    );
+    ref.read(authProvider.notifier).completeOnboarding();
+    context.go(Routes.home);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const _ProgressBar(step: 6, total: 6),
-              const SizedBox(height: 32),
-              Text('Profile Picture',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary)),
-              const SizedBox(height: 6),
-              Text('Add a photo so people recognise you',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[400])),
-              const SizedBox(height: 48),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: NeumorphicBox(
+            borderRadius: 24,
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const _ProgressBar(step: 6, total: 6),
+                const SizedBox(height: 28),
+                
+                Text('Profile Picture',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.accentDark,
+                    )),
+                const SizedBox(height: 4),
+                Text('Add a photo so people recognise you',
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 40),
 
-              // ── Avatar picker ─────────────────────────────────────────
-              GestureDetector(
-                onTap: _showSourceSheet,
-                child: Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 64,
-                      backgroundImage:
-                          _image != null ? FileImage(_image!) : null,
-                      backgroundColor:
-                          Theme.of(context).colorScheme.surface,
-                      child: _image == null
-                          ? Icon(Icons.person_rounded,
-                              size: 64,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .primary
-                                  .withOpacity(0.5))
-                          : null,
-                    ),
-                    Positioned(
-                      bottom: 0, right: 0,
-                      child: Container(
-                        width: 36, height: 36,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Theme.of(context).colorScheme.primary,
-                              Theme.of(context).colorScheme.secondary,
-                            ],
+                // Avatar Picker Circle
+                GestureDetector(
+                  onTap: _showSourceSheet,
+                  child: Stack(
+                    children: [
+                      NeumorphicBox(
+                        shape: BoxShape.circle,
+                        padding: EdgeInsets.zero,
+                        child: Container(
+                          width: 128,
+                          height: 128,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            image: _image != null
+                                ? DecorationImage(
+                                    image: FileImage(_image!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
                           ),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                              color: Theme.of(context)
-                                  .scaffoldBackgroundColor,
-                              width: 2),
+                          child: _image == null
+                              ? const Icon(
+                                  Icons.person_rounded,
+                                  size: 64,
+                                  color: AppColors.textMuted,
+                                )
+                              : null,
                         ),
-                        child: const Icon(Icons.camera_alt_rounded,
-                            size: 18, color: Colors.white),
+                      ),
+                      Positioned(
+                        bottom: 0, right: 0,
+                        child: NeumorphicBox(
+                          shape: BoxShape.circle,
+                          color: AppColors.accent,
+                          padding: const EdgeInsets.all(8),
+                          child: const Icon(Icons.camera_alt_rounded,
+                              size: 16, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text('Tap to add a photo',
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold)),
+
+                const Spacer(),
+                
+                // Finish Setup
+                GestureDetector(
+                  onTap: _uploading ? null : _finish,
+                  child: NeumorphicBox(
+                    color: AppColors.accent,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    borderRadius: 16,
+                    child: Center(
+                      child: _uploading
+                          ? const SizedBox(
+                              height: 22, width: 22,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2.5, color: Colors.white))
+                          : const Text(
+                              'Finish Setup',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Skip for now
+                GestureDetector(
+                  onTap: _finish,
+                  child: NeumorphicBox(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    borderRadius: 16,
+                    child: const Center(
+                      child: Text(
+                        'Skip for now',
+                        style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold, fontSize: 14),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Text('Tap to add a photo',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 13)),
-
-              const Spacer(),
-              ElevatedButton(
-                onPressed: _uploading ? null : _finish,
-                child: _uploading
-                    ? const SizedBox(
-                        height: 22, width: 22,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white))
-                    : const Text('Finish Setup'),
-              ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: _finish,
-                child: Text('Skip for now',
-                    style: TextStyle(color: Colors.grey[500])),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -169,23 +198,27 @@ class _ProfilePicturePageState extends State<ProfilePicturePage> {
 }
 
 class _ProgressBar extends StatelessWidget {
-  final int step, total;
+  final int step;
+  final int total;
   const _ProgressBar({required this.step, required this.total});
+
   @override
-  Widget build(BuildContext context) => Row(
-      children: List.generate(
-          total,
-          (i) => Expanded(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  height: 4,
-                  margin: EdgeInsets.only(right: i < total - 1 ? 4 : 0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(2),
-                    color: i < step
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.surface,
-                  ),
-                ),
-              )));
+  Widget build(BuildContext context) {
+    return Row(
+      children: List.generate(total, (i) {
+        final active = i < step;
+        return Expanded(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            height:  6,
+            margin:  EdgeInsets.only(right: i < total - 1 ? 6 : 0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(3),
+              color: active ? AppColors.accent : const Color(0xFFDCD7CE),
+            ),
+          ),
+        );
+      }),
+    );
+  }
 }

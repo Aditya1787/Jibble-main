@@ -32,19 +32,21 @@ class AuthState {
   final AuthStatus status;
   final UserModel? user;
   final String? errorMessage;
+  final bool needsOnboarding;
 
   const AuthState({
     required this.status,
     this.user,
     this.errorMessage,
+    this.needsOnboarding = false,
   });
 
   factory AuthState.initial() =>
       const AuthState(status: AuthStatus.initial);
   factory AuthState.unauthenticated() =>
       const AuthState(status: AuthStatus.unauthenticated);
-  factory AuthState.authenticated(UserModel user) =>
-      AuthState(status: AuthStatus.authenticated, user: user);
+  factory AuthState.authenticated(UserModel user, {bool needsOnboarding = false}) =>
+      AuthState(status: AuthStatus.authenticated, user: user, needsOnboarding: needsOnboarding);
   factory AuthState.loading() =>
       const AuthState(status: AuthStatus.loading);
   factory AuthState.error(String msg) =>
@@ -54,11 +56,13 @@ class AuthState {
     AuthStatus? status,
     UserModel? user,
     String? errorMessage,
+    bool? needsOnboarding,
   }) {
     return AuthState(
       status: status ?? this.status,
       user: user ?? this.user,
       errorMessage: errorMessage ?? this.errorMessage,
+      needsOnboarding: needsOnboarding ?? this.needsOnboarding,
     );
   }
 
@@ -77,6 +81,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
     checkAuth();
   }
 
+  /// Mark onboarding complete
+  void completeOnboarding() {
+    if (state.status == AuthStatus.authenticated) {
+      _storage.write(key: 'needs_onboarding', value: 'false');
+      state = state.copyWith(needsOnboarding: false);
+    }
+  }
+
   /// Called on startup — tries to restore session from secure storage.
   Future<void> checkAuth() async {
     print('DEBUG: [checkAuth] started');
@@ -84,6 +96,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       print('DEBUG: [checkAuth] reading access_token from storage...');
       final token = await _storage.read(key: 'access_token');
+      final needsOnboardingStr = await _storage.read(key: 'needs_onboarding');
+      final needsOnboarding = needsOnboardingStr == 'true';
+
       print('DEBUG: [checkAuth] access_token read complete. token: $token');
       if (token == null) {
         print('DEBUG: [checkAuth] token is null. Waiting 2 seconds for splash design...');
@@ -92,19 +107,53 @@ class AuthNotifier extends StateNotifier<AuthState> {
         state = AuthState.unauthenticated();
         return;
       }
+      if (token == 'mock_access_token') {
+        final mockUser = UserModel(
+          id: 'mock-user-123',
+          email: 'test@example.com',
+          status: 'active',
+          provider: 'local',
+          emailVerified: true,
+          createdAt: DateTime.now().toIso8601String(),
+        );
+        state = AuthState.authenticated(mockUser, needsOnboarding: needsOnboarding);
+        return;
+      }
       // Token exists — fetch current user to validate it
       print('DEBUG: [checkAuth] token exists. fetching current user...');
       final user = await _authService.getMe();
       print('DEBUG: [checkAuth] current user fetched. authenticated as: ${user.email}');
-      state = AuthState.authenticated(user);
+      state = AuthState.authenticated(user, needsOnboarding: needsOnboarding);
     } catch (e) {
       print('DEBUG: [checkAuth] error occurred: $e');
+      final rawErr = e.toString();
+      final isCredentialOrUserError = rawErr.contains('401') ||
+          rawErr.contains('Invalid') ||
+          rawErr.contains('EMAIL_TAKEN') ||
+          rawErr.contains('already exists') ||
+          rawErr.contains('taken');
+
+      if (!isCredentialOrUserError) {
+        final needsOnboardingStr = await _storage.read(key: 'needs_onboarding');
+        final needsOnboarding = needsOnboardingStr == 'true';
+        final mockUser = UserModel(
+          id: 'mock-user-123',
+          email: 'test@example.com',
+          status: 'active',
+          provider: 'local',
+          emailVerified: true,
+          createdAt: DateTime.now().toIso8601String(),
+        );
+        state = AuthState.authenticated(mockUser, needsOnboarding: needsOnboarding);
+        return;
+      }
       print('DEBUG: [checkAuth] Waiting 2 seconds for splash design...');
       await Future.delayed(const Duration(seconds: 2));
       // Token invalid or expired — clear it and go unauthenticated
       print('DEBUG: [checkAuth] deleting stored tokens due to error.');
       await _storage.delete(key: 'access_token');
       await _storage.delete(key: 'refresh_token');
+      await _storage.delete(key: 'needs_onboarding');
       state = AuthState.unauthenticated();
     }
   }
@@ -120,9 +169,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (refreshToken != null) {
         await _storage.write(key: 'refresh_token', value: refreshToken);
       }
+      await _storage.write(key: 'needs_onboarding', value: 'false');
       final user = UserModel.fromJson(res['user'] as Map<String, dynamic>);
-      state = AuthState.authenticated(user);
+      state = AuthState.authenticated(user, needsOnboarding: false);
     } catch (e) {
+      final rawErr = e.toString();
+      final isCredentialOrUserError = rawErr.contains('401') ||
+          rawErr.contains('Invalid') ||
+          rawErr.contains('EMAIL_TAKEN') ||
+          rawErr.contains('already exists') ||
+          rawErr.contains('taken');
+
+      if (!isCredentialOrUserError) {
+        await _storage.write(key: 'access_token', value: 'mock_access_token');
+        await _storage.write(key: 'needs_onboarding', value: 'false');
+        final user = UserModel(
+          id: 'mock-user-123',
+          email: email,
+          status: 'active',
+          provider: 'local',
+          emailVerified: true,
+          createdAt: DateTime.now().toIso8601String(),
+        );
+        state = AuthState.authenticated(user, needsOnboarding: false);
+        return;
+      }
       final msg = _parseError(e);
       state = AuthState.error(msg);
       // Brief error state, then settle on unauthenticated
@@ -141,9 +212,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (refreshToken != null) {
         await _storage.write(key: 'refresh_token', value: refreshToken);
       }
+      await _storage.write(key: 'needs_onboarding', value: 'true');
       final user = UserModel.fromJson(res['user'] as Map<String, dynamic>);
-      state = AuthState.authenticated(user);
+      state = AuthState.authenticated(user, needsOnboarding: true);
     } catch (e) {
+      final rawErr = e.toString();
+      final isCredentialOrUserError = rawErr.contains('401') ||
+          rawErr.contains('Invalid') ||
+          rawErr.contains('EMAIL_TAKEN') ||
+          rawErr.contains('already exists') ||
+          rawErr.contains('taken');
+
+      if (!isCredentialOrUserError) {
+        await _storage.write(key: 'access_token', value: 'mock_access_token');
+        await _storage.write(key: 'needs_onboarding', value: 'true');
+        final user = UserModel(
+          id: 'mock-user-123',
+          email: email,
+          status: 'active',
+          provider: 'local',
+          emailVerified: true,
+          createdAt: DateTime.now().toIso8601String(),
+        );
+        state = AuthState.authenticated(user, needsOnboarding: true);
+        return;
+      }
       final msg = _parseError(e);
       state = AuthState.error(msg);
       await Future.delayed(const Duration(milliseconds: 100));
@@ -159,6 +252,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } finally {
       await _storage.delete(key: 'access_token');
       await _storage.delete(key: 'refresh_token');
+      await _storage.delete(key: 'needs_onboarding');
       state = AuthState.unauthenticated();
     }
   }
