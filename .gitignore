@@ -1,10 +1,9 @@
-# Node
+﻿# Node
 node_modules/
 dist/
 .env
 
 # Logs
-logs/
 *.log
 npm-debug.log*
 
@@ -31,3 +30,4 @@ Thumbs.db
 
 # Build artifacts
 apps/admin_panel/dist/
+
