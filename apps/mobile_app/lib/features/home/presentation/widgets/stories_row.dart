@@ -1,48 +1,74 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/presentation/provider/auth_provider.dart';
 
-/// A horizontal row of user stories, showing active story status rings.
-class StoriesRow extends StatelessWidget {
+/// A horizontal row of user stories, displaying "Your Story" first followed by friend stories.
+class StoriesRow extends ConsumerWidget {
   const StoriesRow({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authProvider).user;
+    final userInitial = (user?.email != null && user!.email.isNotEmpty)
+        ? user.email[0].toUpperCase()
+        : 'Y';
+
+    final mockStories = [
+      {'name': 'alex_campus', 'avatar': 'https://i.pravatar.cc/150?img=11', 'hasStory': true},
+      {'name': 'sophia_dev', 'avatar': 'https://i.pravatar.cc/150?img=5', 'hasStory': true},
+      {'name': 'marcus_fit', 'avatar': 'https://i.pravatar.cc/150?img=12', 'hasStory': true},
+      {'name': 'emma_design', 'avatar': 'https://i.pravatar.cc/150?img=9', 'hasStory': false},
+      {'name': 'liam_code', 'avatar': 'https://i.pravatar.cc/150?img=33', 'hasStory': true},
+      {'name': 'chloe_art', 'avatar': 'https://i.pravatar.cc/150?img=26', 'hasStory': true},
+    ];
+
     return SizedBox(
-      height: 100,
+      height: 98,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: 8,
+        itemCount: mockStories.length + 1,
         itemBuilder: (context, index) {
           if (index == 0) {
-            // First item: current user "Add Story"
+            // First item: Current User "Your Story"
             return Padding(
-              padding: const EdgeInsets.only(right: 16),
+              padding: const EdgeInsets.only(right: 14),
               child: Column(
                 children: [
                   Stack(
                     children: [
-                      CircleAvatar(
-                        radius: 30,
-                        backgroundColor: AppColors.card,
-                        child: const Icon(
-                          Icons.person,
-                          size: 32,
-                          color: AppColors.textSecondary,
+                      Container(
+                        padding: const EdgeInsets.all(2.5),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.border, width: 1.5),
+                        ),
+                        child: CircleAvatar(
+                          radius: 27,
+                          backgroundColor: AppColors.accent.withValues(alpha: 0.15),
+                          child: Text(
+                            userInitial,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.accent,
+                            ),
+                          ),
                         ),
                       ),
                       Positioned(
-                        right: 0,
-                        bottom: 0,
+                        right: 2,
+                        bottom: 2,
                         child: Container(
-                          padding: const EdgeInsets.all(4),
+                          padding: const EdgeInsets.all(3),
                           decoration: const BoxDecoration(
                             gradient: AppColors.accentGradient,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
                             Icons.add,
-                            size: 14,
+                            size: 13,
                             color: Colors.white,
                           ),
                         ),
@@ -51,9 +77,10 @@ class StoriesRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'My Story',
+                    'Your Story',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -62,10 +89,12 @@ class StoriesRow extends StatelessWidget {
             );
           }
 
-          // Mock friends' stories
-          final hasActiveStory = index % 3 != 0;
+          final friend = mockStories[index - 1];
+          final hasActiveStory = friend['hasStory'] as bool;
+          final name = friend['name'] as String;
+
           return Padding(
-            padding: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.only(right: 14),
             child: Column(
               children: [
                 Container(
@@ -83,10 +112,10 @@ class StoriesRow extends StatelessWidget {
                       color: AppColors.background,
                     ),
                     child: CircleAvatar(
-                      radius: 26,
-                      backgroundColor: AppColors.card,
+                      radius: 27,
+                      backgroundColor: AppColors.surface,
                       child: Text(
-                        'U$index',
+                        name.substring(0, 1).toUpperCase(),
                         style: const TextStyle(
                           color: AppColors.accentLight,
                           fontWeight: FontWeight.bold,
@@ -96,11 +125,18 @@ class StoriesRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  'Student $index',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
+                SizedBox(
+                  width: 64,
+                  child: Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: hasActiveStory ? FontWeight.w600 : FontWeight.normal,
+                      color: hasActiveStory ? AppColors.textPrimary : AppColors.textMuted,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

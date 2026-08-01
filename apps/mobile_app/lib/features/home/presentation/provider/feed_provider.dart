@@ -181,6 +181,13 @@ class FeedNotifier extends StateNotifier<FeedState> {
              (p.caption?.toLowerCase().contains('#$normalizedCategory') ?? false);
     }).toList();
   }
+
+  /// Add a newly created post optimistically to the top of the feed list
+  void addOptimisticPost(PostModel newPost) {
+    state = state.copyWith(
+      posts: [newPost, ...state.posts],
+    );
+  }
 }
 
 final feedProvider = StateNotifierProvider<FeedNotifier, FeedState>((ref) {

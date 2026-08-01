@@ -37,14 +37,14 @@ class _InterestsPageState extends State<InterestsPage> {
                 const _ProgressBar(step: 3, total: 6),
                 const SizedBox(height: 24),
 
-                Text('Your Interests',
+                const Text('Your Interests',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
                       color: AppColors.accentDark,
                     )),
                 const SizedBox(height: 4),
-                Text('Pick at least 3 topics you love',
+                const Text('Pick at least 3 topics you love',
                     style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 20),
 
@@ -107,11 +107,11 @@ class _InterestsPageState extends State<InterestsPage> {
                           ),
                   child: Opacity(
                     opacity: _selected.length < 3 ? 0.5 : 1.0,
-                    child: NeumorphicBox(
+                    child: const NeumorphicBox(
                       color: AppColors.accent,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.symmetric(vertical: 16),
                       borderRadius: 16,
-                      child: const Center(
+                      child: Center(
                         child: Text(
                           'Continue',
                           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),

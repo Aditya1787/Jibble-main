@@ -71,7 +71,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Branding
-                Text(
+                const Text(
                   'Jibble',
                   style: TextStyle(
                     fontFamily: 'Dancing_Script',
@@ -82,7 +82,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                Text(
+                const Text(
                   'Your Campus, Your Vibe',
                   style: TextStyle(
                     letterSpacing: 1.1,
@@ -102,7 +102,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Heading
-                      Text(
+                      const Text(
                         'Join Jibble',
                         style: TextStyle(
                           fontSize: 24,
@@ -112,7 +112,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 6),
-                      Text(
+                      const Text(
                         'Create an account and connect with your campus',
                         style: TextStyle(
                           color: AppColors.textSecondary,
@@ -184,7 +184,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                             labelText: 'Password',
                             floatingLabelBehavior: FloatingLabelBehavior.auto,
                             helperText: 'Min 8 chars, 1 uppercase, 1 number',
-                            helperStyle: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 11),
+                            helperStyle: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 11),
                             prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textMuted),
                             suffixIcon: IconButton(
                               icon: Icon(
@@ -269,7 +269,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Already have an account?',
+                    const Text('Already have an account?',
                         style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 13)),
                     TextButton(
                       onPressed: () {

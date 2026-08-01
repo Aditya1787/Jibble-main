@@ -127,10 +127,10 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       // Elevated Icon Plate
-                      NeumorphicBox(
+                      const NeumorphicBox(
                         shape: BoxShape.circle,
-                        padding: const EdgeInsets.all(18),
-                        child: const Icon(
+                        padding: EdgeInsets.all(18),
+                        child: Icon(
                           Icons.mark_email_read_rounded,
                           size: 36,
                           color: AppColors.accent,
@@ -139,7 +139,7 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
                       const SizedBox(height: 28),
 
                       // Title
-                      Text(
+                      const Text(
                         'Verify Your Email',
                         style: TextStyle(
                           fontSize: 24,
@@ -148,7 +148,7 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      Text(
+                      const Text(
                         'We sent a 6-digit code to',
                         style: TextStyle(
                           color: AppColors.textSecondary,
@@ -184,15 +184,15 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
                       const SizedBox(height: 32),
 
                       // Helper box
-                      NeumorphicBox(
+                      const NeumorphicBox(
                         isRecessed: true,
                         borderRadius: 14,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text('💡 Verification Code: ', style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.bold)),
-                            const Text('123456', style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold, fontSize: 13)),
+                            Text('123456', style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold, fontSize: 13)),
                           ],
                         ),
                       ),

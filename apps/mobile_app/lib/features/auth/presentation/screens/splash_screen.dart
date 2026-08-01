@@ -51,12 +51,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 color: AppColors.background,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     offset: const Offset(-6, -6),
                     blurRadius: 10,
                   ),
                   BoxShadow(
-                    color: const Color(0xFFD2CDC3).withOpacity(0.8),
+                    color: const Color(0xFFD2CDC3).withValues(alpha: 0.8),
                     offset: const Offset(6, 6),
                     blurRadius: 10,
                   ),
@@ -107,7 +107,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                               blurRadius: 12,
                             ),
                             BoxShadow(
-                              color: const Color(0xFFD2CDC3).withOpacity(0.7),
+                              color: const Color(0xFFD2CDC3).withValues(alpha: 0.7),
                               offset: const Offset(5, 5),
                               blurRadius: 12,
                             ),
@@ -133,14 +133,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           ),
 
           // Branding positioned cleanly at the bottom of the screen
-          Positioned(
+          const Positioned(
             bottom: 80,
             left: 0,
             right: 0,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   'Jibble',
                   style: TextStyle(
                     fontFamily: 'Dancing_Script',
@@ -150,8 +150,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     letterSpacing: 1.5,
                   ),
                 ),
-                const SizedBox(height: 6),
-                const Text(
+                SizedBox(height: 6),
+                Text(
                   'Your Campus, Your Vibe',
                   style: TextStyle(
                     fontSize: 13,

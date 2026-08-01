@@ -29,9 +29,9 @@ class NeumorphicBox extends StatelessWidget {
     final List<BoxShadow> shadows = isRecessed
         ? [
             // Recessed (concave inset feeling): dark shadow inside top-left, white border highlights bottom-right
-            BoxShadow(
-              color: const Color(0xFFDDD8CE),
-              offset: const Offset(2, 2),
+            const BoxShadow(
+              color: Color(0xFFDDD8CE),
+              offset: Offset(2, 2),
               blurRadius: 3,
               spreadRadius: 1,
             ),
@@ -68,7 +68,7 @@ class NeumorphicBox extends StatelessWidget {
             : null,
         border: isRecessed
             ? Border.all(color: const Color(0xFFDFD9D0), width: 1.2)
-            : Border.all(color: Colors.white.withOpacity(0.4), width: 0.8),
+            : Border.all(color: Colors.white.withValues(alpha: 0.4), width: 0.8),
         boxShadow: shadows,
       ),
       child: child,

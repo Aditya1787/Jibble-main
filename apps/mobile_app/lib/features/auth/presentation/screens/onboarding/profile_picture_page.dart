@@ -44,7 +44,7 @@ class _ProfilePicturePageState extends ConsumerState<ProfilePicturePage> {
             Container(
               width: 40, height: 4,
               decoration: BoxDecoration(
-                color: AppColors.textMuted.withOpacity(0.3),
+                color: AppColors.textMuted.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -93,14 +93,14 @@ class _ProfilePicturePageState extends ConsumerState<ProfilePicturePage> {
                 const _ProgressBar(step: 6, total: 6),
                 const SizedBox(height: 28),
                 
-                Text('Profile Picture',
+                const Text('Profile Picture',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
                       color: AppColors.accentDark,
                     )),
                 const SizedBox(height: 4),
-                Text('Add a photo so people recognise you',
+                const Text('Add a photo so people recognise you',
                     style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 40),
 
@@ -133,13 +133,13 @@ class _ProfilePicturePageState extends ConsumerState<ProfilePicturePage> {
                               : null,
                         ),
                       ),
-                      Positioned(
+                      const Positioned(
                         bottom: 0, right: 0,
                         child: NeumorphicBox(
                           shape: BoxShape.circle,
                           color: AppColors.accent,
-                          padding: const EdgeInsets.all(8),
-                          child: const Icon(Icons.camera_alt_rounded,
+                          padding: EdgeInsets.all(8),
+                          child: Icon(Icons.camera_alt_rounded,
                               size: 16, color: Colors.white),
                         ),
                       ),
@@ -147,7 +147,7 @@ class _ProfilePicturePageState extends ConsumerState<ProfilePicturePage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Text('Tap to add a photo',
+                const Text('Tap to add a photo',
                     style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold)),
 
                 const Spacer(),
@@ -177,10 +177,10 @@ class _ProfilePicturePageState extends ConsumerState<ProfilePicturePage> {
                 // Skip for now
                 GestureDetector(
                   onTap: _finish,
-                  child: NeumorphicBox(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: const NeumorphicBox(
+                    padding: EdgeInsets.symmetric(vertical: 14),
                     borderRadius: 16,
-                    child: const Center(
+                    child: Center(
                       child: Text(
                         'Skip for now',
                         style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold, fontSize: 14),

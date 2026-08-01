@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/presentation/widgets/neumorphic_box.dart';
 import '../../../post/data/models/post_model.dart';
 
-/// A card displaying a feed post with full metrics, media, and interactive states.
-class FeedPostCard extends StatelessWidget {
+/// Breathtaking interactive Feed Post Card with Neumorphic buttons, double-tap heart pop, and #FE0101 like states.
+class FeedPostCard extends StatefulWidget {
   final PostModel post;
   final VoidCallback onLikeTapped;
   final VoidCallback? onCommentTapped;
@@ -19,37 +20,124 @@ class FeedPostCard extends StatelessWidget {
   });
 
   @override
+  State<FeedPostCard> createState() => _FeedPostCardState();
+}
+
+class _FeedPostCardState extends State<FeedPostCard> with SingleTickerProviderStateMixin {
+  late bool _isLiked;
+  late int _likesCount;
+  bool _isFollowing = false;
+  bool _isSaved = false;
+
+  // Double-tap heart pop animation controller
+  late AnimationController _heartAnimController;
+  late Animation<double> _heartScale;
+  late Animation<double> _heartOpacity;
+  bool _showHeartOverlay = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isLiked = widget.post.isLiked;
+    _likesCount = widget.post.likesCount;
+
+    _heartAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+
+    _heartScale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.3), weight: 40),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.3, end: 1.0), weight: 30),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.0), weight: 30),
+    ]).animate(_heartAnimController);
+
+    _heartOpacity = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 30),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.0), weight: 40),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.0), weight: 30),
+    ]).animate(_heartAnimController);
+
+    _heartAnimController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() {
+          _showHeartOverlay = false;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _heartAnimController.dispose();
+    super.dispose();
+  }
+
+  void _handleLikeToggle() {
+    setState(() {
+      _isLiked = !_isLiked;
+      _likesCount += _isLiked ? 1 : -1;
+    });
+    widget.onLikeTapped();
+  }
+
+  void _triggerDoubleTapLike() {
+    if (!_isLiked) {
+      setState(() {
+        _isLiked = true;
+        _likesCount += 1;
+      });
+      widget.onLikeTapped();
+    }
+
+    setState(() {
+      _showHeartOverlay = true;
+    });
+    _heartAnimController.forward(from: 0.0);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final hasAuthor = post.author != null;
-    final displayName = hasAuthor ? post.author!.displayName : 'Anonymous';
-    final username = hasAuthor ? '@${post.author!.username}' : 'stealth';
-    final avatarUrl = hasAuthor ? post.author!.avatarUrl : null;
-    final isVerified = hasAuthor ? post.author!.isVerified : false;
+    final hasAuthor = widget.post.author != null;
+    final displayName = hasAuthor ? widget.post.author!.displayName : 'Student User';
+    final username = hasAuthor ? '@${widget.post.author!.username}' : '@anonymous';
+    final avatarUrl = hasAuthor ? widget.post.author!.avatarUrl : null;
+    final isVerified = hasAuthor ? widget.post.author!.isVerified : false;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: AppColors.card,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppColors.border, width: 1),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x10000000),
+            blurRadius: 16,
+            offset: Offset(0, 6),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Header Row ─────────────────────────────────────────────
-            Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── 1. Header Row ─────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 10, 10),
+            child: Row(
               children: [
                 CircleAvatar(
-                  radius: 20,
-                  backgroundColor: AppColors.surface,
+                  radius: 21,
+                  backgroundColor: AppColors.accent.withValues(alpha: 0.15),
                   backgroundImage: avatarUrl != null ? CachedNetworkImageProvider(avatarUrl) : null,
                   child: avatarUrl == null
-                      ? const Icon(Icons.person_rounded, color: AppColors.textSecondary)
+                      ? Text(
+                          displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.accent),
+                        )
                       : null,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,340 +160,277 @@ class FeedPostCard extends StatelessWidget {
                             const Icon(
                               Icons.verified_rounded,
                               size: 14,
-                              color: AppColors.success,
+                              color: AppColors.accent,
                             ),
                           ],
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              username,
-                              style: const TextStyle(
-                                color: AppColors.textMuted,
-                                fontSize: 13,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
                         ],
                       ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Text(
-                            _formatTime(post.createdAt),
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: AppColors.textMuted,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          const Icon(Icons.circle, size: 3, color: AppColors.textMuted),
-                          const SizedBox(width: 6),
-                          Icon(
-                            _getVisibilityIcon(post.visibility),
-                            size: 11,
-                            color: AppColors.textMuted,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.more_horiz, color: AppColors.textMuted),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // ── Caption text ───────────────────────────────────────────
-            if (post.caption != null && post.caption!.isNotEmpty) ...[
-              Text(
-                post.caption!,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-
-            // ── Link Preview (if link type) ─────────────────────────────
-            if (post.type == 'link' && post.linkPreview != null) ...[
-              _buildLinkPreview(post.linkPreview!, post.linkUrl),
-              const SizedBox(height: 12),
-            ],
-
-            // ── Poll Options (if poll type) ─────────────────────────────
-            if (post.type == 'poll' && post.pollOptions != null) ...[
-              _buildPoll(post.pollOptions!),
-              const SizedBox(height: 12),
-            ],
-
-            // ── Media elements (if image/video/carousel type) ───────────
-            if (post.mediaUrls.isNotEmpty) ...[
-              _buildMediaGrid(post.mediaUrls),
-              const SizedBox(height: 16),
-            ],
-
-            // ── Action Buttons Row ──────────────────────────────────────
-            Row(
-              children: [
-                _buildActionItem(
-                  icon: post.isLiked ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
-                  iconColor: post.isLiked ? AppColors.danger : AppColors.textMuted,
-                  label: post.likesCount.toString(),
-                  onTap: onLikeTapped,
-                ),
-                const SizedBox(width: 28),
-                _buildActionItem(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  label: post.commentsCount.toString(),
-                  onTap: onCommentTapped ?? () {},
-                ),
-                const SizedBox(width: 28),
-                _buildActionItem(
-                  icon: Icons.share_outlined,
-                  label: 'Share',
-                  onTap: onShareTapped ?? () {},
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Sub-Widget Builders ─────────────────────────────────────────────────────
-
-  Widget _buildActionItem({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    Color? iconColor,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: iconColor ?? AppColors.textMuted,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLinkPreview(LinkPreviewModel preview, String? url) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border, width: 1),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (preview.imageUrl != null)
-            CachedNetworkImage(
-              imageUrl: preview.imageUrl!,
-              height: 150,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorWidget: (_, __, ___) => const SizedBox.shrink(),
-            ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (preview.title != null)
-                  Text(
-                    preview.title!,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                      fontSize: 13,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                if (preview.description != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    preview.description!,
-                    style: const TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 12,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-                if (url != null) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    Uri.parse(url).host,
-                    style: const TextStyle(
-                      color: AppColors.accentLight,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPoll(List<PollOptionModel> options) {
-    final totalVotes = options.fold<int>(0, (sum, item) => sum + item.votes);
-
-    return Column(
-      children: options.map((opt) {
-        final percent = totalVotes > 0 ? (opt.votes / totalVotes) : 0.0;
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Container(
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border, width: 1),
-            ),
-            child: Stack(
-              children: [
-                // Vote Percentage Progress Bar Background
-                FractionallySizedBox(
-                  widthFactor: percent,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.accent.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(7),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
                       Text(
-                        opt.text,
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 13,
-                        ),
-                      ),
-                      Text(
-                        '${(percent * 100).toStringAsFixed(0)}%',
+                        username,
                         style: const TextStyle(
                           color: AppColors.textMuted,
                           fontSize: 12,
-                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
                   ),
                 ),
+
+                // Neumorphic Follow Pill Button: Hidden if already following
+                if (!_isFollowing) ...[
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _isFollowing = true;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                      decoration: BoxDecoration(
+                        gradient: AppColors.accentGradient,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.accent.withValues(alpha: 0.35),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.add_rounded, color: Colors.white, size: 14),
+                          SizedBox(width: 3),
+                          Text(
+                            'Follow',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+
+                // Neumorphic Settings / More Options Icon Button
+                GestureDetector(
+                  onTap: () {},
+                  child: const NeumorphicBox(
+                    shape: BoxShape.circle,
+                    padding: EdgeInsets.all(8),
+                    child: Icon(Icons.more_vert_rounded, color: AppColors.textSecondary, size: 18),
+                  ),
+                ),
               ],
             ),
           ),
-        );
-      }).toList(),
-    );
-  }
 
-  Widget _buildMediaGrid(List<String> urls) {
-    if (urls.length == 1) {
-      return Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border, width: 1),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: AspectRatio(
-          aspectRatio: 16 / 9,
-          child: CachedNetworkImage(
-            imageUrl: urls[0],
-            fit: BoxFit.cover,
-            placeholder: (_, __) => Container(color: AppColors.surface),
-            errorWidget: (_, __, ___) => const Icon(Icons.broken_image),
+          // ── 2. Post Media / Content with Double-Tap Heart ────────────
+          GestureDetector(
+            onDoubleTap: _triggerDoubleTapLike,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Media or Text Content Container
+                if (widget.post.mediaUrls.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: CachedNetworkImage(
+                      imageUrl: widget.post.mediaUrls.first,
+                      width: double.infinity,
+                      height: 320,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        height: 320,
+                        color: AppColors.surface,
+                        child: const Center(
+                          child: CircularProgressIndicator(color: AppColors.accent),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        height: 200,
+                        color: AppColors.surface,
+                        child: const Center(
+                          child: Icon(Icons.image_not_supported_rounded, color: AppColors.textMuted),
+                        ),
+                      ),
+                    ),
+                  )
+                else if (widget.post.caption != null && widget.post.caption!.isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      widget.post.caption!,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+
+                // Heart Overlay Pop Animation
+                if (_showHeartOverlay)
+                  AnimatedBuilder(
+                    animation: _heartAnimController,
+                    builder: (context, child) {
+                      return Opacity(
+                        opacity: _heartOpacity.value,
+                        child: Transform.scale(
+                          scale: _heartScale.value,
+                          child: const Icon(
+                            Icons.favorite_rounded,
+                            color: Color(0xFFFE0101),
+                            size: 110,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+              ],
+            ),
           ),
-        ),
-      );
-    }
 
-    // Grid layout for multiple images
-    return SizedBox(
-      height: 200,
-      child: GridView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-        ),
-        itemCount: urls.length.clamp(1, 4),
-        itemBuilder: (context, index) {
-          return Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border, width: 1),
+          // ── 3. Caption below Media ──────────────────────────────────
+          if (widget.post.mediaUrls.isNotEmpty && widget.post.caption != null && widget.post.caption!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+              child: RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '$displayName ',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                        fontSize: 13,
+                      ),
+                    ),
+                    TextSpan(
+                      text: widget.post.caption!,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            clipBehavior: Clip.antiAlias,
-            child: CachedNetworkImage(
-              imageUrl: urls[index],
-              fit: BoxFit.cover,
-              placeholder: (_, __) => Container(color: AppColors.surface),
-              errorWidget: (_, __, ___) => const Icon(Icons.broken_image),
+
+          // ── 4. Neumorphic Interactive Action Buttons Bar ─────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+            child: Row(
+              children: [
+                // 1. Neumorphic Like Button (turns #FE0101 when liked)
+                GestureDetector(
+                  onTap: _handleLikeToggle,
+                  child: NeumorphicBox(
+                    borderRadius: 24,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    color: _isLiked ? const Color(0xFFFE0101).withValues(alpha: 0.12) : null,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                          color: _isLiked ? const Color(0xFFFE0101) : AppColors.textSecondary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '$_likesCount',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: _isLiked ? const Color(0xFFFE0101) : AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // 2. Neumorphic Comment Button
+                GestureDetector(
+                  onTap: widget.onCommentTapped,
+                  child: NeumorphicBox(
+                    borderRadius: 24,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.chat_bubble_outline_rounded,
+                          color: AppColors.textSecondary,
+                          size: 19,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${widget.post.commentsCount}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // 3. Neumorphic Share Button
+                GestureDetector(
+                  onTap: widget.onShareTapped,
+                  child: const NeumorphicBox(
+                    shape: BoxShape.circle,
+                    padding: EdgeInsets.all(9),
+                    child: Icon(
+                      Icons.send_rounded,
+                      color: AppColors.textSecondary,
+                      size: 18,
+                    ),
+                  ),
+                ),
+
+                const Spacer(),
+
+                // 4. Neumorphic Save / Bookmark Button
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _isSaved = !_isSaved;
+                    });
+                  },
+                  child: NeumorphicBox(
+                    shape: BoxShape.circle,
+                    padding: const EdgeInsets.all(9),
+                    color: _isSaved ? AppColors.accent.withValues(alpha: 0.15) : null,
+                    child: Icon(
+                      _isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                      color: _isSaved ? AppColors.accent : AppColors.textSecondary,
+                      size: 19,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
-  }
-
-  IconData _getVisibilityIcon(String visibility) {
-    switch (visibility) {
-      case 'private':
-        return Icons.lock_outline_rounded;
-      case 'followers':
-        return Icons.people_outline_rounded;
-      case 'college_only':
-        return Icons.school_outlined;
-      default:
-        return Icons.public_rounded;
-    }
-  }
-
-  String _formatTime(String isoString) {
-    try {
-      final date = DateTime.parse(isoString);
-      final diff = DateTime.now().difference(date);
-
-      if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-      if (diff.inHours < 24) return '${diff.inHours}h ago';
-      if (diff.inDays < 7) return '${diff.inDays}d ago';
-      return '${date.day}/${date.month}/${date.year}';
-    } catch (_) {
-      return 'just now';
-    }
   }
 }

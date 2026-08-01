@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../../core/network/api_client.dart';
@@ -7,11 +8,7 @@ import '../../data/models/user_model.dart';
 // ── Infrastructure providers ──────────────────────────────────────────────────
 
 final secureStorageProvider = Provider<FlutterSecureStorage>(
-  (_) => const FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-    ),
-  ),
+  (_) => const FlutterSecureStorage(),
 );
 
 final apiClientProvider = Provider<ApiClient>((ref) {
@@ -94,16 +91,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
     print('DEBUG: [checkAuth] started');
     state = AuthState.loading();
     try {
-      print('DEBUG: [checkAuth] reading access_token from storage...');
+      debugPrint('DEBUG: [checkAuth] reading access_token from storage...');
       final token = await _storage.read(key: 'access_token');
       final needsOnboardingStr = await _storage.read(key: 'needs_onboarding');
       final needsOnboarding = needsOnboardingStr == 'true';
 
-      print('DEBUG: [checkAuth] access_token read complete. token: $token');
+      debugPrint('DEBUG: [checkAuth] access_token read complete. token: $token');
       if (token == null) {
-        print('DEBUG: [checkAuth] token is null. Waiting 2 seconds for splash design...');
+        debugPrint('DEBUG: [checkAuth] token is null. Waiting 2 seconds for splash design...');
         await Future.delayed(const Duration(seconds: 2));
-        print('DEBUG: [checkAuth] transitioning to unauthenticated.');
+        debugPrint('DEBUG: [checkAuth] transitioning to unauthenticated.');
         state = AuthState.unauthenticated();
         return;
       }
@@ -120,12 +117,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return;
       }
       // Token exists — fetch current user to validate it
-      print('DEBUG: [checkAuth] token exists. fetching current user...');
+      debugPrint('DEBUG: [checkAuth] token exists. fetching current user...');
       final user = await _authService.getMe();
-      print('DEBUG: [checkAuth] current user fetched. authenticated as: ${user.email}');
+      debugPrint('DEBUG: [checkAuth] current user fetched. authenticated as: ${user.email}');
       state = AuthState.authenticated(user, needsOnboarding: needsOnboarding);
     } catch (e) {
-      print('DEBUG: [checkAuth] error occurred: $e');
+      debugPrint('DEBUG: [checkAuth] error occurred: $e');
       final rawErr = e.toString();
       final isCredentialOrUserError = rawErr.contains('401') ||
           rawErr.contains('Invalid') ||
@@ -147,10 +144,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         state = AuthState.authenticated(mockUser, needsOnboarding: needsOnboarding);
         return;
       }
-      print('DEBUG: [checkAuth] Waiting 2 seconds for splash design...');
+      debugPrint('DEBUG: [checkAuth] Waiting 2 seconds for splash design...');
       await Future.delayed(const Duration(seconds: 2));
       // Token invalid or expired — clear it and go unauthenticated
-      print('DEBUG: [checkAuth] deleting stored tokens due to error.');
+      debugPrint('DEBUG: [checkAuth] deleting stored tokens due to error.');
       await _storage.delete(key: 'access_token');
       await _storage.delete(key: 'refresh_token');
       await _storage.delete(key: 'needs_onboarding');

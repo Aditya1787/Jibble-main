@@ -54,7 +54,7 @@ class AuthGate extends ConsumerWidget {
                 const SizedBox(height: 24),
 
                 // Welcome text
-                Text(
+                const Text(
                   'Welcome to Jibble! 🎉',
                   style: TextStyle(
                     fontSize: 24,
@@ -76,18 +76,18 @@ class AuthGate extends ConsumerWidget {
                 const SizedBox(height: 32),
 
                 // Status card inside recessed plate
-                NeumorphicBox(
+                const NeumorphicBox(
                   isRecessed: true,
                   borderRadius: 18,
-                  padding: const EdgeInsets.all(18),
+                  padding: EdgeInsets.all(18),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(children: [
-                        const Icon(Icons.check_circle_outline_rounded,
+                        Icon(Icons.check_circle_outline_rounded,
                             color: AppColors.accent,
                             size: 22),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text('Authentication Active!',
                             style: TextStyle(
                               color: AppColors.accentDark,
@@ -95,7 +95,7 @@ class AuthGate extends ConsumerWidget {
                               fontSize: 15,
                             )),
                       ]),
-                      const SizedBox(height: 10),
+                      SizedBox(height: 10),
                       Text(
                         'Your profile setup is complete. The full home feed and campus portals will load in the next sprint.',
                         style: TextStyle(
@@ -113,11 +113,11 @@ class AuthGate extends ConsumerWidget {
                 // Logout Button
                 GestureDetector(
                   onTap: () => ref.read(authProvider.notifier).logout(),
-                  child: NeumorphicBox(
+                  child: const NeumorphicBox(
                     color: AppColors.danger,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: EdgeInsets.symmetric(vertical: 16),
                     borderRadius: 16,
-                    child: const Center(
+                    child: Center(
                       child: Text(
                         'Logout',
                         style: TextStyle(

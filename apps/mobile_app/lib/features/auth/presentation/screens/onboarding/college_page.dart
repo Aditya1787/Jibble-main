@@ -53,14 +53,14 @@ class _CollegePageState extends ConsumerState<CollegePage> {
                 const SizedBox(height: 24),
 
                 // Heading
-                Text('Your College',
+                const Text('Your College',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
                       color: AppColors.accentDark,
                     )),
                 const SizedBox(height: 4),
-                Text('Search and select your institution',
+                const Text('Search and select your institution',
                     style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 20),
 
@@ -94,10 +94,10 @@ class _CollegePageState extends ConsumerState<CollegePage> {
                               Icon(
                                 Icons.school_outlined,
                                 size: 56,
-                                color: AppColors.textMuted.withOpacity(0.4),
+                                color: AppColors.textMuted.withValues(alpha: 0.4),
                               ),
                               const SizedBox(height: 12),
-                              Text(
+                              const Text(
                                 'Type to search your college\n(Or click Continue to skip)',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
@@ -174,11 +174,11 @@ class _CollegePageState extends ConsumerState<CollegePage> {
                           ),
                   child: Opacity(
                     opacity: _selectedCollege == null ? 0.5 : 1.0,
-                    child: NeumorphicBox(
+                    child: const NeumorphicBox(
                       color: AppColors.accent,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.symmetric(vertical: 16),
                       borderRadius: 16,
-                      child: const Center(
+                      child: Center(
                         child: Text(
                           'Continue',
                           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),

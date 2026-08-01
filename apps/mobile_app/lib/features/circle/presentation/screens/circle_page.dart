@@ -40,8 +40,8 @@ class CirclePage extends StatelessWidget {
       itemBuilder: (context, index) {
         return ListTile(
           leading: CircleAvatar(
-            backgroundColor: AppColors.accent.withOpacity(0.2),
-            child: Icon(Icons.person, color: AppColors.accentLight),
+            backgroundColor: AppColors.accent.withValues(alpha: 0.2),
+            child: const Icon(Icons.person, color: AppColors.accentLight),
           ),
           title: Text('Student ${index + 1}', style: const TextStyle(color: AppColors.textPrimary)),
           subtitle: const Text('Computer Science', style: TextStyle(color: AppColors.textMuted)),

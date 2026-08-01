@@ -28,12 +28,12 @@ class CustomBottomNavBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color:  AppColors.surface,
-        border: Border(
+        border: const Border(
           top: BorderSide(color: AppColors.border, width: 1),
         ),
         boxShadow: [
           BoxShadow(
-            color:      Colors.black.withOpacity(0.25),
+            color:      Colors.black.withValues(alpha: 0.25),
             blurRadius: 12,
             offset:     const Offset(0, -4),
           ),
@@ -52,7 +52,7 @@ class CustomBottomNavBar extends StatelessWidget {
               return Expanded(
                 child: InkWell(
                   onTap:         () => onTap(i),
-                  splashColor:   AppColors.accent.withOpacity(0.08),
+                  splashColor:   AppColors.accent.withValues(alpha: 0.08),
                   highlightColor: Colors.transparent,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -67,7 +67,7 @@ class CustomBottomNavBar extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color:      AppColors.accent.withOpacity(0.4),
+                                color:      AppColors.accent.withValues(alpha: 0.4),
                                 blurRadius: 10,
                                 offset:     const Offset(0, 3),
                               ),

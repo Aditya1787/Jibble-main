@@ -43,17 +43,17 @@ class AppTheme {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Color(0x33FFFFFF), // Transparent glass white
+      fillColor: const Color(0x33FFFFFF), // Transparent glass white
       hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14, fontWeight: FontWeight.w500),
       labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w500),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.white.withOpacity(0.4)),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.white.withOpacity(0.4)),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -66,7 +66,7 @@ class AppTheme {
         foregroundColor: Colors.white,
         minimumSize: const Size(double.infinity, 54),
         elevation: 4,
-        shadowColor: AppColors.accent.withOpacity(0.25),
+        shadowColor: AppColors.accent.withValues(alpha: 0.25),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, letterSpacing: 0.5),
       ),

@@ -59,7 +59,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Branding
-                Text(
+                const Text(
                   'Jibble',
                   style: TextStyle(
                     fontFamily: 'Dancing_Script',
@@ -70,7 +70,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                Text(
+                const Text(
                   'Your Campus, Your Vibe',
                   style: TextStyle(
                     letterSpacing: 1.1,
@@ -90,7 +90,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Heading
-                      Text(
+                      const Text(
                         'Welcome Back',
                         style: TextStyle(
                           fontSize: 24,
@@ -100,7 +100,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 6),
-                      Text(
+                      const Text(
                         'Sign in to continue your campus journey',
                         style: TextStyle(
                           color: AppColors.textSecondary,
@@ -224,7 +224,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Don't have an account?",
+                    const Text("Don't have an account?",
                         style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 13)),
                     TextButton(
                       onPressed: () {

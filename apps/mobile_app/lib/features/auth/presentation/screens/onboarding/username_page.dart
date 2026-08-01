@@ -46,14 +46,14 @@ class _UsernamePageState extends State<UsernamePage> {
                 const _ProgressBar(step: 5, total: 6),
                 const SizedBox(height: 24),
                 
-                Text('Choose a Username',
+                const Text('Choose a Username',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
                       color: AppColors.accentDark,
                     )),
                 const SizedBox(height: 4),
-                Text('Your unique handle on Jibble',
+                const Text('Your unique handle on Jibble',
                     style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 32),
                 
@@ -89,7 +89,7 @@ class _UsernamePageState extends State<UsernamePage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text('Lowercase letters, numbers, underscores and dots only.',
+                const Text('Lowercase letters, numbers, underscores and dots only.',
                     style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.bold)),
                 
                 const Spacer(),
@@ -102,11 +102,11 @@ class _UsernamePageState extends State<UsernamePage> {
                           builder: (_) => const ProfilePicturePage())),
                   child: Opacity(
                     opacity: !_valid ? 0.5 : 1.0,
-                    child: NeumorphicBox(
+                    child: const NeumorphicBox(
                       color: AppColors.accent,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.symmetric(vertical: 16),
                       borderRadius: 16,
-                      child: const Center(
+                      child: Center(
                         child: Text(
                           'Continue',
                           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),

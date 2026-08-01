@@ -66,7 +66,7 @@ class CachedImageWidget extends StatelessWidget {
             height: 24,
             child:  CircularProgressIndicator(
               strokeWidth: 2,
-              color:       theme.colorScheme.primary.withOpacity(0.5),
+              color:       theme.colorScheme.primary.withValues(alpha: 0.5),
             ),
           ),
         ),
@@ -81,7 +81,7 @@ class CachedImageWidget extends StatelessWidget {
             errorIcon,
             size:  errorIconSize,
             color: errorIconColor ??
-                Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
           ),
         ),
       );

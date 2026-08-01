@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/presentation/widgets/neumorphic_box.dart';
 import '../provider/feed_provider.dart';
 import '../widgets/stories_row.dart';
 import '../widgets/category_chips_row.dart';
 import '../widgets/feed_post_card.dart';
 import '../widgets/home_drawer.dart';
 
-/// HomePage rendering Stories, Category filters, and Jibble posts with pagination.
+/// HomePage rendering Neumorphic Top Bar, Stories, Category filters, and Jibble feed posts.
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -32,7 +33,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void _onScroll() {
-    // If we scroll past 90% of the maximum scroll extent, fetch next page
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.9) {
       ref.read(feedProvider.notifier).loadMore();
     }
@@ -45,24 +45,73 @@ class _HomePageState extends ConsumerState<HomePage> {
     return Scaffold(
       drawer: const HomeDrawer(),
       appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        centerTitle: true,
+        toolbarHeight: 64,
+        leading: Builder(
+          builder: (context) => Padding(
+            padding: const EdgeInsets.only(left: 14),
+            child: GestureDetector(
+              onTap: () => Scaffold.of(context).openDrawer(),
+              child: const Center(
+                child: NeumorphicBox(
+                  shape: BoxShape.circle,
+                  padding: EdgeInsets.all(10),
+                  child: Icon(Icons.menu_rounded, color: AppColors.textPrimary, size: 20),
+                ),
+              ),
+            ),
+          ),
+        ),
         title: const Text(
           'Jibble',
           style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.5,
+            fontFamily: 'Dancing_Script',
+            fontSize: 34,
+            fontWeight: FontWeight.w800,
             color: AppColors.accent,
+            letterSpacing: 1.0,
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none_rounded, size: 26),
-            onPressed: () {},
+          // Neumorphic Search Button
+          GestureDetector(
+            onTap: () {},
+            child: const NeumorphicBox(
+              shape: BoxShape.circle,
+              padding: EdgeInsets.all(10),
+              child: Icon(Icons.search_rounded, color: AppColors.textPrimary, size: 20),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.search_rounded, size: 26),
-            onPressed: () {},
+          const SizedBox(width: 10),
+
+          // Neumorphic Notification Button with Badge Dot
+          GestureDetector(
+            onTap: () {},
+            child: Stack(
+              children: [
+                const NeumorphicBox(
+                  shape: BoxShape.circle,
+                  padding: EdgeInsets.all(10),
+                  child: Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary, size: 20),
+                ),
+                Positioned(
+                  top: 2,
+                  right: 2,
+                  child: Container(
+                    width: 9,
+                    height: 9,
+                    decoration: const BoxDecoration(
+                      color: AppColors.accent,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 14),
         ],
       ),
       body: _buildBody(feedState),
@@ -70,14 +119,12 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _buildBody(FeedState state) {
-    // 1. Initial Loading State
     if (state.status == FeedStatus.loading && state.posts.isEmpty) {
       return const Center(
         child: CircularProgressIndicator(color: AppColors.accent),
       );
     }
 
-    // 2. Initial Error State
     if (state.status == FeedStatus.error && state.posts.isEmpty) {
       return Center(
         child: Padding(
@@ -108,39 +155,37 @@ class _HomePageState extends ConsumerState<HomePage> {
       );
     }
 
-    // 3. Post Feed Content
     return RefreshIndicator(
       onRefresh: () => ref.read(feedProvider.notifier).loadFeed(),
       color: AppColors.accent,
       backgroundColor: AppColors.card,
       child: ListView.builder(
         controller: _scrollController,
-        padding: const EdgeInsets.only(top: 16, bottom: 24),
-        itemCount: state.posts.length + 3, // Stories (1) + Categories (2) + Posts + Loader (last)
+        padding: const EdgeInsets.only(top: 8, bottom: 24),
+        itemCount: state.posts.length + 3,
         itemBuilder: (context, index) {
           if (index == 0) {
-            // Stories Header Widget
+            // Stories Section
             return const Padding(
-              padding: EdgeInsets.only(bottom: 16),
+              padding: EdgeInsets.only(bottom: 12),
               child: StoriesRow(),
             );
           }
 
           if (index == 1) {
-            // Category scrollbar
+            // Category Chips Row
             return const Padding(
-              padding: EdgeInsets.only(bottom: 16),
+              padding: EdgeInsets.only(bottom: 14),
               child: CategoryChipsRow(),
             );
           }
 
-          // Fetch post offset index
           final postIndex = index - 2;
 
           if (postIndex < state.posts.length) {
             final post = state.posts[postIndex];
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               child: FeedPostCard(
                 post: post,
                 onLikeTapped: () {
