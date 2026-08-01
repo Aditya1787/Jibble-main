@@ -171,8 +171,8 @@ class _AnimatedBottomBarTabState extends State<_AnimatedBottomBarTab> {
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOutBack,
         transform: Matrix4.identity()
-          ..translateByDouble(translateY, axis: Axis.vertical)
-          ..scaleByDouble(scaleX),
+          ..translateByDouble(0.0, translateY, 0.0, 1.0)
+          ..scaleByDouble(scaleX, scaleY, 0.0, 1.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

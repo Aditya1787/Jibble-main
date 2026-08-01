@@ -88,7 +88,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Called on startup — tries to restore session from secure storage.
   Future<void> checkAuth() async {
-    print('DEBUG: [checkAuth] started');
+    debugPrint('DEBUG: [checkAuth] started');
     state = AuthState.loading();
     try {
       debugPrint('DEBUG: [checkAuth] reading access_token from storage...');
