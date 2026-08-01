@@ -38,7 +38,7 @@ class _UsernamePageState extends State<UsernamePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ProgressBar(step: 5, total: 6),
+              const _ProgressBar(step: 5, total: 6),
               const SizedBox(height: 32),
               Text('Choose a Username',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(

@@ -29,7 +29,7 @@ class _InterestsPageState extends State<InterestsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ProgressBar(step: 3, total: 6),
+              const _ProgressBar(step: 3, total: 6),
               const SizedBox(height: 32),
 
               Text('Your Interests',

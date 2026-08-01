@@ -29,7 +29,7 @@ class _SkillsPageState extends State<SkillsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ProgressBar(step: 4, total: 6),
+              const _ProgressBar(step: 4, total: 6),
               const SizedBox(height: 32),
 
               Text('Your Skills',

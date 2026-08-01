@@ -12,7 +12,7 @@ class ProfilePicturePage extends StatefulWidget {
 
 class _ProfilePicturePageState extends State<ProfilePicturePage> {
   File? _image;
-  bool _uploading = false;
+  final bool _uploading = false;
 
   Future<void> _pickImage(ImageSource src) async {
     final picker = ImagePicker();
@@ -84,7 +84,7 @@ class _ProfilePicturePageState extends State<ProfilePicturePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _ProgressBar(step: 6, total: 6),
+              const _ProgressBar(step: 6, total: 6),
               const SizedBox(height: 32),
               Text('Profile Picture',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(

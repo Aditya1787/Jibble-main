@@ -47,7 +47,7 @@ class _CollegePageState extends ConsumerState<CollegePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── Progress ─────────────────────────────────────────────
-              _ProgressBar(step: 1, total: 6),
+              const _ProgressBar(step: 1, total: 6),
               const SizedBox(height: 32),
 
               // ── Heading ───────────────────────────────────────────────

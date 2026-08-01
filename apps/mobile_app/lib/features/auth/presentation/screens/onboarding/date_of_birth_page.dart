@@ -48,7 +48,7 @@ class _DateOfBirthPageState extends State<DateOfBirthPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ProgressBar(step: 2, total: 6),
+              const _ProgressBar(step: 2, total: 6),
               const SizedBox(height: 32),
 
               Text('Date of Birth',
