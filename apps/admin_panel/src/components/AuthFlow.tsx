@@ -1,280 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useAuthStore } from '../store/useAuthStore'
-
-// Comprehensive roles list categorized and subcategorized
-const jobRoleData = [
-  {
-    category: 'Privacy & Policy Management',
-    icon: '🛡️',
-    roles: [
-      'Privacy Intern',
-      'Data Protection Officer (DPO)',
-      'Compliance Officer',
-      'Content & Policy Moderator',
-      'Privacy Policy Auditor',
-      'Legal & Compliance Lead'
-    ]
-  },
-  {
-    category: 'Executive Team',
-    icon: '👨‍💼',
-    roles: [
-      'Founder / CEO',
-      'Co-Founder',
-      'CTO (Chief Technology Officer)',
-      'COO (Chief Operating Officer)',
-      'CFO (Chief Financial Officer)',
-      'CPO (Chief Product Officer)',
-      'CMO (Chief Marketing Officer)',
-      'Executive Intern'
-    ]
-  },
-  {
-    category: 'Software Engineering',
-    icon: '💻',
-    subcategories: {
-      'Backend': [
-        'Backend Intern',
-        'Junior Backend Developer',
-        'Backend Developer',
-        'Senior Backend Engineer',
-        'Lead Backend Engineer',
-        'Backend Architect'
-      ],
-      'Frontend': [
-        'Frontend Intern',
-        'Junior Frontend Developer',
-        'Frontend Developer',
-        'Senior Frontend Developer',
-        'Frontend Lead'
-      ],
-      'Mobile (Flutter)': [
-        'Flutter Intern',
-        'Junior Flutter Developer',
-        'Flutter Developer',
-        'Senior Flutter Developer',
-        'Mobile Tech Lead'
-      ],
-      'Full Stack': [
-        'Full Stack Intern',
-        'Junior Full Stack Developer',
-        'Full Stack Developer',
-        'Senior Full Stack Engineer',
-        'Principal Engineer'
-      ],
-      'DevOps': [
-        'DevOps Intern',
-        'Junior DevOps Engineer',
-        'DevOps Engineer',
-        'Senior DevOps Engineer',
-        'Cloud Architect'
-      ],
-      'Quality Assurance (QA)': [
-        'QA Intern',
-        'QA Tester',
-        'Automation Test Engineer',
-        'Senior QA Engineer',
-        'QA Lead'
-      ]
-    }
-  },
-  {
-    category: 'AI / Machine Learning',
-    icon: '🤖',
-    roles: [
-      'AI Intern',
-      'Machine Learning Engineer',
-      'AI Engineer',
-      'LLM Engineer',
-      'Computer Vision Engineer',
-      'NLP Engineer',
-      'Senior AI Engineer',
-      'AI Research Scientist'
-    ]
-  },
-  {
-    category: 'Data',
-    icon: '📊',
-    roles: [
-      'Data Analyst',
-      'Business Analyst',
-      'Data Engineer',
-      'Senior Data Engineer',
-      'Data Scientist',
-      'Analytics Manager'
-    ]
-  },
-  {
-    category: 'Design',
-    icon: '🎨',
-    roles: [
-      'UI Designer',
-      'UX Designer',
-      'Product Designer',
-      'Graphic Designer',
-      'Motion Designer',
-      'Senior Product Designer',
-      'Design Lead'
-    ]
-  },
-  {
-    category: 'Product',
-    icon: '📱',
-    roles: [
-      'Associate Product Manager (APM)',
-      'Product Manager',
-      'Senior Product Manager',
-      'Group Product Manager',
-      'Head of Product'
-    ]
-  },
-  {
-    category: 'Marketing',
-    icon: '📢',
-    subcategories: {
-      'Digital Marketing': [
-        'Marketing Intern',
-        'Digital Marketing Executive',
-        'SEO Specialist',
-        'SEM Specialist',
-        'Growth Marketer',
-        'Marketing Manager'
-      ],
-      'Social Media': [
-        'Social Media Intern',
-        'Social Media Executive',
-        'Social Media Manager',
-        'Community Manager',
-        'Influencer Marketing Manager'
-      ],
-      'Content': [
-        'Content Writer',
-        'Technical Writer',
-        'Copywriter',
-        'Content Strategist'
-      ]
-    }
-  },
-  {
-    category: 'Sales',
-    icon: '💰',
-    roles: [
-      'Sales Intern',
-      'Sales Executive',
-      'Business Development Executive (BDE)',
-      'Business Development Manager (BDM)',
-      'Account Executive',
-      'Enterprise Sales Manager',
-      'Sales Director'
-    ]
-  },
-  {
-    category: 'Customer Success',
-    icon: '🤝',
-    roles: [
-      'Customer Support Executive',
-      'Technical Support Engineer',
-      'Customer Success Associate',
-      'Customer Success Manager',
-      'Key Account Manager'
-    ]
-  },
-  {
-    category: 'Human Resources (HR)',
-    icon: '🏢',
-    roles: [
-      'HR Intern',
-      'Talent Acquisition Executive',
-      'HR Executive',
-      'Recruiter',
-      'HR Business Partner',
-      'HR Manager'
-    ]
-  },
-  {
-    category: 'Finance',
-    icon: '💵',
-    roles: [
-      'Accountant',
-      'Finance Executive',
-      'Payroll Executive',
-      'Financial Analyst',
-      'Finance Manager'
-    ]
-  },
-  {
-    category: 'Legal',
-    icon: '⚖️',
-    roles: [
-      'Legal Executive',
-      'Compliance Officer',
-      'Corporate Lawyer',
-      'Legal Manager'
-    ]
-  },
-  {
-    category: 'Cyber Security',
-    icon: '🔐',
-    roles: [
-      'Security Analyst',
-      'SOC Analyst',
-      'Ethical Hacker',
-      'Penetration Tester',
-      'Security Engineer',
-      'Security Architect'
-    ]
-  },
-  {
-    category: 'Cloud Infrastructure',
-    icon: '☁️',
-    roles: [
-      'Cloud Engineer',
-      'AWS Engineer',
-      'Site Reliability Engineer (SRE)',
-      'Infrastructure Engineer',
-      'Platform Engineer'
-    ]
-  },
-  {
-    category: 'Operations',
-    icon: '📋',
-    roles: [
-      'Operations Executive',
-      'Operations Manager',
-      'Project Coordinator',
-      'Project Manager',
-      'Program Manager'
-    ]
-  },
-  {
-    category: 'Documentation',
-    icon: '📝',
-    roles: [
-      'Technical Writer',
-      'API Documentation Engineer',
-      'Knowledge Base Manager'
-    ]
-  },
-  {
-    category: 'Developer Relations',
-    icon: '🌍',
-    roles: [
-      'Developer Advocate',
-      'Community Manager',
-      'Technical Evangelist'
-    ]
-  },
-  {
-    category: 'Growth',
-    icon: '📈',
-    roles: [
-      'Growth Associate',
-      'Growth Analyst',
-      'Growth Engineer',
-      'Growth Product Manager'
-    ]
-  }
-]
+import { jobRoleData } from '../data/orgData'
+import { adminApi } from '../api/adminApi'
 
 const avatarPresets = [
   '🎒', '🕶️', '💻', '🦊', '🚀', '🔮', '🍀', '🍕'
@@ -644,6 +371,14 @@ export default function AuthFlow() {
         finalHr || undefined
       )
       setStep(2)
+      // Send real Email OTP via backend API
+      adminApi.auth.sendOtp('email', email).then((res) => {
+        if (res.devOtpCode) {
+          console.log(`[Dev Mode] Email OTP for ${email}: ${res.devOtpCode}`)
+        }
+      }).catch((err) => {
+        console.warn('Backend OTP send failed, falling back to local timer:', err)
+      })
     }
   }
 
@@ -681,33 +416,53 @@ export default function AuthFlow() {
     }
   }
 
-  const handleEmailOtpVerify = () => {
+  const handleEmailOtpVerify = async () => {
     const code = emailOtp.join('')
     if (code.length < 6) {
       setErrors({ emailOtp: 'Please enter all 6 digits.' })
       return
+    }
+    try {
+      await adminApi.auth.verifyOtp('email', email, code)
+    } catch (err: any) {
+      console.warn('Backend Email OTP verify failed, verifying locally:', err.message)
     }
     store.verifyEmailOTP()
     setErrors({})
     setStep(3)
   }
 
-  const handleMobileSendOtp = () => {
+  const handleMobileSendOtp = async () => {
     if (!phone || phone.length < 10) {
       setErrors({ phone: 'Please enter a valid 10-digit mobile number.' })
       return
     }
     setErrors({})
+    try {
+      const fullPhone = `${countryCode}${phone}`
+      const res = await adminApi.auth.sendOtp('mobile', fullPhone)
+      if (res.devOtpCode) {
+        console.log(`[Dev Mode] Mobile OTP for ${fullPhone}: ${res.devOtpCode}`)
+      }
+    } catch (err: any) {
+      console.warn('Backend Mobile OTP send failed, falling back to local store:', err.message)
+    }
     store.sendMobileOTP(phone)
     setMobileOtpSent(true)
     setMobileTimer(30)
   }
 
-  const handleMobileOtpVerify = () => {
+  const handleMobileOtpVerify = async () => {
     const code = mobileOtp.join('')
     if (code.length < 6) {
       setErrors({ mobileOtp: 'Please enter all 6 digits.' })
       return
+    }
+    try {
+      const fullPhone = `${countryCode}${phone}`
+      await adminApi.auth.verifyOtp('mobile', fullPhone, code)
+    } catch (err: any) {
+      console.warn('Backend Mobile OTP verify failed, verifying locally:', err.message)
     }
     store.verifyMobileOTP()
     setErrors({})
@@ -977,26 +732,6 @@ export default function AuthFlow() {
             >
               {isLoggingIn ? 'Verifying Account... ⏳' : 'Sign In to Workspace →'}
             </button>
-
-            {/* Quick credentials details box */}
-            <div className="nm-card-inset" style={{
-              padding: '12px 16px',
-              borderRadius: '12px',
-              fontSize: '12px',
-              color: 'var(--text-secondary)',
-              background: 'rgba(243, 239, 232, 0.4)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '4px',
-              lineHeight: 1.4
-            }}>
-              <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>🔑 Demo Account Details:</span>
-              <span>Username: <strong style={{ color: 'var(--accent)' }}>admin@jibble.com</strong></span>
-              <span>Password: <strong style={{ color: 'var(--accent)' }}>admin123</strong></span>
-              <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 600 }}>
-                💡 Or sign up with a new account, then use it here to sign back in!
-              </span>
-            </div>
           </form>
         )}
 

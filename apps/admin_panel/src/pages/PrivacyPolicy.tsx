@@ -27,7 +27,7 @@ export default function PrivacyPolicy() {
     const matchSearch =
       p.title.toLowerCase().includes(policySearch.toLowerCase()) ||
       p.category.toLowerCase().includes(policySearch.toLowerCase()) ||
-      p.content.toLowerCase().includes(policySearch.toLowerCase())
+      (p.content ?? '').toLowerCase().includes(policySearch.toLowerCase())
     return matchCat && matchSearch
   })
 

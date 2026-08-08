@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
 import OrgHierarchy from './pages/OrgHierarchy'
+import About from './pages/About'
 import Users from './pages/Users'
 import TeamsTasks from './pages/TeamsTasks'
 import TasksDashboard from './pages/TasksDashboard'
@@ -15,7 +16,7 @@ import Settings from './pages/Settings'
 import AuthFlow from './components/AuthFlow'
 import { useAuthStore } from './store/useAuthStore'
 
-export type Page = 'dashboard' | 'profile' | 'hierarchy' | 'users' | 'teams' | 'tasks' | 'privacy' | 'posts' | 'reports' | 'analytics' | 'settings' | 'team-detail'
+export type Page = 'dashboard' | 'profile' | 'hierarchy' | 'about' | 'users' | 'teams' | 'tasks' | 'privacy' | 'posts' | 'reports' | 'analytics' | 'settings' | 'team-detail'
 
 export default function App() {
   const [activePage, setActivePage] = useState<Page>('dashboard')
@@ -36,6 +37,7 @@ export default function App() {
       case 'dashboard':   return <Dashboard />
       case 'profile':     return <Profile />
       case 'hierarchy':   return <OrgHierarchy />
+      case 'about':       return <About />
       case 'users':       return <Users />
       case 'teams':       return <TeamsTasks onSelectTeam={handleOpenTeamWorkspace} />
       case 'tasks':       return <TasksDashboard />

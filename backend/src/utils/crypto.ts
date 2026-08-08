@@ -22,10 +22,11 @@ export const comparePassword = (plain: string, hash: string): Promise<boolean> =
 // ─── JWT ─────────────────────────────────────────────────────────────────────
 
 export interface JwtPayload {
+  id?: string;       // user UUID (alias for sub)
   sub: string;       // user UUID
   email?: string;
   role?: string;
-  type: 'access' | 'refresh';
+  type?: 'access' | 'refresh';
   iat?: number;
   exp?: number;
 }

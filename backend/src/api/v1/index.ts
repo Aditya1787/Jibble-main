@@ -1,7 +1,6 @@
 /**
  * @file api/v1/index.ts
- * @description Aggregates all v1 module routes under /api/v1.
- *              Add new module routers here as the project grows.
+ * @description Aggregates all v1 module routes for Mobile App Backend.
  */
 
 import { Router } from 'express';
@@ -12,7 +11,6 @@ import { collegeRouter } from '../../modules/college/college.routes';
 import { profileRouter } from '../../modules/profile/profile.routes';
 import { postRouter } from '../../modules/post/post.routes';
 import { globalRateLimiter } from '../../middlewares/rateLimiter.global';
-
 import { storyRouter } from '../../modules/story/story.routes';
 import { circleRouter } from '../../modules/circle/circle.routes';
 
@@ -44,10 +42,3 @@ v1Router.use('/stories', storyRouter);
 
 // ── Circles ───────────────────────────────────────────────────────────────────
 v1Router.use('/circles', circleRouter);
-
-// ── Future module routes ──────────────────────────────────────────────────────
-// v1Router.use('/chats',          chatRouter);
-// v1Router.use('/notifications',  notificationRouter);
-// v1Router.use('/search',         searchRouter);
-// v1Router.use('/admin',          adminRouter);
-// v1Router.use('/analytics',      analyticsRouter);

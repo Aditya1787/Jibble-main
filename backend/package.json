@@ -20,6 +20,7 @@
     "@aws-sdk/client-s3": "^3.490.0",
     "@aws-sdk/s3-request-presigner": "^3.490.0",
     "@prisma/client": "^5.7.1",
+    "@supabase/supabase-js": "^2.112.2",
     "bcryptjs": "^2.4.3",
     "bullmq": "^5.1.1",
     "compression": "^1.7.4",

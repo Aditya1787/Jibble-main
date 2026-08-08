@@ -62,8 +62,8 @@ export default function TasksDashboard() {
     const matchStatus = statusFilter === 'all' || task.status === statusFilter
     const matchSearch =
       task.title.toLowerCase().includes(taskSearch.toLowerCase()) ||
-      task.assigneeName.toLowerCase().includes(taskSearch.toLowerCase()) ||
-      task.projectName.toLowerCase().includes(taskSearch.toLowerCase())
+      (task.assigneeName ?? '').toLowerCase().includes(taskSearch.toLowerCase()) ||
+      (task.projectName ?? '').toLowerCase().includes(taskSearch.toLowerCase())
     return matchCadence && matchProj && matchPriority && matchStatus && matchSearch
   })
 
@@ -83,6 +83,7 @@ export default function TasksDashboard() {
       title,
       projectId: projectId || projects[0]?.id || 'proj-1',
       projectName: proj?.name || 'Workspace Project',
+      assigneeId: null,
       assigneeName: selectedAssignee || assigneeQuery || 'Unassigned',
       assigneeAvatar: '👤',
       priority,
@@ -421,7 +422,7 @@ export default function TasksDashboard() {
 
                             {/* Assignee & Actions Row */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => { setTargetUsernameForProfile(task.assigneeName); setShowUserProfileModal(true); }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => { setTargetUsernameForProfile(task.assigneeName ?? ''); setShowUserProfileModal(true); }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                   <span style={{ fontSize: '16px' }}>{task.assigneeAvatar || '👤'}</span>
                                   <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>@{task.assigneeName}</span>
@@ -494,8 +495,8 @@ export default function TasksDashboard() {
                   {task.description}
                 </p>
 
-                <div className="nm-card-inset" style={{ padding: '12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => { setTargetUsernameForProfile(task.assigneeName); setShowUserProfileModal(true); }}>
+                  <div className="nm-card-inset" style={{ padding: '12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => { setTargetUsernameForProfile(task.assigneeName ?? ''); setShowUserProfileModal(true); }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontSize: '20px' }}>{task.assigneeAvatar || '👤'}</span>
                       <div>
@@ -566,7 +567,7 @@ export default function TasksDashboard() {
                       <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{task.description}</p>
 
                       <div className="nm-card-inset" style={{ padding: '8px 10px', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => { setTargetUsernameForProfile(task.assigneeName); setShowUserProfileModal(true); }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => { setTargetUsernameForProfile(task.assigneeName ?? ''); setShowUserProfileModal(true); }}>
                           <span style={{ fontSize: '11px', fontWeight: 700 }}>👤 @{task.assigneeName}</span>
                           <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{task.dueDate}</span>
                         </div>
@@ -744,7 +745,7 @@ export default function TasksDashboard() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Assignee @username</label>
-                  <input type="text" className="nm-input-glass" value={editingTask.assigneeName} onChange={(e) => setEditingTask({ ...editingTask, assigneeName: e.target.value })} />
+                  <input type="text" className="nm-input-glass" value={editingTask.assigneeName ?? ''} onChange={(e) => setEditingTask({ ...editingTask, assigneeName: e.target.value })} />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Cadence</label>
@@ -769,13 +770,13 @@ export default function TasksDashboard() {
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Deadline</label>
-                  <input type="text" className="nm-input-glass" value={editingTask.dueDate} onChange={(e) => setEditingTask({ ...editingTask, dueDate: e.target.value })} />
+                  <input type="text" className="nm-input-glass" value={editingTask.dueDate ?? ''} onChange={(e) => setEditingTask({ ...editingTask, dueDate: e.target.value })} />
                 </div>
               </div>
 
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Description</label>
-                <textarea className="nm-input-glass" rows={3} value={editingTask.description} onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })} />
+                <textarea className="nm-input-glass" rows={3} value={editingTask.description ?? ''} onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })} />
               </div>
 
               <button type="submit" className="nm-btn-accent" style={{ marginTop: '10px', padding: '12px' }}>

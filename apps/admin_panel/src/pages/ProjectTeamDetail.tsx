@@ -43,9 +43,9 @@ export default function ProjectTeamDetail({ teamId, onBack }: Props) {
   // Tasks allocated to members in this team
   const teamMemberNames = team.members.map((m) => m.name.toLowerCase())
   const teamTasks = tasks.filter((t) =>
-    teamMemberNames.some((name) => t.assigneeName.toLowerCase().includes(name)) ||
+    teamMemberNames.some((name) => (t.assigneeName ?? '').toLowerCase().includes(name)) ||
     linkedProjects.some((p) => p.id === t.projectId) ||
-    t.projectName.toLowerCase().includes(team.name.toLowerCase()) ||
+    (t.projectName ?? '').toLowerCase().includes(team.name.toLowerCase()) ||
     t.projectId === team.id
   )
 
@@ -78,6 +78,7 @@ export default function ProjectTeamDetail({ teamId, onBack }: Props) {
       title: taskTitle,
       projectId: primaryProj?.id || team.id,
       projectName: primaryProj?.name || team.name,
+      assigneeId: null,
       assigneeName: taskAssignee || team.members[0]?.name || 'Aditya Kumar',
       assigneeAvatar: '👤',
       priority: taskPriority,
@@ -432,7 +433,7 @@ export default function ProjectTeamDetail({ teamId, onBack }: Props) {
 
                 {/* Assignee & Status */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => { setTargetUsernameForProfile(task.assigneeName); setShowUserProfileModal(true); }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => { setTargetUsernameForProfile(task.assigneeName ?? ''); setShowUserProfileModal(true); }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span style={{ fontSize: '16px' }}>{task.assigneeAvatar || '👤'}</span>
                       <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>@{task.assigneeName}</span>
@@ -549,7 +550,7 @@ export default function ProjectTeamDetail({ teamId, onBack }: Props) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Assignee</label>
-                  <input type="text" className="nm-input-glass" value={editingTask.assigneeName} onChange={(e) => setEditingTask({ ...editingTask, assigneeName: e.target.value })} />
+                  <input type="text" className="nm-input-glass" value={editingTask.assigneeName ?? ''} onChange={(e) => setEditingTask({ ...editingTask, assigneeName: e.target.value })} />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Cadence</label>
@@ -574,13 +575,13 @@ export default function ProjectTeamDetail({ teamId, onBack }: Props) {
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Deadline</label>
-                  <input type="text" className="nm-input-glass" value={editingTask.dueDate} onChange={(e) => setEditingTask({ ...editingTask, dueDate: e.target.value })} />
+                  <input type="text" className="nm-input-glass" value={editingTask.dueDate ?? ''} onChange={(e) => setEditingTask({ ...editingTask, dueDate: e.target.value })} />
                 </div>
               </div>
 
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Description</label>
-                <textarea className="nm-input-glass" rows={3} value={editingTask.description} onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })} />
+                <textarea className="nm-input-glass" rows={3} value={editingTask.description ?? ''} onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })} />
               </div>
 
               <button type="submit" className="nm-btn-accent" style={{ marginTop: '10px', padding: '12px' }}>

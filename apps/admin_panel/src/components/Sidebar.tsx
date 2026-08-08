@@ -5,6 +5,7 @@ const navItems = [
   { id: 'dashboard',  label: 'Dashboard',       icon: '⊞' },
   { id: 'profile',    label: 'My Profile',      icon: '👤' },
   { id: 'hierarchy',  label: 'Org Hierarchy',   icon: '🌳' },
+  { id: 'about',      label: 'About Jibble',    icon: 'ℹ️' },
   { id: 'users',      label: 'Users',           icon: '👥' },
   { id: 'teams',      label: 'Teams & Roster',  icon: '🏢' },
   { id: 'tasks',      label: 'Tasks Dashboard', icon: '📋' },

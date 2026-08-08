@@ -38,7 +38,7 @@ export default function UserProfileModal({ initialUsername = '', onClose }: Prop
     : { totalAssigned: 0, completedOnTime: 0, overdueCount: 0, onTimeRate: 0, ratingBadge: '⚡ Contributor' }
 
   const userAssignedTasks = selectedUser
-    ? tasks.filter((t) => t.assigneeName.toLowerCase().includes(selectedUser.username.toLowerCase()) || t.assigneeName.toLowerCase().includes(selectedUser.email.toLowerCase()))
+    ? tasks.filter((t) => (t.assigneeName ?? '').toLowerCase().includes(selectedUser.username.toLowerCase()) || (t.assigneeName ?? '').toLowerCase().includes(selectedUser.email.toLowerCase()))
     : []
 
   return (

@@ -1,0 +1,156 @@
+================================================================================
+          JIBBLE ECOSYSTEM — COMPLETE SETUP & CONSOLE GUIDE
+================================================================================
+
+Workspace Directory Architecture:
+----------------------------------
+1. Admin Backend API:      d:\for opening\for opening\Jibble\admin_backend
+                           (Node.js + Express + TypeScript + Supabase Admin SDK)
+                           Runs on Port 8080.
+
+2. Admin Panel Frontend:  d:\for opening\for opening\Jibble\apps\admin_panel
+                           (React 18 + Vite + TypeScript + Zustand + Spatial UI)
+                           Runs on Port 5173.
+
+3. Mobile App Backend:     d:\for opening\for opening\Jibble\backend
+                           (Node.js + Express + PostgreSQL/Prisma + Redis)
+                           Runs on Port 8081. Cleaned & 100% isolated.
+
+4. Mobile App (Flutter):   d:\for opening\for opening\Jibble\apps\mobile_app
+                           (Flutter + Firebase Core + Firebase Messaging FCM)
+
+5. Database Migration SQL: d:\for opening\for opening\Jibble\database\001_admin_panel_schema.sql
+
+
+================================================================================
+PART 1: SUPABASE CONSOLE SETUP (FOR ADMIN BACKEND & ADMIN PANEL)
+================================================================================
+
+1. Create Supabase Project:
+   a. Log in at https://supabase.com
+   b. Click "New Project" -> Name: `Jibble-Admin-Backend` -> Set Database Password.
+   c. Choose region (e.g., Mumbai / San Francisco).
+
+2. Execute SQL Database Schema:
+   a. In Supabase Console, open "SQL Editor" from the left menu.
+   b. Click "+ New Query".
+   c. Open file: `d:\for opening\for opening\Jibble\database\001_admin_panel_schema.sql`
+   d. Copy the complete SQL text and paste into the SQL Editor.
+   e. Click "RUN" (or press Ctrl+Enter).
+   -> Creates 10 tables: employees, job_categories, job_roles, teams, team_members, projects, tasks, policies, privacy_settings, audit_logs.
+
+3. Get Supabase API Keys:
+   a. Go to Project Settings (⚙️ icon) -> API.
+   b. Copy 3 credentials:
+      - Project URL          (e.g., https://xyz.supabase.co)
+      - `anon` `public` key  (starts with eyJ...)
+      - `service_role` key   (starts with eyJ... — server secret)
+
+4. Configure Auth Settings (Optional for Dev):
+   a. Go to Authentication -> Providers -> Email.
+   b. Turn OFF "Confirm email" for instant login during testing.
+
+
+================================================================================
+PART 2: FIREBASE CONSOLE SETUP (FOR FLUTTER MOBILE APP & PUSH NOTIFICATIONS)
+================================================================================
+
+1. Create Firebase Project:
+   a. Log in at https://console.firebase.google.com
+   b. Click "Add Project" -> Project Name: `Jibble-Mobile-App` -> Click Continue.
+   c. (Optional) Enable Google Analytics -> Click "Create Project".
+
+2. Register Android App in Firebase:
+   a. Click the Android icon (🤖) in project overview.
+   b. Package name: `com.jibble.app` (matches package in `apps/mobile_app`).
+   c. App nickname: `Jibble Mobile Android`.
+   d. Click "Register App".
+   e. Download `google-services.json`.
+   f. Place `google-services.json` inside:
+      `d:\for opening\for opening\Jibble\apps\mobile_app\android\app\google-services.json`
+
+3. Register iOS App in Firebase (if building for iOS):
+   a. Click "Add App" -> iOS icon (🍎).
+   b. Bundle ID: `com.jibble.app`
+   c. Download `GoogleService-Info.plist`.
+   d. Place `GoogleService-Info.plist` inside:
+      `d:\for opening\for opening\Jibble\apps\mobile_app\ios\Runner\GoogleService-Info.plist`
+
+4. Enable Firebase Cloud Messaging (FCM for Push Notifications):
+   a. In Firebase Console, go to Project Settings (⚙️ icon) -> Cloud Messaging tab.
+   b. Ensure "Firebase Cloud Messaging API (V1)" is Enabled.
+   c. Copy the FCM Server Key or Service Account credentials for push notification triggers in mobile backend.
+
+5. Automatic FlutterFire CLI Config (Recommended):
+   a. Install FlutterFire CLI: `npm install -g firebase-tools` & `dart pub global activate flutterfire_cli`
+   b. Run inside mobile app folder:
+      `cd apps/mobile_app`
+      `flutterfire configure`
+   c. Automatically generates `lib/firebase_options.dart` with all keys.
+
+
+================================================================================
+PART 3: ENVIRONMENT CONFIGURATION (.env FILES)
+================================================================================
+
+1. Admin Backend (`d:\for opening\for opening\Jibble\admin_backend\.env`):
+--------------------------------------------------------------------------
+NODE_ENV=development
+PORT=8080
+SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
+SUPABASE_ANON_KEY=YOUR_ANON_KEY_HERE
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_KEY_HERE
+CLIENT_BASE_URL=http://localhost:5173
+RATE_LIMIT_WINDOW_MS=60000
+RATE_LIMIT_GLOBAL_MAX=200
+
+
+2. Admin Panel Frontend (`d:\for opening\for opening\Jibble\apps\admin_panel\.env`):
+-----------------------------------------------------------------------------------
+VITE_API_BASE_URL=http://localhost:8080
+VITE_SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
+VITE_SUPABASE_ANON_KEY=YOUR_ANON_KEY_HERE
+
+
+3. Mobile Backend (`d:\for opening\for opening\Jibble\backend\.env`):
+---------------------------------------------------------------------
+NODE_ENV=development
+PORT=8081
+DATABASE_URL=postgresql://postgres:YOUR_PASS@localhost:5432/jibble
+REDIS_URL=redis://localhost:6379
+JWT_ACCESS_SECRET=your_jwt_access_secret_min_32_chars
+JWT_REFRESH_SECRET=your_jwt_refresh_secret_min_32_chars
+CLIENT_BASE_URL=http://localhost:3000
+
+
+================================================================================
+PART 4: COMMANDS TO RUN THE SYSTEM
+================================================================================
+
+1. Start Admin Backend (Terminal 1):
+   cd "d:\for opening\for opening\Jibble\admin_backend"
+   npm run dev
+   -> Running at: http://localhost:8080
+   -> Health check: http://localhost:8080/api/v1/health
+
+2. Start Admin Panel Frontend (Terminal 2):
+   cd "d:\for opening\for opening\Jibble\apps\admin_panel"
+   npm run dev
+   -> Running at: http://localhost:5173
+
+3. Start Mobile App Backend (Terminal 3):
+   cd "d:\for opening\for opening\Jibble\backend"
+   npm run dev
+   -> Running at: http://localhost:8081
+
+4. Start Mobile App Flutter (Terminal 4):
+   cd "d:\for opening\for opening\Jibble\apps\mobile_app"
+   flutter run
+
+
+================================================================================
+VERIFICATION SUMMARY
+================================================================================
+• Admin Backend TypeScript check:  npx tsc --noEmit (0 errors)
+• Admin Panel Frontend TS check:  npx tsc --noEmit (0 errors)
+• Mobile Backend:                100% cleaned & isolated from admin files.

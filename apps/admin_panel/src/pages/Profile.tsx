@@ -25,8 +25,8 @@ export default function Profile() {
   const performance = getEmployeePerformance(user.username || user.email)
   const userAssignedTasks = tasks.filter(
     (t) =>
-      t.assigneeName.toLowerCase().includes(user.username.toLowerCase()) ||
-      t.assigneeName.toLowerCase().includes(user.email.toLowerCase())
+      (t.assigneeName ?? '').toLowerCase().includes(user.username.toLowerCase()) ||
+      (t.assigneeName ?? '').toLowerCase().includes(user.email.toLowerCase())
   )
 
   const handleSaveProfile = (e: React.FormEvent) => {

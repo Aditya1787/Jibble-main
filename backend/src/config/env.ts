@@ -74,6 +74,11 @@ const envSchema = z.object({
 
   // ── Feature Flags ────────────────────────────────────────────────────────
   FEATURE_FLAGS: z.string().optional().default(''),
+
+  // ── Supabase ─────────────────────────────────────────────────────────────
+  SUPABASE_URL: z.string().optional().default(''),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional().default(''),
+  SUPABASE_ANON_KEY: z.string().optional().default(''),
 });
 
 // ---------------------------------------------------------------------------

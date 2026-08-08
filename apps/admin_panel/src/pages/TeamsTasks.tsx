@@ -60,8 +60,8 @@ export default function TeamsTasks({ onSelectTeam }: Props = {}) {
     const matchPriority = priorityFilter === 'all' || task.priority === priorityFilter
     const matchSearch =
       task.title.toLowerCase().includes(taskSearch.toLowerCase()) ||
-      task.assigneeName.toLowerCase().includes(taskSearch.toLowerCase()) ||
-      task.projectName.toLowerCase().includes(taskSearch.toLowerCase())
+      (task.assigneeName ?? '').toLowerCase().includes(taskSearch.toLowerCase()) ||
+      (task.projectName ?? '').toLowerCase().includes(taskSearch.toLowerCase())
     return matchCadence && matchProj && matchPriority && matchSearch
   })
 
@@ -78,17 +78,10 @@ export default function TeamsTasks({ onSelectTeam }: Props = {}) {
     addTeam({
       name: newTeamName,
       department: newTeamDept,
+      leadEmployeeId: null,
       leadName: newTeamLead,
       description: newTeamDesc || 'Corporate employee project team.',
       activeProjectsCount: 1,
-      members: newMembers.map((m, idx) => ({
-        id: `m-custom-${idx}-${Date.now()}`,
-        name: m.name,
-        email: m.email,
-        avatar: m.avatar,
-        teamRole: m.teamRole,
-        joinedDate: 'Just now'
-      }))
     })
     setNewTeamName('')
     setNewTeamDesc('')
@@ -119,6 +112,7 @@ export default function TeamsTasks({ onSelectTeam }: Props = {}) {
       title: newTaskTitle,
       projectId: newTaskProjId,
       projectName: proj?.name || 'Workspace Project',
+      assigneeId: null,
       assigneeName: newTaskAssignee,
       assigneeAvatar: '👤',
       priority: newTaskPriority,
@@ -638,7 +632,7 @@ export default function TeamsTasks({ onSelectTeam }: Props = {}) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Assignee @username</label>
-                  <input type="text" className="nm-input-glass" value={editingTask.assigneeName} onChange={(e) => setEditingTask({ ...editingTask, assigneeName: e.target.value })} />
+                  <input type="text" className="nm-input-glass" value={editingTask.assigneeName ?? ''} onChange={(e) => setEditingTask({ ...editingTask, assigneeName: e.target.value })} />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Cadence</label>
@@ -663,13 +657,13 @@ export default function TeamsTasks({ onSelectTeam }: Props = {}) {
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Deadline</label>
-                  <input type="text" className="nm-input-glass" value={editingTask.dueDate} onChange={(e) => setEditingTask({ ...editingTask, dueDate: e.target.value })} />
+                  <input type="text" className="nm-input-glass" value={editingTask.dueDate ?? ''} onChange={(e) => setEditingTask({ ...editingTask, dueDate: e.target.value })} />
                 </div>
               </div>
 
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Description</label>
-                <textarea className="nm-input-glass" rows={3} value={editingTask.description} onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })} />
+                <textarea className="nm-input-glass" rows={3} value={editingTask.description ?? ''} onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })} />
               </div>
 
               <button type="submit" className="nm-btn-accent" style={{ marginTop: '10px', padding: '12px' }}>
