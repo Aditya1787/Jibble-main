@@ -4,6 +4,18 @@ import { useAuthStore } from '../store/useAuthStore'
 // Comprehensive roles list categorized and subcategorized
 const jobRoleData = [
   {
+    category: 'Privacy & Policy Management',
+    icon: '🛡️',
+    roles: [
+      'Privacy Intern',
+      'Data Protection Officer (DPO)',
+      'Compliance Officer',
+      'Content & Policy Moderator',
+      'Privacy Policy Auditor',
+      'Legal & Compliance Lead'
+    ]
+  },
+  {
     category: 'Executive Team',
     icon: '👨‍💼',
     roles: [
@@ -13,7 +25,8 @@ const jobRoleData = [
       'COO (Chief Operating Officer)',
       'CFO (Chief Financial Officer)',
       'CPO (Chief Product Officer)',
-      'CMO (Chief Marketing Officer)'
+      'CMO (Chief Marketing Officer)',
+      'Executive Intern'
     ]
   },
   {
@@ -278,6 +291,26 @@ const foodOptions = [
   '🍝 Pasta', '🥗 Salad', '🌮 Taco', '🍜 Ramen'
 ]
 
+const leadPresets = [
+  { name: 'Marcus Vance', title: 'Tech Head / CTO', dept: 'Engineering' },
+  { name: 'David Kim', title: 'VP of Engineering', dept: 'Software Engineering' },
+  { name: 'Elena Rostova', title: 'Engineering Manager', dept: 'Backend & Cloud' },
+  { name: 'Alex Rivera', title: 'Frontend Lead', dept: 'UI/UX & Web' },
+  { name: 'Samantha Chen', title: 'Head of Product', dept: 'Product Strategy' },
+  { name: 'Robert Taylor', title: 'DevOps & SRE Lead', dept: 'Infrastructure' },
+  { name: 'Aarav Sharma', title: 'AI & Data Science Lead', dept: 'AI / Machine Learning' },
+  { name: 'Sophia Martinez', title: 'QA & Testing Manager', dept: 'Quality Assurance' },
+]
+
+const hrPresets = [
+  { name: 'Priya Sharma', title: 'HR Director', dept: 'People Operations' },
+  { name: 'Sarah Jenkins', title: 'HR Business Partner (HRBP)', dept: 'Engineering & Product' },
+  { name: 'Anita Roy', title: 'Talent Acquisition Lead', dept: 'Recruitment' },
+  { name: 'Michael Chang', title: 'People Operations Manager', dept: 'Employee Success' },
+  { name: 'Rohan Mehta', title: 'Senior HR Executive', dept: 'HR & Compliance' },
+  { name: 'Emily Watson', title: 'Onboarding & Cultural Lead', dept: 'People Experience' },
+]
+
 export default function AuthFlow() {
   const store = useAuthStore()
   
@@ -297,10 +330,27 @@ export default function AuthFlow() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  
+  // Two-part searchable Job Role states
   const [selCategory, setSelCategory] = useState('')
+  const [catSearch, setCatSearch] = useState('')
+  const [catDropdownOpen, setCatDropdownOpen] = useState(false)
+  
   const [selSubcategory, setSelSubcategory] = useState('')
   const [selRole, setSelRole] = useState('')
-  const [roleMenuOpen, setRoleMenuOpen] = useState(false)
+  const [roleSearch, setRoleSearch] = useState('')
+  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false)
+  
+  // Supervisor (Tech Head / Team Lead) states
+  const [leadType, setLeadType] = useState('Tech Head')
+  const [reportingLead, setReportingLead] = useState('')
+  const [leadSearch, setLeadSearch] = useState('')
+  const [leadDropdownOpen, setLeadDropdownOpen] = useState(false)
+  
+  // HR Representative states
+  const [hrContact, setHrContact] = useState('')
+  const [hrSearch, setHrSearch] = useState('')
+  const [hrDropdownOpen, setHrDropdownOpen] = useState(false)
   
   // Step 2 States (Email OTP)
   const [emailOtp, setEmailOtp] = useState(['', '', '', '', '', ''])
@@ -477,6 +527,75 @@ export default function AuthFlow() {
     }, 1000)
   }
 
+  // Computed categories filtered by search query
+  const filteredCategories = jobRoleData.filter((item) =>
+    item.category.toLowerCase().includes(catSearch.toLowerCase())
+  )
+
+  // Computed roles list based on category & role search query
+  const availableRolesList = React.useMemo(() => {
+    let list: Array<{ role: string; category: string; subcategory?: string; icon?: string }> = []
+    
+    if (selCategory) {
+      const catData = jobRoleData.find((c) => c.category === selCategory)
+      if (catData) {
+        if (catData.subcategories) {
+          Object.entries(catData.subcategories).forEach(([subcat, rolesList]) => {
+            (rolesList as string[]).forEach((r) => {
+              list.push({ role: r, category: catData.category, subcategory: subcat, icon: catData.icon })
+            })
+          })
+        } else if (catData.roles) {
+          catData.roles.forEach((r) => {
+            list.push({ role: r, category: catData.category, icon: catData.icon })
+          })
+        }
+      }
+    } else {
+      jobRoleData.forEach((catData) => {
+        if (catData.subcategories) {
+          Object.entries(catData.subcategories).forEach(([subcat, rolesList]) => {
+            (rolesList as string[]).forEach((r) => {
+              list.push({ role: r, category: catData.category, subcategory: subcat, icon: catData.icon })
+            })
+          })
+        } else if (catData.roles) {
+          catData.roles.forEach((r) => {
+            list.push({ role: r, category: catData.category, icon: catData.icon })
+          })
+        }
+      })
+    }
+
+    if (roleSearch.trim()) {
+      const q = roleSearch.toLowerCase()
+      list = list.filter(
+        (item) =>
+          item.role.toLowerCase().includes(q) ||
+          item.category.toLowerCase().includes(q) ||
+          (item.subcategory && item.subcategory.toLowerCase().includes(q))
+      )
+    }
+
+    return list
+  }, [selCategory, roleSearch])
+
+  // Filtered Leads
+  const filteredLeads = leadPresets.filter(
+    (lead) =>
+      lead.name.toLowerCase().includes(leadSearch.toLowerCase()) ||
+      lead.title.toLowerCase().includes(leadSearch.toLowerCase()) ||
+      lead.dept.toLowerCase().includes(leadSearch.toLowerCase())
+  )
+
+  // Filtered HR Contacts
+  const filteredHrs = hrPresets.filter(
+    (hr) =>
+      hr.name.toLowerCase().includes(hrSearch.toLowerCase()) ||
+      hr.title.toLowerCase().includes(hrSearch.toLowerCase()) ||
+      hr.dept.toLowerCase().includes(hrSearch.toLowerCase())
+  )
+
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {}
     if (!email) {
@@ -494,9 +613,13 @@ export default function AuthFlow() {
     if (password !== confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match.'
     }
+
+    if (!selCategory && !catSearch) {
+      newErrors.category = 'Please select or type a corporate category.'
+    }
     
-    if (!selRole) {
-      newErrors.role = 'Please select a valid job role.'
+    if (!selRole && !roleSearch) {
+      newErrors.role = 'Please select or type a valid job role.'
     }
 
     setErrors(newErrors)
@@ -506,7 +629,20 @@ export default function AuthFlow() {
   const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault()
     if (validateStep1()) {
-      store.setCredentials(email, password, selRole, selCategory, selSubcategory || undefined)
+      const finalCat = selCategory || catSearch
+      const finalRole = selRole || roleSearch
+      const finalLead = reportingLead || leadSearch
+      const finalHr = hrContact || hrSearch
+      store.setCredentials(
+        email, 
+        password, 
+        finalRole, 
+        finalCat, 
+        selSubcategory || undefined,
+        finalLead || undefined,
+        leadType || undefined,
+        finalHr || undefined
+      )
       setStep(2)
     }
   }
@@ -640,16 +776,26 @@ export default function AuthFlow() {
   const selectedCategoryData = jobRoleData.find((c) => c.category === selCategory)
   
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '40px 20px',
-      color: 'var(--text-primary)',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        padding: '40px 20px',
+        color: 'var(--text-primary)',
+        position: 'relative',
+        overflowY: 'auto',
+      }}
+      onClick={() => {
+        // Close dropdowns when clicking outside input fields
+        setCatDropdownOpen(false)
+        setRoleDropdownOpen(false)
+        setLeadDropdownOpen(false)
+        setHrDropdownOpen(false)
+      }}
+    >
       {/* Spatial UI Floating Drifting Background Blobs */}
       <div className="spatial-bg">
         <div className="spatial-orb orb-1" />
@@ -854,16 +1000,20 @@ export default function AuthFlow() {
           </form>
         )}
 
-        {/* ================= MODE: REGISTER (STEP 1: CREDENTIALS & ROLE) ================= */}
+        {/* ================= MODE: REGISTER (STEP 1: CREDENTIALS, ROLE, LEAD & HR) ================= */}
         {activeMode === 'register' && step === 1 && (
-          <form onSubmit={handleStep1Submit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <form
+            onSubmit={handleStep1Submit}
+            style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div style={{ textAlign: 'center' }}>
               <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)' }}>Create Workspace Profile</h3>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Provide email, password, and select your corporate category role.</p>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Provide email, password, select job category, role, Team Lead & HR contact.</p>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {/* Email */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Personal Email */}
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-secondary)' }}>Personal Email ID</label>
                 <input
@@ -902,166 +1052,444 @@ export default function AuthFlow() {
                 </div>
               </div>
 
-              {/* Job Role Selection Area */}
-              <div style={{ position: 'relative' }}>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-secondary)' }}>Job Role</label>
-                <button
-                  type="button"
-                  className="nm-input-glass"
-                  style={{
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    background: 'rgba(243, 239, 232, 0.3)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '12px 16px',
-                  }}
-                  onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-                >
-                  <span style={{ color: selRole ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: 600 }}>
-                    {selRole ? `${selCategory} ${selSubcategory ? '› ' + selSubcategory : ''} › ${selRole}` : 'Select your Category & Job Role'}
-                  </span>
-                  <span>{roleMenuOpen ? '▲' : '▼'}</span>
-                </button>
-                {errors.role && <span style={{ color: 'var(--danger)', fontSize: '11px', marginTop: '4px', display: 'block', fontWeight: 600 }}>{errors.role}</span>}
+              {/* TWO-PART SEARCHABLE JOB ROLE SECTION */}
+              <div style={{
+                background: 'rgba(243, 239, 232, 0.35)',
+                borderRadius: '16px',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px',
+                boxShadow: 'var(--nm-inset-sm)',
+                border: '1px solid rgba(255, 255, 255, 0.5)'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    🏷️ 1. Corporate Category & Job Role
+                  </label>
+                  {(selCategory || selRole || catSearch || roleSearch) && (
+                    <button
+                      type="button"
+                      style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}
+                      onClick={() => {
+                        setSelCategory('')
+                        setCatSearch('')
+                        setSelSubcategory('')
+                        setSelRole('')
+                        setRoleSearch('')
+                      }}
+                    >
+                      Clear ✕
+                    </button>
+                  )}
+                </div>
 
-                {/* Dropdown Menu Container */}
-                {roleMenuOpen && (
-                  <div className="spatial-panel animate-pop-in" style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 10px)',
-                    left: 0,
-                    width: '100%',
-                    maxHeight: '320px',
-                    overflowY: 'auto',
-                    zIndex: 100,
-                    padding: '16px',
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1.2fr',
-                    gap: '12px',
-                    boxShadow: '0 20px 40px rgba(61,61,61,0.12), 6px 6px 15px var(--shadow-dark), -6px -6px 15px var(--shadow-light)',
-                  }}>
-                    {/* Left Column: Categories */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderRight: '1px solid var(--border)', paddingRight: '8px' }}>
-                      <p style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '4px' }}>Categories</p>
-                      {jobRoleData.map((item) => (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  {/* Part 1: Category Input (Searchable) */}
+                  <div style={{ position: 'relative' }}>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: 'var(--text-secondary)' }}>
+                      Category
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        className="nm-input-glass"
+                        placeholder="Search Category..."
+                        value={catSearch}
+                        onChange={(e) => {
+                          setCatSearch(e.target.value)
+                          setCatDropdownOpen(true)
+                        }}
+                        onFocus={() => {
+                          setCatDropdownOpen(true)
+                          setRoleDropdownOpen(false)
+                          setLeadDropdownOpen(false)
+                          setHrDropdownOpen(false)
+                        }}
+                        style={{ paddingRight: '28px', fontWeight: 600, fontSize: '13px' }}
+                      />
+                      <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: '12px', opacity: 0.6 }}>
+                        🔍
+                      </span>
+                    </div>
+                    {errors.category && <span style={{ color: 'var(--danger)', fontSize: '11px', marginTop: '4px', display: 'block', fontWeight: 600 }}>{errors.category}</span>}
+
+                    {/* Category Dropdown List */}
+                    {catDropdownOpen && (
+                      <div
+                        className="spatial-panel animate-pop-in"
+                        style={{
+                          position: 'absolute',
+                          top: 'calc(100% + 6px)',
+                          left: 0,
+                          width: '100%',
+                          maxHeight: '220px',
+                          overflowY: 'auto',
+                          zIndex: 120,
+                          padding: '8px',
+                          boxShadow: '0 12px 30px rgba(0,0,0,0.15)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '4px',
+                          background: 'var(--bg-primary)',
+                          borderRadius: '12px'
+                        }}
+                      >
+                        {filteredCategories.length > 0 ? (
+                          filteredCategories.map((cat) => (
+                            <button
+                              key={cat.category}
+                              type="button"
+                              style={{
+                                textAlign: 'left',
+                                padding: '8px 10px',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                                fontWeight: selCategory === cat.category ? 700 : 500,
+                                background: selCategory === cat.category ? 'var(--bg-hover)' : 'transparent',
+                                color: selCategory === cat.category ? 'var(--accent)' : 'var(--text-primary)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                              }}
+                              onClick={() => {
+                                setSelCategory(cat.category)
+                                setCatSearch(cat.category)
+                                setSelSubcategory('')
+                                setSelRole('')
+                                setRoleSearch('')
+                                setCatDropdownOpen(false)
+                                setRoleDropdownOpen(true)
+                              }}
+                            >
+                              <span>{cat.icon}</span>
+                              <span>{cat.category}</span>
+                            </button>
+                          ))
+                        ) : (
+                          <div style={{ padding: '8px', fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center' }}>
+                            No matching categories
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Part 2: Role Input (Searchable) */}
+                  <div style={{ position: 'relative' }}>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: 'var(--text-secondary)' }}>
+                      Job Role
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        className="nm-input-glass"
+                        placeholder={selCategory ? `Roles in ${selCategory}...` : "Search roles..."}
+                        value={roleSearch}
+                        onChange={(e) => {
+                          setRoleSearch(e.target.value)
+                          setRoleDropdownOpen(true)
+                        }}
+                        onFocus={() => {
+                          setRoleDropdownOpen(true)
+                          setCatDropdownOpen(false)
+                          setLeadDropdownOpen(false)
+                          setHrDropdownOpen(false)
+                        }}
+                        style={{ paddingRight: '28px', fontWeight: 600, fontSize: '13px' }}
+                      />
+                      <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: '12px', opacity: 0.6 }}>
+                        🔍
+                      </span>
+                    </div>
+                    {errors.role && <span style={{ color: 'var(--danger)', fontSize: '11px', marginTop: '4px', display: 'block', fontWeight: 600 }}>{errors.role}</span>}
+
+                    {/* Role Dropdown List */}
+                    {roleDropdownOpen && (
+                      <div
+                        className="spatial-panel animate-pop-in"
+                        style={{
+                          position: 'absolute',
+                          top: 'calc(100% + 6px)',
+                          left: 0,
+                          width: '100%',
+                          maxHeight: '220px',
+                          overflowY: 'auto',
+                          zIndex: 120,
+                          padding: '8px',
+                          boxShadow: '0 12px 30px rgba(0,0,0,0.15)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '4px',
+                          background: 'var(--bg-primary)',
+                          borderRadius: '12px'
+                        }}
+                      >
+                        {availableRolesList.length > 0 ? (
+                          availableRolesList.map((item, idx) => (
+                            <button
+                              key={`${item.category}-${item.role}-${idx}`}
+                              type="button"
+                              style={{
+                                textAlign: 'left',
+                                padding: '8px 10px',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                                fontWeight: selRole === item.role ? 700 : 500,
+                                background: selRole === item.role ? 'var(--accent)' : 'transparent',
+                                color: selRole === item.role ? '#ffffff' : 'var(--text-primary)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                              }}
+                              onClick={() => {
+                                setSelRole(item.role)
+                                setRoleSearch(item.role)
+                                if (item.category) {
+                                  setSelCategory(item.category)
+                                  setCatSearch(item.category)
+                                }
+                                if (item.subcategory) {
+                                  setSelSubcategory(item.subcategory)
+                                } else {
+                                  setSelSubcategory('')
+                                }
+                                setRoleDropdownOpen(false)
+                              }}
+                            >
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span>{item.icon ? `${item.icon} ` : ''}{item.role}</span>
+                                {(!selCategory || item.subcategory) && (
+                                  <span style={{ fontSize: '10px', opacity: 0.8 }}>
+                                    {item.category}{item.subcategory ? ` › ${item.subcategory}` : ''}
+                                  </span>
+                                )}
+                              </div>
+                              {selRole === item.role && <span>✓</span>}
+                            </button>
+                          ))
+                        ) : (
+                          <div style={{ padding: '8px', fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center' }}>
+                            {roleSearch ? `No roles matching "${roleSearch}"` : 'Type to search role'}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Selected Position Summary Badge */}
+                {selRole && (
+                  <div className="nm-card-inset" style={{ padding: '8px 12px', borderRadius: '8px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: 'var(--accent)', fontWeight: 700 }}>Position:</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {selCategory} {selSubcategory ? `› ${selSubcategory}` : ''} › <strong style={{ color: 'var(--accent)' }}>{selRole}</strong>
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* SUPERVISOR & HR SELECTION SECTION */}
+              <div style={{
+                background: 'rgba(243, 239, 232, 0.35)',
+                borderRadius: '16px',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px',
+                boxShadow: 'var(--nm-inset-sm)',
+                border: '1px solid rgba(255, 255, 255, 0.5)'
+              }}>
+                <label style={{ fontSize: '12px', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  👥 2. Select Team Lead, Tech Head & HR Representative
+                </label>
+
+                {/* Row 1: Team Lead / Tech Head Selector */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '10px', alignItems: 'flex-start' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: 'var(--text-secondary)' }}>
+                      Lead Role Type
+                    </label>
+                    <select
+                      className="nm-input-glass"
+                      style={{ fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                      value={leadType}
+                      onChange={(e) => setLeadType(e.target.value)}
+                    >
+                      <option value="Tech Head">Tech Head</option>
+                      <option value="Team Lead">Team Lead</option>
+                      <option value="Engineering Manager">Engineering Manager</option>
+                      <option value="Project Manager">Project Manager</option>
+                      <option value="Product Lead">Product Lead</option>
+                      <option value="Department Head">Department Head</option>
+                    </select>
+                  </div>
+
+                  <div style={{ position: 'relative' }}>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: 'var(--text-secondary)' }}>
+                      Select / Search {leadType}
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        className="nm-input-glass"
+                        placeholder={`Search ${leadType} or type name...`}
+                        value={leadSearch}
+                        onChange={(e) => {
+                          setLeadSearch(e.target.value)
+                          setReportingLead(e.target.value)
+                          setLeadDropdownOpen(true)
+                        }}
+                        onFocus={() => {
+                          setLeadDropdownOpen(true)
+                          setCatDropdownOpen(false)
+                          setRoleDropdownOpen(false)
+                          setHrDropdownOpen(false)
+                        }}
+                        style={{ paddingRight: '28px', fontWeight: 600, fontSize: '12px' }}
+                      />
+                      <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: '12px', opacity: 0.6 }}>
+                        🔍
+                      </span>
+                    </div>
+
+                    {/* Lead Dropdown Options */}
+                    {leadDropdownOpen && (
+                      <div
+                        className="spatial-panel animate-pop-in"
+                        style={{
+                          position: 'absolute',
+                          top: 'calc(100% + 6px)',
+                          left: 0,
+                          width: '100%',
+                          maxHeight: '200px',
+                          overflowY: 'auto',
+                          zIndex: 120,
+                          padding: '6px',
+                          boxShadow: '0 12px 30px rgba(0,0,0,0.15)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '4px',
+                          background: 'var(--bg-primary)',
+                          borderRadius: '12px'
+                        }}
+                      >
+                        {filteredLeads.map((lead) => (
+                          <button
+                            key={lead.name}
+                            type="button"
+                            style={{
+                              textAlign: 'left',
+                              padding: '8px 10px',
+                              border: 'none',
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                              background: reportingLead === `${lead.name} (${lead.title})` ? 'var(--bg-hover)' : 'transparent',
+                              color: 'var(--text-primary)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              flexDirection: 'column'
+                            }}
+                            onClick={() => {
+                              const val = `${lead.name} (${lead.title})`
+                              setReportingLead(val)
+                              setLeadSearch(val)
+                              setLeadDropdownOpen(false)
+                            }}
+                          >
+                            <span style={{ fontWeight: 700 }}>👨‍💼 {lead.name}</span>
+                            <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{lead.title} • {lead.dept}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Row 2: HR Representative Selector */}
+                <div style={{ position: 'relative' }}>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: 'var(--text-secondary)' }}>
+                    Select / Search HR Representative
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      className="nm-input-glass"
+                      placeholder="Search HR Representative or type name..."
+                      value={hrSearch}
+                      onChange={(e) => {
+                        setHrSearch(e.target.value)
+                        setHrContact(e.target.value)
+                        setHrDropdownOpen(true)
+                      }}
+                      onFocus={() => {
+                        setHrDropdownOpen(true)
+                        setCatDropdownOpen(false)
+                        setRoleDropdownOpen(false)
+                        setLeadDropdownOpen(false)
+                      }}
+                      style={{ paddingRight: '28px', fontWeight: 600, fontSize: '12px' }}
+                    />
+                    <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: '12px', opacity: 0.6 }}>
+                      🔍
+                    </span>
+                  </div>
+
+                  {/* HR Dropdown Options */}
+                  {hrDropdownOpen && (
+                    <div
+                      className="spatial-panel animate-pop-in"
+                      style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 6px)',
+                        left: 0,
+                        width: '100%',
+                        maxHeight: '200px',
+                        overflowY: 'auto',
+                        zIndex: 120,
+                        padding: '6px',
+                        boxShadow: '0 12px 30px rgba(0,0,0,0.15)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px',
+                        background: 'var(--bg-primary)',
+                        borderRadius: '12px'
+                      }}
+                    >
+                      {filteredHrs.map((hr) => (
                         <button
-                          key={item.category}
+                          key={hr.name}
                           type="button"
                           style={{
-                            background: selCategory === item.category ? 'var(--bg-hover)' : 'transparent',
-                            color: selCategory === item.category ? 'var(--accent)' : 'var(--text-primary)',
+                            textAlign: 'left',
+                            padding: '8px 10px',
                             border: 'none',
                             borderRadius: '8px',
-                            padding: '8px 10px',
-                            fontSize: '13px',
-                            fontWeight: selCategory === item.category ? 700 : 500,
-                            textAlign: 'left',
+                            fontSize: '12px',
+                            background: hrContact === `${hr.name} (${hr.title})` ? 'var(--bg-hover)' : 'transparent',
+                            color: 'var(--text-primary)',
                             cursor: 'pointer',
                             display: 'flex',
-                            gap: '8px',
-                            alignItems: 'center',
+                            flexDirection: 'column'
                           }}
                           onClick={() => {
-                            setSelCategory(item.category)
-                            setSelSubcategory('')
-                            setSelRole('')
+                            const val = `${hr.name} (${hr.title})`
+                            setHrContact(val)
+                            setHrSearch(val)
+                            setHrDropdownOpen(false)
                           }}
                         >
-                          <span>{item.icon}</span>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.category}</span>
+                          <span style={{ fontWeight: 700 }}>🏢 {hr.name}</span>
+                          <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{hr.title} • {hr.dept}</span>
                         </button>
                       ))}
                     </div>
-
-                    {/* Right Column: Subcategories & Roles */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', paddingLeft: '4px' }}>
-                      {selCategory ? (
-                        <>
-                          <p style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                            Roles in {selCategory}
-                          </p>
-                          
-                          {/* If subcategories exist */}
-                          {selectedCategoryData?.subcategories ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                              {Object.entries(selectedCategoryData.subcategories as any).map(([subcat, rolesList]) => (
-                                <div key={subcat} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                  <div style={{
-                                    fontSize: '11px',
-                                    fontWeight: 700,
-                                    color: 'var(--accent)',
-                                    padding: '2px 6px',
-                                    background: 'rgba(51, 102, 89, 0.08)',
-                                    borderRadius: '4px',
-                                    width: 'fit-content',
-                                    margin: '4px 0 2px'
-                                  }}>{subcat}</div>
-                                  {(rolesList as string[]).map((r: string) => (
-                                    <button
-                                      key={r}
-                                      type="button"
-                                      style={{
-                                        background: selRole === r ? 'var(--accent)' : 'transparent',
-                                        color: selRole === r ? '#ffffff' : 'var(--text-secondary)',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        padding: '6px 12px',
-                                        fontSize: '12px',
-                                        fontWeight: 500,
-                                        textAlign: 'left',
-                                        cursor: 'pointer',
-                                      }}
-                                      onClick={() => {
-                                        setSelSubcategory(subcat)
-                                        setSelRole(r)
-                                        setRoleMenuOpen(false)
-                                      }}
-                                    >
-                                      {r}
-                                    </button>
-                                  ))}
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            /* If standard role list exists directly under Category */
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              {selectedCategoryData?.roles?.map((r: string) => (
-                                <button
-                                  key={r}
-                                  type="button"
-                                  style={{
-                                    background: selRole === r ? 'var(--accent)' : 'transparent',
-                                    color: selRole === r ? '#ffffff' : 'var(--text-secondary)',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    padding: '6px 12px',
-                                    fontSize: '12px',
-                                    fontWeight: 500,
-                                    textAlign: 'left',
-                                    cursor: 'pointer',
-                                  }}
-                                  onClick={() => {
-                                    setSelRole(r)
-                                    setRoleMenuOpen(false)
-                                  }}
-                                >
-                                  {r}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
-                          Select category on left
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1562,7 +1990,21 @@ export default function AuthFlow() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '8px 16px', fontSize: '13px' }}>
                 <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Company Role:</span>
-                <span style={{ fontWeight: 700, color: 'var(--accent)' }}>{selRole} ({selCategory})</span>
+                <span style={{ fontWeight: 700, color: 'var(--accent)' }}>{selRole || roleSearch} ({selCategory || catSearch})</span>
+
+                {(reportingLead || leadSearch) && (
+                  <>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Supervisor ({leadType}):</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>👨‍💼 {reportingLead || leadSearch}</span>
+                  </>
+                )}
+
+                {(hrContact || hrSearch) && (
+                  <>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>HR Contact:</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>🏢 {hrContact || hrSearch}</span>
+                  </>
+                )}
 
                 <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Belongs to:</span>
                 <span style={{ fontWeight: 600 }}>📍 {hometown}</span>

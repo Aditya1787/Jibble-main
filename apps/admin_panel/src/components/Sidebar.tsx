@@ -2,12 +2,17 @@ import type { Page } from '../App'
 import { useAuthStore } from '../store/useAuthStore'
 
 const navItems = [
-  { id: 'dashboard',  label: 'Dashboard',  icon: '⊞' },
-  { id: 'users',      label: 'Users',       icon: '👥' },
-  { id: 'posts',      label: 'Posts',       icon: '📝' },
-  { id: 'reports',    label: 'Reports',     icon: '🚩' },
-  { id: 'analytics',  label: 'Analytics',   icon: '📊' },
-  { id: 'settings',   label: 'Settings',    icon: '⚙️' },
+  { id: 'dashboard',  label: 'Dashboard',       icon: '⊞' },
+  { id: 'profile',    label: 'My Profile',      icon: '👤' },
+  { id: 'hierarchy',  label: 'Org Hierarchy',   icon: '🌳' },
+  { id: 'users',      label: 'Users',           icon: '👥' },
+  { id: 'teams',      label: 'Teams & Roster',  icon: '🏢' },
+  { id: 'tasks',      label: 'Tasks Dashboard', icon: '📋' },
+  { id: 'privacy',    label: 'Privacy & Policy', icon: '🛡️' },
+  { id: 'posts',      label: 'Posts',           icon: '📝' },
+  { id: 'reports',    label: 'Reports',         icon: '🚩' },
+  { id: 'analytics',  label: 'Analytics',       icon: '📊' },
+  { id: 'settings',   label: 'Settings',        icon: '⚙️' },
 ] as const
 
 interface Props {

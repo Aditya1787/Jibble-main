@@ -1,5 +1,6 @@
 import StatCard from '../components/StatCard'
 import { useAuthStore } from '../store/useAuthStore'
+import { useTeamTaskStore } from '../store/useTeamTaskStore'
 
 const recentUsers = [
   { name: 'Aditya Kumar',    college: 'IIT Delhi',      joined: '2 min ago',   status: 'active' },
@@ -17,25 +18,29 @@ const statusColor: Record<string, string> = {
 
 export default function Dashboard() {
   const { user } = useAuthStore()
+  const { teams, tasks, policies } = useTeamTaskStore()
+
+  const mandatoryCount = policies.filter(p => p.isMandatory).length
+  const avgCompliance = Math.round(policies.reduce((acc, p) => acc + p.complianceRate, 0) / (policies.length || 1))
 
   return (
     <div style={{ padding: '32px 36px', maxWidth: 1400, display: 'flex', flexDirection: 'column', gap: '32px' }}>
       {/* Header */}
       <div>
         <h1 style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.03em', marginBottom: 4 }}>
-          Dashboard
+          Corporate Workspace Dashboard
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500 }}>
-          Welcome back, <strong style={{ color: 'var(--accent)' }}>@{user?.username || 'Admin'}</strong> — you are logged in as the <strong style={{ color: 'var(--accent)' }}>{user?.role || 'Super Admin'}</strong>.
+          Welcome back, <strong style={{ color: 'var(--accent)' }}>@{user?.username || 'Admin'}</strong> — corporate position: <strong style={{ color: 'var(--accent)' }}>{user?.role || 'Founder / CEO'}</strong>.
         </p>
       </div>
 
-      {/* Stats Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
-        <StatCard title="Total Users"    value="24,891" change="12.4%" positive icon="👥" color="#336659" />
-        <StatCard title="Active Today"   value="3,214"  change="8.2%"  positive icon="🔥" color="#336659" />
-        <StatCard title="New Posts"      value="1,842"  change="5.1%"  positive icon="📝" color="#c28d38" />
-        <StatCard title="Open Reports"   value="47"     change="3.0%"  positive={false} icon="🚩" color="#b34a4a" />
+      {/* Primary KPI Stats Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
+        <StatCard title="Active Teams"      value={`${teams.length} Teams`} change="100%" positive icon="🏢" color="#336659" />
+        <StatCard title="Assigned Tasks"    value={`${tasks.length} Active`} change="12.4%" positive icon="📋" color="#3b82f6" />
+        <StatCard title="Policy Sign-offs"  value={`${avgCompliance}% Compliance`} change="4.2%" positive icon="🛡️" color="#10b981" />
+        <StatCard title="Open Reports"      value="47" change="3.0%" positive={false} icon="🚩" color="#b34a4a" />
       </div>
 
       {/* Two column section */}
