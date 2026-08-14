@@ -74,6 +74,41 @@ export const employeeRepo = {
     return data as Employee | null;
   },
 
+  async findByUsername(username: string): Promise<Employee | null> {
+    const sb = getSupabaseAdmin();
+    const { data, error } = await sb
+      .from('employees')
+      .select('*')
+      .ilike('username', username)
+      .single();
+    if (error && error.code !== 'PGRST116') throw AppError.internal(error.message);
+    return data as Employee | null;
+  },
+
+  async findByRole(role: string): Promise<Employee | null> {
+    const sb = getSupabaseAdmin();
+    const { data, error } = await sb
+      .from('employees')
+      .select('*')
+      .ilike('role', role)
+      .limit(1)
+      .single();
+    if (error && error.code !== 'PGRST116') throw AppError.internal(error.message);
+    return data as Employee | null;
+  },
+
+  async linkAuthUser(employeeId: string, authUserId: string): Promise<Employee> {
+    const sb = getSupabaseAdmin();
+    const { data, error } = await sb
+      .from('employees')
+      .update({ auth_user_id: authUserId })
+      .eq('id', employeeId)
+      .select()
+      .single();
+    if (error) throw AppError.internal(error.message);
+    return data as Employee;
+  },
+
   async create(input: CreateEmployeeInput & { auth_user_id?: string }): Promise<Employee> {
     const sb = getSupabaseAdmin();
     const { data, error } = await sb
@@ -145,7 +180,7 @@ export const teamRepo = {
         *,
         members:team_members(
           id, team_role, joined_date,
-          employee:employee_id(id, full_name, email, avatar_emoji, role)
+          employee:employee_id(id, username, full_name, email, avatar_emoji, role)
         )
       `)
       .order('name', { ascending: true });
@@ -161,7 +196,7 @@ export const teamRepo = {
         *,
         members:team_members(
           id, team_role, joined_date,
-          employee:employee_id(id, full_name, email, avatar_emoji, role)
+          employee:employee_id(id, username, full_name, email, avatar_emoji, role)
         )
       `)
       .eq('id', id)

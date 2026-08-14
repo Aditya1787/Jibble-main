@@ -8,16 +8,17 @@ import {
   allCompanyCategories,
   jobRoleData,
   allOrgEmployees,
-  flattenOrgTree
+  flattenOrgTree,
+  buildOrgTreeFromNodes,
 } from '../data/orgData'
 
 type ViewMode = 'tree' | 'grid' | 'catalog'
 
 export default function OrgHierarchy() {
-  const { registeredUsers } = useAuthStore()
+  const { user, registeredUsers } = useAuthStore()
   const { projects } = useTeamTaskStore()
 
-  const [selectedUsername, setSelectedUsername] = useState<string>('admin_ceo')
+  const [selectedUsername, setSelectedUsername] = useState<string>('')
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all')
   const [selectedSubcategoryFilter, setSelectedSubcategoryFilter] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
@@ -26,30 +27,48 @@ export default function OrgHierarchy() {
   const [collapsedNodes, setCollapsedNodes] = useState<Record<string, boolean>>({})
   const [showProfileModal, setShowProfileModal] = useState<string | null>(null)
   const [showCatalogDrawer, setShowCatalogDrawer] = useState<boolean>(false)
+  const [removedUsernames, setRemovedUsernames] = useState<string[]>([])
+  const [hierarchyError, setHierarchyError] = useState<string | null>(null)
 
-  // Enrich tree with store data
-  const allNodes = useMemo(() => {
-    const flattened = flattenOrgTree(fullOrgTree)
-    return flattened.map((n) => {
-      const reg = registeredUsers.find((r) => r.profile.username.toLowerCase() === n.username.toLowerCase())
-      return {
-        ...n,
-        avatar: reg?.profile.avatar || n.avatar,
-        role: reg?.profile.role || n.role,
-        email: reg?.profile.email || n.email
-      }
-    })
-  }, [registeredUsers])
+  const isExecutiveRole = (roleTitle: string) => {
+    if (!roleTitle) return false
+    const norm = roleTitle.toLowerCase()
+    const execs = ['founder', 'ceo', 'cto', 'cfo', 'coo', 'cpo', 'cmo', 'executive']
+    return execs.some((e) => norm.includes(e))
+  }
+
+  // Dynamically build org nodes from real accounts
+  const allNodes: OrgNode[] = useMemo(() => {
+    const activeProfiles = user
+      ? [user, ...registeredUsers.map((r) => r.profile).filter((p) => p.email.toLowerCase() !== user.email.toLowerCase())]
+      : registeredUsers.map((r) => r.profile)
+
+    return activeProfiles
+      .filter((p) => !removedUsernames.includes(p.username.toLowerCase()))
+      .map((p, idx) => ({
+        id: `node-${idx + 1}`,
+        name: p.username,
+        username: p.username,
+        role: p.role,
+        category: p.category,
+        subcategory: p.subcategory,
+        email: p.email,
+        avatar: p.avatar || '👤',
+        reportsTo: p.reportingLead,
+        children: [],
+      }))
+  }, [user, registeredUsers, removedUsernames])
+
+  const dynamicOrgTree = useMemo(() => buildOrgTreeFromNodes(allNodes), [allNodes])
 
   const selectedNode = allNodes.find((n) => n.username.toLowerCase() === selectedUsername.toLowerCase()) || allNodes[0]
-  const supervisorNode = allNodes.find((n) => n.username.toLowerCase() === selectedNode.reportsTo?.toLowerCase())
-  const directReports = allNodes.filter((n) => n.reportsTo?.toLowerCase() === selectedNode.username.toLowerCase())
-  const sharedProjects = projects.filter(
+  const supervisorNode = selectedNode ? allNodes.find((n) => n.username.toLowerCase() === selectedNode.reportsTo?.toLowerCase()) : undefined
+  const directReports = selectedNode ? allNodes.filter((n) => n.reportsTo?.toLowerCase() === selectedNode.username.toLowerCase()) : []
+  const sharedProjects = selectedNode ? projects.filter(
     (p) =>
       (p.teamName ?? '').toLowerCase().includes(selectedNode.category.toLowerCase()) ||
-      (p.teamName ?? '').toLowerCase().includes(selectedNode.subcategory?.toLowerCase() || '') ||
-      (p.teamName ?? '').toLowerCase().includes('engineering')
-  )
+      (p.teamName ?? '').toLowerCase().includes(selectedNode.subcategory?.toLowerCase() || '')
+  ) : []
 
   // Search and filter matching logic
   const matchesFilter = (node: OrgNode): boolean => {
@@ -325,14 +344,14 @@ export default function OrgHierarchy() {
         {/* Search and View Switcher */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
           {/* Search Box */}
-          <div style={{ position: 'relative', width: '340px' }}>
+          <div style={{ position: 'relative', width: '380px', maxWidth: '100%' }}>
             <input
               type="text"
-              className="nm-input-glass"
+              className="nm-input"
               placeholder="Search by name, role (e.g. LLM Engineer, Flutter, DPO)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ paddingRight: '36px', fontSize: '13px', fontWeight: 600, width: '100%' }}
+              style={{ paddingRight: '36px', fontSize: '13px', fontWeight: 500, width: '100%', height: '42px' }}
             />
             {searchQuery ? (
               <button
@@ -343,14 +362,14 @@ export default function OrgHierarchy() {
                 ✕
               </button>
             ) : (
-              <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: '13px' }}>
+              <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: '13px', opacity: 0.6 }}>
                 🔍
               </span>
             )}
           </div>
 
           {/* View Mode Buttons */}
-          <div style={{ display: 'flex', gap: '6px', background: 'rgba(0,0,0,0.04)', padding: '4px', borderRadius: '12px' }}>
+          <div className="nm-card-inset" style={{ display: 'flex', gap: '4px', padding: '4px', borderRadius: '12px', background: 'var(--bg-card)' }}>
             <button
               type="button"
               style={{
@@ -358,11 +377,12 @@ export default function OrgHierarchy() {
                 borderRadius: '8px',
                 border: 'none',
                 fontSize: '12px',
-                fontWeight: 800,
+                fontWeight: 700,
                 cursor: 'pointer',
                 background: viewMode === 'tree' ? 'var(--accent)' : 'transparent',
-                color: viewMode === 'tree' ? '#ffffff' : 'var(--text-primary)',
-                transition: 'all 0.2s'
+                color: viewMode === 'tree' ? '#ffffff' : 'var(--text-secondary)',
+                transition: 'all 0.2s',
+                boxShadow: viewMode === 'tree' ? '0 2px 8px var(--accent-glow)' : 'none'
               }}
               onClick={() => setViewMode('tree')}
             >
@@ -375,11 +395,12 @@ export default function OrgHierarchy() {
                 borderRadius: '8px',
                 border: 'none',
                 fontSize: '12px',
-                fontWeight: 800,
+                fontWeight: 700,
                 cursor: 'pointer',
                 background: viewMode === 'grid' ? 'var(--accent)' : 'transparent',
-                color: viewMode === 'grid' ? '#ffffff' : 'var(--text-primary)',
-                transition: 'all 0.2s'
+                color: viewMode === 'grid' ? '#ffffff' : 'var(--text-secondary)',
+                transition: 'all 0.2s',
+                boxShadow: viewMode === 'grid' ? '0 2px 8px var(--accent-glow)' : 'none'
               }}
               onClick={() => setViewMode('grid')}
             >
@@ -392,11 +413,12 @@ export default function OrgHierarchy() {
                 borderRadius: '8px',
                 border: 'none',
                 fontSize: '12px',
-                fontWeight: 800,
+                fontWeight: 700,
                 cursor: 'pointer',
                 background: viewMode === 'catalog' ? 'var(--accent)' : 'transparent',
-                color: viewMode === 'catalog' ? '#ffffff' : 'var(--text-primary)',
-                transition: 'all 0.2s'
+                color: viewMode === 'catalog' ? '#ffffff' : 'var(--text-secondary)',
+                transition: 'all 0.2s',
+                boxShadow: viewMode === 'catalog' ? '0 2px 8px var(--accent-glow)' : 'none'
               }}
               onClick={() => setViewMode('catalog')}
             >
@@ -410,7 +432,7 @@ export default function OrgHierarchy() {
           <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             🏷️ Filter Hierarchy by Department (19 Categories)
           </span>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', maxHeight: '110px', overflowY: 'auto', paddingRight: '4px' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', paddingRight: '4px' }}>
             {allCompanyCategories.map((cat) => {
               const isActive = selectedCategoryFilter.toLowerCase() === cat.id.toLowerCase()
               return (
@@ -418,15 +440,16 @@ export default function OrgHierarchy() {
                   key={cat.id}
                   type="button"
                   style={{
-                    padding: '6px 12px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    fontSize: '11px',
-                    fontWeight: 700,
+                    padding: '7px 14px',
+                    borderRadius: '20px',
+                    border: isActive ? '1px solid var(--accent)' : '1px solid var(--border)',
+                    fontSize: '12px',
+                    fontWeight: isActive ? 700 : 500,
                     cursor: 'pointer',
-                    background: isActive ? 'var(--accent)' : 'rgba(243,239,232,0.6)',
+                    background: isActive ? 'var(--accent)' : 'var(--bg-card)',
                     color: isActive ? '#ffffff' : 'var(--text-primary)',
-                    boxShadow: isActive ? 'var(--nm-inset-sm)' : 'var(--nm-flat-xs)'
+                    boxShadow: isActive ? '0 4px 12px var(--accent-glow)' : 'var(--nm-flat-xs)',
+                    transition: 'all 0.2s ease'
                   }}
                   onClick={() => {
                     setSelectedCategoryFilter(cat.id)
@@ -497,15 +520,52 @@ export default function OrgHierarchy() {
             </div>
           </div>
 
-          <button
-            type="button"
-            className="nm-btn-accent"
-            style={{ padding: '8px 18px', fontSize: '12px' }}
-            onClick={() => setShowProfileModal(selectedNode.username)}
-          >
-            Open Profile Dashboard →
-          </button>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button
+              type="button"
+              className="nm-btn-accent"
+              style={{ padding: '8px 18px', fontSize: '12px' }}
+              onClick={() => setShowProfileModal(selectedNode.username)}
+            >
+              Open Profile Dashboard →
+            </button>
+            {Boolean(
+              user?.role?.toLowerCase().includes('ceo') ||
+              user?.role?.toLowerCase().includes('founder') ||
+              user?.role?.toLowerCase().includes('hr') ||
+              user?.category?.toLowerCase().includes('hr') ||
+              user?.category?.toLowerCase().includes('human resources') ||
+              user?.category?.toLowerCase().includes('people operations')
+            ) && (
+              <button
+                type="button"
+                className="nm-btn"
+                style={{ padding: '8px 14px', fontSize: '12px', color: 'var(--danger)' }}
+                onClick={() => {
+                  setHierarchyError(null)
+                  const isExec = isExecutiveRole(selectedNode.role)
+                  const isCeo = user?.role?.toLowerCase().includes('ceo') || user?.role?.toLowerCase().includes('founder')
+                  if (isExec && !isCeo) {
+                    setHierarchyError(`Permission Denied: Only CEO / Founder can remove executive team members (${selectedNode.role}).`)
+                    return
+                  }
+                  if (confirm(`Remove @${selectedNode.username} from organization hierarchy?`)) {
+                    setRemovedUsernames((prev) => [...prev, selectedNode.username.toLowerCase()])
+                  }
+                }}
+              >
+                🗑️ Remove Member
+              </button>
+            )}
+          </div>
         </div>
+
+        {hierarchyError && (
+          <div className="nm-card-inset animate-pop-in" style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(179,74,74,0.08)', border: '1px solid rgba(179,74,74,0.2)', color: 'var(--danger)', fontWeight: 700, fontSize: '12px', marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>⚠️ {hierarchyError}</span>
+            <button onClick={() => setHierarchyError(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--danger)', fontWeight: 800 }}>✕</button>
+          </div>
+        )}
 
         {/* Linkages Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
@@ -644,7 +704,19 @@ export default function OrgHierarchy() {
                 transition: 'transform 0.2s'
               }}
             >
-              <RenderTreeNode node={fullOrgTree} />
+              {dynamicOrgTree ? (
+                <RenderTreeNode node={dynamicOrgTree} />
+              ) : (
+                <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '60px 20px' }}>
+                  <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>🏢</span>
+                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                    No Registered Employees Yet
+                  </h3>
+                  <p style={{ fontSize: '14px', maxWidth: '400px', margin: '0 auto' }}>
+                    As users register their accounts, the corporate hierarchy will build dynamically starting from the first account.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

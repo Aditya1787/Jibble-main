@@ -19,19 +19,21 @@ const navItems = [
 interface Props {
   activePage: Page
   onNavigate: (page: Page) => void
+  theme?: 'light' | 'dark'
+  onToggleTheme?: () => void
 }
 
-export default function Sidebar({ activePage, onNavigate }: Props) {
+export default function Sidebar({ activePage, onNavigate, theme = 'light', onToggleTheme }: Props) {
   const { user, logout } = useAuthStore()
 
   return (
     <aside style={{
       width: 'var(--sidebar-width)',
       height: 'calc(100vh - 32px)',
-      background: 'rgba(243, 239, 232, 0.6)',
+      background: 'var(--bg-card)',
       backdropFilter: 'blur(20px)',
-      border: '1px solid rgba(255, 255, 255, 0.55)',
-      boxShadow: '0 20px 40px rgba(61, 61, 61, 0.05), var(--nm-flat)',
+      border: '1px solid var(--border-light)',
+      boxShadow: '0 20px 40px rgba(0, 0, 0, 0.08), var(--nm-flat)',
       position: 'fixed',
       top: '16px',
       left: '16px',
@@ -42,12 +44,15 @@ export default function Sidebar({ activePage, onNavigate }: Props) {
       padding: '16px',
       transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
     }}>
-      {/* Logo Card */}
+      {/* Logo Card & Theme Switcher */}
       <div className="nm-card-inset" style={{
         padding: '14px',
         marginBottom: '20px',
         borderRadius: '16px',
-        background: 'rgba(243, 239, 232, 0.3)',
+        background: 'var(--bg-card)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{
@@ -63,6 +68,28 @@ export default function Sidebar({ activePage, onNavigate }: Props) {
             <div style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Admin Console</div>
           </div>
         </div>
+
+        {onToggleTheme && (
+          <button
+            onClick={onToggleTheme}
+            className="nm-btn"
+            title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
+            style={{
+              width: 34,
+              height: 34,
+              padding: 0,
+              borderRadius: 10,
+              fontSize: 16,
+              cursor: 'pointer',
+              border: 'none',
+              background: 'var(--bg-card)',
+              color: 'var(--text-primary)',
+              boxShadow: 'var(--nm-flat-xs)'
+            }}
+          >
+            {theme === 'light' ? '🌙' : '☀️'}
+          </button>
+        )}
       </div>
 
       {/* Nav */}
@@ -91,12 +118,12 @@ export default function Sidebar({ activePage, onNavigate }: Props) {
                 fontWeight: active ? 700 : 500,
                 textAlign: 'left',
                 boxShadow: active ? 'var(--nm-inset-sm)' : 'none',
-                background: active ? 'rgba(243, 239, 232, 0.4)' : 'transparent',
+                background: active ? 'var(--bg-hover)' : 'transparent',
                 transition: 'all 0.2s',
               }}
               onMouseEnter={e => {
                 if (!active) {
-                  e.currentTarget.style.background = 'rgba(243, 239, 232, 0.7)'
+                  e.currentTarget.style.background = 'var(--bg-hover)'
                   e.currentTarget.style.boxShadow = 'var(--nm-flat-xs)'
                 }
               }}
@@ -123,7 +150,7 @@ export default function Sidebar({ activePage, onNavigate }: Props) {
           display: 'flex',
           flexDirection: 'column',
           gap: '10px',
-          background: 'rgba(243, 239, 232, 0.4)',
+          background: 'var(--bg-card)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {/* Avatar */}

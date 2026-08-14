@@ -5,6 +5,7 @@ export default function Settings() {
   const [settingsState, setSettingsState] = useState<Record<string, any>>({
     'Platform Name': 'Jibble',
     'Support Email': 'support@jibble.app',
+    'Dark Theme Mode': (localStorage.getItem('jibble_theme') === 'dark'),
     'Anonymous Posts (Circle)': true,
     'Stories': true,
     'Smart Matching': false,
@@ -15,6 +16,11 @@ export default function Settings() {
   })
 
   const handleToggle = (label: string) => {
+    if (label === 'Dark Theme Mode') {
+      const nextTheme = !settingsState['Dark Theme Mode'] ? 'dark' : 'light'
+      document.documentElement.setAttribute('data-theme', nextTheme)
+      localStorage.setItem('jibble_theme', nextTheme)
+    }
     setSettingsState(prev => ({
       ...prev,
       [label]: !prev[label]
@@ -34,6 +40,7 @@ export default function Settings() {
       items: [
         { label: 'Platform Name', type: 'input' },
         { label: 'Support Email', type: 'input' },
+        { label: 'Dark Theme Mode', type: 'toggle' },
       ],
     },
     {

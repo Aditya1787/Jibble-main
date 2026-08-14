@@ -1,10 +1,4 @@
-const reports = [
-  { id: 1, reporter: 'Priya Sharma',  reported: 'Arjun Singh',  type: 'Harassment',        desc: 'User sent offensive messages in DM.',           status: 'open',     time: '1h ago' },
-  { id: 2, reporter: 'Riya Patel',    reported: 'Karan Mehta',  type: 'Spam',              desc: 'User is posting the same promotional content.',  status: 'reviewing', time: '3h ago' },
-  { id: 3, reporter: 'Neha Gupta',    reported: 'Unknown Post', type: 'Misinformation',    desc: 'Post contains false placement statistics.',      status: 'resolved', time: '6h ago' },
-  { id: 4, reporter: 'Rahul Verma',   reported: 'Priya Sharma', type: 'Impersonation',     desc: 'Profile claims to be a faculty member.',         status: 'open',     time: '8h ago' },
-  { id: 5, reporter: 'Karan Mehta',   reported: 'Anonymous',   type: 'Inappropriate content', desc: 'Anonymous post with explicit language.',     status: 'resolved', time: '1d ago' },
-]
+const reports: Array<{ id: number; reporter: string; reported: string; type: string; desc: string; status: string; time: string }> = []
 
 const statusStyle: Record<string, { color: string; bg: string }> = {
   open:      { color: 'var(--danger)',  bg: 'rgba(179,74,74,0.1)' },
@@ -36,7 +30,14 @@ export default function Reports() {
 
       {/* Reports List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        {reports.map(r => {
+        {reports.length === 0 ? (
+          <div className="nm-card" style={{ padding: '36px', textAlign: 'center', color: 'var(--text-muted)' }}>
+            <span style={{ fontSize: '40px', display: 'block', marginBottom: '12px' }}>🚩</span>
+            <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>No Active Reports</h3>
+            <p style={{ fontSize: '13px' }}>User reports and violations will be listed here for policy moderation.</p>
+          </div>
+        ) : (
+          reports.map(r => {
           const ss = statusStyle[r.status]
           return (
             <div key={r.id} className="nm-card" style={{ padding: '20px 24px' }}>
@@ -93,7 +94,7 @@ export default function Reports() {
               </div>
             </div>
           )
-        })}
+        }))}
       </div>
     </div>
   )

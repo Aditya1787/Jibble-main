@@ -1,6 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useTeamTaskStore, TaskCadence, Task, Team } from '../store/useTeamTaskStore'
-import { useAuthStore, AdminUser, isLeadOrHead } from '../store/useAuthStore'
+import { useAuthStore, AdminUser } from '../store/useAuthStore'
+import {
+  canCreateTeam,
+  canAddTeamMember,
+  canAssignOrDeleteTask,
+  filterVisibleTeams,
+  filterVisibleTasks,
+  parseLeadFromOption,
+} from '../utils/permissions'
 import UserProfileModal from '../components/UserProfileModal'
 
 interface Props {
@@ -9,8 +17,23 @@ interface Props {
 
 export default function TeamsTasks({ onSelectTeam }: Props = {}) {
   const { user, registeredUsers } = useAuthStore()
-  const isLead = isLeadOrHead(user) || true
-  const { teams, projects, tasks, addTeam, updateTeam, addMemberToTeam, addTask, updateTask, updateTaskStatus, deleteTask } = useTeamTaskStore()
+  const { teams, projects, tasks, addTeam, updateTeam, addMemberToTeam, addTask, updateTask, updateTaskStatus, deleteTask, fetchAll } = useTeamTaskStore()
+
+  useEffect(() => {
+    fetchAll()
+  }, [fetchAll])
+
+  // ── Role-based Permission Flags ───────────────────────────────────────────────
+  const userCanCreateTeam = canCreateTeam(user)
+  const userCanAddMember = canAddTeamMember(user)
+  const userCanAssignTask = canAssignOrDeleteTask(user, teams)
+
+  const visibleTeams = useMemo(() => filterVisibleTeams(user, teams), [user, teams])
+  const visibleTasks = useMemo(() => filterVisibleTasks(user, tasks, teams), [user, tasks, teams])
+
+  const realEmployees = user
+    ? [user, ...registeredUsers.map((r) => r.profile).filter((p) => p.email.toLowerCase() !== user.email.toLowerCase())]
+    : registeredUsers.map((r) => r.profile)
 
   const [activeTab, setActiveTab] = useState<'teams' | 'tasks'>('teams')
   const [cadenceFilter, setCadenceFilter] = useState<TaskCadence | 'all'>('all')
@@ -30,21 +53,18 @@ export default function TeamsTasks({ onSelectTeam }: Props = {}) {
 
   // Username search for adding member to selectedTeam
   const [usernameQuery, setUsernameQuery] = useState('')
-  const [newMemberRole, setNewMemberRole] = useState('Team Contributor')
+  const [newMemberRole, setNewMemberRole] = useState('Team Member')
 
   // New Team Form State
   const [newTeamName, setNewTeamName] = useState('')
   const [newTeamDept, setNewTeamDept] = useState('Engineering')
-  const [newTeamLead, setNewTeamLead] = useState('Alex Rivera')
+  const [newTeamLead, setNewTeamLead] = useState('')
   const [newTeamDesc, setNewTeamDesc] = useState('')
-  const [newMembers, setNewMembers] = useState<Array<{ name: string; email: string; avatar: string; teamRole: string }>>([
-    { name: 'Aditya Kumar', email: 'aditya@company.com', avatar: '💻', teamRole: 'Senior Team Member' }
-  ])
 
   // New Task Form State
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskProjId, setNewTaskProjId] = useState(projects[0]?.id || '')
-  const [newTaskAssignee, setNewTaskAssignee] = useState('Aditya Kumar')
+  const [newTaskAssignee, setNewTaskAssignee] = useState(user?.username ? `@${user.username}` : '')
   const [newTaskPriority, setNewTaskPriority] = useState<Task['priority']>('high')
   const [newTaskCadence, setNewTaskCadence] = useState<TaskCadence>('week')
   const [newTaskDueDate, setNewTaskDueDate] = useState('This Friday')
@@ -54,7 +74,7 @@ export default function TeamsTasks({ onSelectTeam }: Props = {}) {
   const totalMembers = teams.reduce((acc, t) => acc + t.members.length, 0)
   
   // Filtered Tasks
-  const filteredTasks = tasks.filter((task) => {
+  const filteredTasks = visibleTasks.filter((task) => {
     const matchCadence = cadenceFilter === 'all' || task.cadence === cadenceFilter
     const matchProj = selectedProject === 'all' || task.projectId === selectedProject
     const matchPriority = priorityFilter === 'all' || task.priority === priorityFilter
@@ -91,16 +111,17 @@ export default function TeamsTasks({ onSelectTeam }: Props = {}) {
   const handleAddMemberByUsername = (userProfile: AdminUser) => {
     if (!selectedTeam) return
     addMemberToTeam(selectedTeam.id, {
-      id: `m-${Date.now()}`,
+      id: userProfile.dbEmployeeId || `m-${Date.now()}`,
+      dbEmployeeId: userProfile.dbEmployeeId,
       name: userProfile.username || userProfile.email,
       email: userProfile.email,
       avatar: userProfile.avatar || '👤',
-      teamRole: newMemberRole || userProfile.role || 'Team Member',
-      joinedDate: 'Just now'
+      teamRole: 'Team Member',
+      joinedDate: new Date().toISOString().split('T')[0],
+    }).then(() => {
+      const updated = useTeamTaskStore.getState().teams.find((t) => t.id === selectedTeam.id)
+      if (updated) setSelectedTeam(updated)
     })
-    // Refresh local selectedTeam state
-    const updated = teams.find(t => t.id === selectedTeam.id)
-    if (updated) setSelectedTeam(updated)
     setUsernameQuery('')
   }
 
@@ -238,19 +259,25 @@ export default function TeamsTasks({ onSelectTeam }: Props = {}) {
           {/* Action Row */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>Corporate Teams Directory (Click any team to open & edit)</h2>
-            <button
-              type="button"
-              className="nm-btn-accent"
-              style={{ padding: '10px 20px', fontSize: '13px' }}
-              onClick={() => setShowTeamModal(true)}
-            >
-              + Create New Team
-            </button>
+            {userCanCreateTeam ? (
+              <button
+                type="button"
+                className="nm-btn-accent"
+                style={{ padding: '10px 20px', fontSize: '13px' }}
+                onClick={() => setShowTeamModal(true)}
+              >
+                + Create New Team
+              </button>
+            ) : (
+              <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', background: 'rgba(0,0,0,0.04)', padding: '6px 14px', borderRadius: '10px' }}>
+                🔒 Team Creation: Founder &amp; HR Only
+              </div>
+            )}
           </div>
 
           {/* Teams Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '24px' }}>
-            {teams.map((team) => (
+            {visibleTeams.map((team) => (
               <div
                 key={team.id}
                 className="nm-card"
@@ -292,23 +319,33 @@ export default function TeamsTasks({ onSelectTeam }: Props = {}) {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {team.members.map((member) => (
-                      <div key={member.id} className="nm-card-inset" style={{ padding: '10px 14px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span style={{ fontSize: '20px' }}>{member.avatar}</span>
-                          <div>
-                            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>@{member.name}</div>
-                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{member.email}</div>
+                    {team.members.map((member) => {
+                      const isTeamLead = team.leadEmployeeId
+                        ? member.id === team.leadEmployeeId
+                        : (team.leadName ?? '').toLowerCase().includes((member.name ?? '').toLowerCase())
+                      return (
+                        <div key={member.id} className="nm-card-inset" style={{ padding: '10px 14px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ fontSize: '20px' }}>{member.avatar}</span>
+                            <div>
+                              <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>@{member.name}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{member.email}</div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px' }}>
+                            {isTeamLead && (
+                              <span style={{ fontSize: '10px', fontWeight: 800, color: '#7c3aed', background: 'rgba(139,92,246,0.12)', padding: '2px 7px', borderRadius: '5px' }}>
+                                👑 Team Lead
+                              </span>
+                            )}
+                            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent)', background: 'rgba(51,102,89,0.1)', padding: '2px 8px', borderRadius: '6px' }}>
+                              {member.teamRole}
+                            </span>
                           </div>
                         </div>
-
-                        <div style={{ textAlign: 'right' }}>
-                          <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent)', background: 'rgba(51,102,89,0.1)', padding: '2px 8px', borderRadius: '6px', display: 'inline-block' }}>
-                            {member.teamRole}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               </div>
@@ -326,6 +363,7 @@ export default function TeamsTasks({ onSelectTeam }: Props = {}) {
               <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 🗓️ Task Cadence Frequency Filter
               </span>
+              {userCanAssignTask ? (
               <button
                 type="button"
                 className="nm-btn-accent"
@@ -334,6 +372,11 @@ export default function TeamsTasks({ onSelectTeam }: Props = {}) {
               >
                 + Assign New Task
               </button>
+              ) : (
+              <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', background: 'rgba(0,0,0,0.04)', padding: '5px 12px', borderRadius: '8px' }}>
+                🔒 Task Assignment: Lead &amp; HR Only
+              </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -464,14 +507,16 @@ export default function TeamsTasks({ onSelectTeam }: Props = {}) {
                         <option value="in_review">In Review</option>
                         <option value="completed">Completed ✓</option>
                       </select>
-                      <button
-                        type="button"
-                        style={{ border: 'none', background: 'transparent', color: 'var(--danger)', cursor: 'pointer', fontSize: '12px' }}
-                        onClick={() => deleteTask(task.id)}
-                        title="Delete Task"
-                      >
-                        ✕
-                      </button>
+                      {userCanAssignTask && (
+                        <button
+                          type="button"
+                          style={{ border: 'none', background: 'transparent', color: 'var(--danger)', cursor: 'pointer', fontSize: '12px' }}
+                          onClick={() => deleteTask(task.id)}
+                          title="Delete Task"
+                        >
+                          ✕
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -502,83 +547,85 @@ export default function TeamsTasks({ onSelectTeam }: Props = {}) {
               <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--accent)' }}>👨‍💼 Lead Manager: {selectedTeam.leadName}</div>
             </div>
 
-            {/* ADD MEMBER BY USERNAME SEARCH */}
-            <div className="nm-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase' }}>
-                ➕ Add Team Member by @username
-              </span>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr auto', gap: '10px', alignItems: 'center' }}>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="text"
-                    className="nm-input-glass"
-                    placeholder="Search @username (e.g. aditya, admin_ceo)..."
-                    value={usernameQuery}
-                    onChange={(e) => setUsernameQuery(e.target.value)}
-                    style={{ fontSize: '12px' }}
-                  />
-
-                  {/* Username Autocomplete list */}
-                  {usernameQuery && userMatches.length > 0 && (
-                    <div
-                      className="spatial-panel animate-pop-in"
-                      style={{
-                        position: 'absolute',
-                        top: 'calc(100% + 4px)',
-                        left: 0,
-                        width: '100%',
-                        maxHeight: '140px',
-                        overflowY: 'auto',
-                        zIndex: 120,
-                        padding: '6px',
-                        background: 'var(--bg-primary)',
-                        borderRadius: '10px',
-                        boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '4px'
-                      }}
-                    >
-                      {userMatches.map((u) => (
-                        <button
-                          key={u.profile.email}
-                          type="button"
-                          style={{
-                            textAlign: 'left',
-                            padding: '6px 8px',
-                            border: 'none',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            background: 'transparent',
-                            display: 'flex',
-                            justifyContent: 'space-between'
-                          }}
-                          onClick={() => handleAddMemberByUsername(u.profile)}
-                        >
-                          <span style={{ fontWeight: 700 }}>@{u.profile.username || u.profile.email}</span>
-                          <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{u.profile.role}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <input
-                  type="text"
-                  className="nm-input-glass"
-                  placeholder="Team Role (e.g. Lead Dev)"
-                  value={newMemberRole}
-                  onChange={(e) => setNewMemberRole(e.target.value)}
-                  style={{ fontSize: '12px' }}
-                />
-
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>
-                  Select user above
+            {/* ADD MEMBER BY USERNAME SEARCH (HR / Founder Only) */}
+            {userCanAddMember ? (
+              <div className="nm-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase' }}>
+                  ➕ Add Team Member by @username
                 </span>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr auto', gap: '10px', alignItems: 'center' }}>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      className="nm-input-glass"
+                      placeholder="Search @username (e.g. aditya, admin_ceo)..."
+                      value={usernameQuery}
+                      onChange={(e) => setUsernameQuery(e.target.value)}
+                      style={{ fontSize: '12px' }}
+                    />
+
+                    {/* Username Autocomplete list */}
+                    {usernameQuery && userMatches.length > 0 && (
+                      <div
+                        className="spatial-panel animate-pop-in"
+                        style={{
+                          position: 'absolute',
+                          top: 'calc(100% + 4px)',
+                          left: 0,
+                          width: '100%',
+                          maxHeight: '140px',
+                          overflowY: 'auto',
+                          zIndex: 120,
+                          padding: '6px',
+                          background: 'var(--bg-primary)',
+                          borderRadius: '10px',
+                          boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '4px'
+                        }}
+                      >
+                        {userMatches.map((u) => (
+                          <button
+                            key={u.profile.email}
+                            type="button"
+                            style={{
+                              textAlign: 'left',
+                              padding: '6px 8px',
+                              border: 'none',
+                              borderRadius: '6px',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              background: 'transparent',
+                              display: 'flex',
+                              justifyContent: 'space-between'
+                            }}
+                            onClick={() => handleAddMemberByUsername(u.profile)}
+                          >
+                            <span style={{ fontWeight: 700 }}>@{u.profile.username || u.profile.email}</span>
+                            <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{u.profile.role}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Role is always Team Member for new additions */}
+                  <div className="nm-card-inset" style={{ padding: '8px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: 700, color: 'var(--accent)' }}>
+                    👤 Role: Team Member
+                  </div>
+
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>
+                    Select user above
+                  </span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', background: 'rgba(0,0,0,0.04)', padding: '10px 14px', borderRadius: '10px' }}>
+                🔒 Adding Members: Founder &amp; HR Only
+              </div>
+            )}
 
             {/* Current Team Roster */}
             <div>
@@ -632,7 +679,17 @@ export default function TeamsTasks({ onSelectTeam }: Props = {}) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Assignee @username</label>
-                  <input type="text" className="nm-input-glass" value={editingTask.assigneeName ?? ''} onChange={(e) => setEditingTask({ ...editingTask, assigneeName: e.target.value })} />
+                  <select
+                    className="nm-input-glass"
+                    value={editingTask.assigneeName ?? ''}
+                    onChange={(e) => setEditingTask({ ...editingTask, assigneeName: e.target.value })}
+                  >
+                    {realEmployees.map((emp) => (
+                      <option key={emp.email} value={`@${emp.username}`}>
+                        @{emp.username} ({emp.role})
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Cadence</label>
@@ -695,8 +752,18 @@ export default function TeamsTasks({ onSelectTeam }: Props = {}) {
                   <input type="text" className="nm-input-glass" value={newTeamDept} onChange={(e) => setNewTeamDept(e.target.value)} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Team Lead Name</label>
-                  <input type="text" className="nm-input-glass" value={newTeamLead} onChange={(e) => setNewTeamLead(e.target.value)} />
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Choose Team Lead</label>
+                  <select
+                    className="nm-input-glass"
+                    value={newTeamLead}
+                    onChange={(e) => setNewTeamLead(e.target.value)}
+                  >
+                    {realEmployees.map((emp) => (
+                      <option key={emp.email} value={`@${emp.username} (${emp.role})`}>
+                        @{emp.username} — {emp.role} ({emp.email})
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -714,7 +781,7 @@ export default function TeamsTasks({ onSelectTeam }: Props = {}) {
       )}
 
       {/* ================= CREATE TASK MODAL ================= */}
-      {showTaskModal && (
+      {showTaskModal && userCanAssignTask && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
           <div className="spatial-panel animate-pop-in" style={{ width: '100%', maxWidth: '520px', padding: '28px', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -738,8 +805,18 @@ export default function TeamsTasks({ onSelectTeam }: Props = {}) {
                   </select>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Assignee Name</label>
-                  <input type="text" className="nm-input-glass" value={newTaskAssignee} onChange={(e) => setNewTaskAssignee(e.target.value)} />
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Assignee @username</label>
+                  <select
+                    className="nm-input-glass"
+                    value={newTaskAssignee}
+                    onChange={(e) => setNewTaskAssignee(e.target.value)}
+                  >
+                    {realEmployees.map((emp) => (
+                      <option key={emp.email} value={`@${emp.username}`}>
+                        @{emp.username} — {emp.role}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

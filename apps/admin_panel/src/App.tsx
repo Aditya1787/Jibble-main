@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
@@ -15,13 +15,37 @@ import Analytics from './pages/Analytics'
 import Settings from './pages/Settings'
 import AuthFlow from './components/AuthFlow'
 import { useAuthStore } from './store/useAuthStore'
+import { useTeamTaskStore } from './store/useTeamTaskStore'
 
 export type Page = 'dashboard' | 'profile' | 'hierarchy' | 'about' | 'users' | 'teams' | 'tasks' | 'privacy' | 'posts' | 'reports' | 'analytics' | 'settings' | 'team-detail'
 
 export default function App() {
   const [activePage, setActivePage] = useState<Page>('dashboard')
   const [selectedTeamId, setSelectedTeamId] = useState<string>('team-1')
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    return (localStorage.getItem('jibble_theme') as 'light' | 'dark') || 'light'
+  })
   const { isAuthenticated, isOnboarded } = useAuthStore()
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('jibble_theme', theme)
+  }, [theme])
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'))
+  }
+
+  useEffect(() => {
+    useAuthStore.getState().initAuth()
+  }, [])
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      useAuthStore.getState().fetchRegisteredUsers()
+      useTeamTaskStore.getState().fetchAll()
+    }
+  }, [isAuthenticated])
 
   if (!isAuthenticated || !isOnboarded) {
     return <AuthFlow />
@@ -60,7 +84,7 @@ export default function App() {
         <div className="spatial-orb orb-3" />
       </div>
 
-      <Sidebar activePage={activePage} onNavigate={setActivePage} />
+      <Sidebar activePage={activePage} onNavigate={setActivePage} theme={theme} onToggleTheme={toggleTheme} />
       
       <main style={{
         marginLeft: 'calc(var(--sidebar-width) + 24px)',

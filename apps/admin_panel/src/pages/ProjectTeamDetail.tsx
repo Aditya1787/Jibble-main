@@ -15,7 +15,7 @@ export default function ProjectTeamDetail({ teamId, onBack }: Props) {
   const team = teams.find((t) => t.id === teamId) || teams[0]
   const linkedProjects = projects.filter((p) => p.teamId === team.id || p.teamName === team.name)
 
-  const isLead = isLeadOrHead(user) || true
+  const isLead = isLeadOrHead(user)
 
   // State
   const [usernameQuery, setUsernameQuery] = useState('')
@@ -60,12 +60,13 @@ export default function ProjectTeamDetail({ teamId, onBack }: Props) {
   // Handlers
   const handleAddMember = (userProfile: AdminUser) => {
     addMemberToTeam(team.id, {
-      id: `m-${Date.now()}`,
+      id: userProfile.dbEmployeeId || `m-${Date.now()}`,
+      dbEmployeeId: userProfile.dbEmployeeId,
       name: userProfile.username || userProfile.email,
       email: userProfile.email,
       avatar: userProfile.avatar || '👤',
       teamRole: newMemberRole || userProfile.role || 'Team Member',
-      joinedDate: 'Just now'
+      joinedDate: new Date().toISOString().split('T')[0],
     })
     setUsernameQuery('')
   }

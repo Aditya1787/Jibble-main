@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuthStore } from '../store/useAuthStore'
 import UserProfileModal from '../components/UserProfileModal'
 
@@ -7,22 +7,12 @@ interface UserItem {
   name: string
   username: string
   email: string
-  college: string
+  department: string
   role: string
   status: 'active' | 'pending' | 'banned'
   joined: string
   posts: number
 }
-
-const initialUsers: UserItem[] = [
-  { id: 1, name: 'Aditya Kumar', username: 'aditya', email: 'aditya@iitd.ac.in', college: 'IIT Delhi', role: 'student', status: 'active', joined: 'Jan 12, 2025', posts: 42 },
-  { id: 2, name: 'Priya Sharma', username: 'priya_hr', email: 'priya@bits.ac.in', college: 'BITS Pilani', role: 'mod', status: 'active', joined: 'Jan 15, 2025', posts: 28 },
-  { id: 3, name: 'Rahul Verma', username: 'rahul_dev', email: 'rahul@vit.ac.in', college: 'VIT Vellore', role: 'student', status: 'pending', joined: 'Feb 2, 2025', posts: 0 },
-  { id: 4, name: 'Neha Gupta', username: 'neha_sec', email: 'neha@nittrichy.ac.in', college: 'NIT Trichy', role: 'mod', status: 'active', joined: 'Dec 20, 2024', posts: 87 },
-  { id: 5, name: 'Arjun Singh', username: 'arjun_s', email: 'arjun@dtu.ac.in', college: 'DTU Delhi', role: 'student', status: 'banned', joined: 'Mar 5, 2025', posts: 3 },
-  { id: 6, name: 'Riya Patel', username: 'riya_ui', email: 'riya@iiit.ac.in', college: 'IIIT Hyd', role: 'student', status: 'active', joined: 'Mar 8, 2025', posts: 19 },
-  { id: 7, name: 'Karan Mehta', username: 'karan_m', email: 'karan@manipal.edu', college: 'Manipal', role: 'student', status: 'active', joined: 'Mar 9, 2025', posts: 55 },
-]
 
 const statusColor: Record<string, string> = {
   active: 'var(--accent)',
@@ -36,24 +26,149 @@ const roleColor: Record<string, string> = {
 }
 
 export default function Users() {
-  const { user } = useAuthStore()
-  const [usersList, setUsersList] = useState<UserItem[]>(initialUsers)
+  const { user, registeredUsers, fetchRegisteredUsers } = useAuthStore()
+  
+  // Fetch registered users on mount
+  useEffect(() => {
+    fetchRegisteredUsers()
+  }, [fetchRegisteredUsers])
+
+  const isExecutiveRole = (roleTitle: string) => {
+    if (!roleTitle) return false
+    const norm = roleTitle.toLowerCase()
+    const execs = ['founder', 'ceo', 'cto', 'cfo', 'coo', 'cpo', 'cmo', 'executive']
+    return execs.some((e) => norm.includes(e))
+  }
+
+  const isCeoOrFounder = user?.role?.toLowerCase().includes('ceo') || user?.role?.toLowerCase().includes('founder')
+  const isFounderOrHr = Boolean(
+    isCeoOrFounder ||
+    user?.role?.toLowerCase().includes('hr') ||
+    user?.category?.toLowerCase().includes('hr') ||
+    user?.category?.toLowerCase().includes('human resources') ||
+    user?.category?.toLowerCase().includes('people operations')
+  )
+
+  // Persist user moderation statuses by email in localStorage
+  const [approvedUserEmails, setApprovedUserEmails] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem('jibble_approved_user_emails')
+      return raw ? JSON.parse(raw) : []
+    } catch { return [] }
+  })
+  const [rejectedUserEmails, setRejectedUserEmails] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem('jibble_rejected_user_emails')
+      return raw ? JSON.parse(raw) : []
+    } catch { return [] }
+  })
+  const [bannedUserEmails, setBannedUserEmails] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem('jibble_banned_user_emails')
+      return raw ? JSON.parse(raw) : []
+    } catch { return [] }
+  })
+  const [removedUserEmails, setRemovedUserEmails] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem('jibble_removed_user_emails')
+      return raw ? JSON.parse(raw) : []
+    } catch { return [] }
+  })
+
+  useEffect(() => {
+    try { localStorage.setItem('jibble_approved_user_emails', JSON.stringify(approvedUserEmails)) } catch {}
+  }, [approvedUserEmails])
+
+  useEffect(() => {
+    try { localStorage.setItem('jibble_rejected_user_emails', JSON.stringify(rejectedUserEmails)) } catch {}
+  }, [rejectedUserEmails])
+
+  useEffect(() => {
+    try { localStorage.setItem('jibble_banned_user_emails', JSON.stringify(bannedUserEmails)) } catch {}
+  }, [bannedUserEmails])
+
+  useEffect(() => {
+    try { localStorage.setItem('jibble_removed_user_emails', JSON.stringify(removedUserEmails)) } catch {}
+  }, [removedUserEmails])
+
+  // Dynamically populate registered users
+  const allUsers: UserItem[] = useMemo(() => {
+    const rawList = user
+      ? [user, ...registeredUsers.map((r) => r.profile).filter((p) => p.email.toLowerCase() !== user.email.toLowerCase())]
+      : registeredUsers.map((r) => r.profile)
+
+    return rawList.map((p, idx) => {
+      const isExec = isExecutiveRole(p.role)
+      return {
+        id: idx + 1,
+        name: p.username || 'Employee',
+        username: p.username,
+        email: p.email,
+        department: p.category || 'General',
+        role: p.role || 'Contributor',
+        status: isExec ? ('active' as const) : ('pending' as const),
+        joined: 'Recently',
+        posts: 0,
+      }
+    })
+  }, [user, registeredUsers])
+
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
+  const [removalError, setRemovalError] = useState<string | null>(null)
 
   const [profileModalUser, setProfileModalUser] = useState<string | null>(null)
 
-  const isPolicyOfficer = user?.category === 'Privacy & Policy Management' || user?.role?.toLowerCase().includes('moderator') || user?.role?.toLowerCase().includes('officer') || user?.role?.toLowerCase().includes('ceo')
-
-  const handleBanUser = (userId: number) => {
-    setUsersList(usersList.map(u => u.id === userId ? { ...u, status: 'banned' as const } : u))
+  const handleBanUser = (email: string) => {
+    const norm = email.toLowerCase()
+    setBannedUserEmails((prev) => (prev.includes(norm) ? prev : [...prev, norm]))
   }
 
-  const handleRemoveUser = (userId: number) => {
-    setUsersList(usersList.filter(u => u.id !== userId))
+  const handleUnbanUser = (email: string) => {
+    const norm = email.toLowerCase()
+    setBannedUserEmails((prev) => prev.filter((e) => e !== norm))
   }
 
-  const filtered = usersList.filter(u => {
+  const handleApproveUser = (email: string) => {
+    const norm = email.toLowerCase()
+    setApprovedUserEmails((prev) => (prev.includes(norm) ? prev : [...prev, norm]))
+    setRejectedUserEmails((prev) => prev.filter((e) => e !== norm))
+  }
+
+  const handleRejectUser = (email: string) => {
+    const norm = email.toLowerCase()
+    setRejectedUserEmails((prev) => (prev.includes(norm) ? prev : [...prev, norm]))
+    setApprovedUserEmails((prev) => prev.filter((e) => e !== norm))
+  }
+
+  const handleRemoveUser = (targetUser: UserItem) => {
+    setRemovalError(null)
+    if (!isFounderOrHr) {
+      setRemovalError('Only CEO / Founder and HR personnel can remove users.')
+      return
+    }
+    if (isExecutiveRole(targetUser.role) && !isCeoOrFounder) {
+      setRemovalError(`Cannot remove ${targetUser.username} (${targetUser.role}). Only CEO / Founder can remove executive personnel.`)
+      return
+    }
+    const norm = targetUser.email.toLowerCase()
+    setRemovedUserEmails((prev) => (prev.includes(norm) ? prev : [...prev, norm]))
+  }
+
+  const activeUserList = allUsers
+    .filter((u) => {
+      const norm = u.email.toLowerCase()
+      return !removedUserEmails.includes(norm) && !rejectedUserEmails.includes(norm)
+    })
+    .map((u) => {
+      const norm = u.email.toLowerCase()
+      let currentStatus = u.status
+      if (approvedUserEmails.includes(norm)) currentStatus = 'active'
+      if (bannedUserEmails.includes(norm)) currentStatus = 'banned'
+      return { ...u, status: currentStatus }
+    })
+
+  const filtered = activeUserList.filter((u) => {
     const matchSearch =
       u.name.toLowerCase().includes(search.toLowerCase()) ||
       u.username.toLowerCase().includes(search.toLowerCase()) ||
@@ -70,12 +185,19 @@ export default function Users() {
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500 }}>Search users by @username, view performance profiles, and manage corporate permissions.</p>
         </div>
 
-        {isPolicyOfficer && (
+        {isFounderOrHr && (
           <div className="nm-card-inset" style={{ padding: '8px 16px', borderRadius: '12px', background: 'rgba(51,102,89,0.1)', color: 'var(--accent)', fontWeight: 700, fontSize: '12px' }}>
-            🛡️ Policy Officer Account Moderation Active
+            🛡️ CEO / Founder & HR Moderation Active
           </div>
         )}
       </div>
+
+      {removalError && (
+        <div className="nm-card-inset animate-pop-in" style={{ padding: '12px 16px', borderRadius: '12px', background: 'rgba(179,74,74,0.08)', border: '1px solid rgba(179,74,74,0.2)', color: 'var(--danger)', fontWeight: 700, fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>⚠️ {removalError}</span>
+          <button onClick={() => setRemovalError(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--danger)', fontWeight: 800 }}>✕</button>
+        </div>
+      )}
 
       {/* Toolbar */}
       <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -122,7 +244,7 @@ export default function Users() {
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
             <thead>
               <tr style={{ borderBottom: '2px solid var(--border)' }}>
-                {['User', 'College', 'Role', 'Status', 'Joined', 'Posts', 'Actions'].map(h => (
+                {['User', 'Department / Category', 'Role', 'Status', 'Joined', 'Posts', 'Actions'].map(h => (
                   <th key={h} style={{
                     padding: '16px 20px',
                     textAlign: 'left',
@@ -163,7 +285,7 @@ export default function Users() {
                   </td>
 
                   <td style={{ padding: '16px 20px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
-                    {u.college}
+                    {u.department}
                   </td>
 
                   <td style={{ padding: '16px 20px' }}>
@@ -210,24 +332,53 @@ export default function Users() {
                         Profile Dashboard
                       </button>
 
-                      {u.status !== 'banned' && (
-                        <button
-                          className="nm-btn"
-                          style={{ padding: '6px 12px', fontSize: 11, borderRadius: 8, color: 'var(--warning)', boxShadow: 'var(--nm-flat-xs)' }}
-                          onClick={() => handleBanUser(u.id)}
-                        >
-                          Ban
-                        </button>
+                      {isFounderOrHr && u.status === 'pending' && (
+                        <>
+                          <button
+                            className="nm-btn-accent"
+                            style={{ padding: '6px 12px', fontSize: 11, borderRadius: 8, background: '#059669', color: '#fff', border: 'none' }}
+                            onClick={() => handleApproveUser(u.email)}
+                          >
+                            ✓ Approve User
+                          </button>
+                          <button
+                            className="nm-btn-accent"
+                            style={{ padding: '6px 10px', fontSize: 11, borderRadius: 8, background: 'var(--danger)', color: '#fff', border: 'none' }}
+                            onClick={() => handleRejectUser(u.email)}
+                          >
+                            ✕ Reject
+                          </button>
+                        </>
                       )}
 
-                      {isPolicyOfficer && (
-                        <button
-                          className="nm-btn-accent"
-                          style={{ padding: '6px 10px', fontSize: 11, borderRadius: 8, background: 'var(--danger)', border: 'none', color: '#fff' }}
-                          onClick={() => handleRemoveUser(u.id)}
-                        >
-                          Remove Account
-                        </button>
+                      {isFounderOrHr && u.status !== 'pending' && (
+                        <>
+                          {u.status !== 'banned' ? (
+                            <button
+                              className="nm-btn"
+                              style={{ padding: '6px 12px', fontSize: 11, borderRadius: 8, color: 'var(--warning)', boxShadow: 'var(--nm-flat-xs)' }}
+                              onClick={() => handleBanUser(u.email)}
+                            >
+                              Ban
+                            </button>
+                          ) : (
+                            <button
+                              className="nm-btn-accent"
+                              style={{ padding: '6px 12px', fontSize: 11, borderRadius: 8, background: '#059669', color: '#fff', border: 'none' }}
+                              onClick={() => handleUnbanUser(u.email)}
+                            >
+                              ✓ Unban
+                            </button>
+                          )}
+
+                          <button
+                            className="nm-btn-accent"
+                            style={{ padding: '6px 10px', fontSize: 11, borderRadius: 8, background: 'var(--danger)', border: 'none', color: '#fff' }}
+                            onClick={() => handleRemoveUser(u)}
+                          >
+                            Remove Account
+                          </button>
+                        </>
                       )}
                     </div>
                   </td>

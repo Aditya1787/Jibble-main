@@ -1,17 +1,15 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useTeamTaskStore, TaskCadence, Task } from '../store/useTeamTaskStore'
-import { useAuthStore, isLeadOrHead } from '../store/useAuthStore'
+import { useAuthStore } from '../store/useAuthStore'
+import { canAssignOrDeleteTask, filterVisibleTasks } from '../utils/permissions'
 import UserProfileModal from '../components/UserProfileModal'
 
 export default function TasksDashboard() {
   const { user } = useAuthStore()
-  const { projects, tasks, addTask, updateTask, updateTaskStatus, deleteTask } = useTeamTaskStore()
+  const { teams, projects, tasks, addTask, updateTask, updateTaskStatus, deleteTask } = useTeamTaskStore()
 
-  // User Role State
-  const [demoRoleMode, setDemoRoleMode] = useState<'lead' | 'member'>(() =>
-    isLeadOrHead(user) ? 'lead' : 'lead'
-  )
-  const isLead = demoRoleMode === 'lead'
+  // Can assign task: Founder / HR / Team Lead
+  const userCanAssignTask = canAssignOrDeleteTask(user, teams)
 
   // View Mode Switcher: 'all_tasks' | 'projects' | 'kanban'
   const [viewMode, setViewMode] = useState<'projects' | 'all_tasks' | 'kanban'>('projects')
@@ -48,14 +46,17 @@ export default function TasksDashboard() {
     u.profile.email.toLowerCase().includes(assigneeQuery.toLowerCase())
   )
 
-  // Metrics
-  const totalTasks = tasks.length
-  const workingOnCount = tasks.filter((t) => t.status === 'in_progress').length
-  const inReviewCount = tasks.filter((t) => t.status === 'in_review').length
-  const completedCount = tasks.filter((t) => t.status === 'completed').length
+  // Filter tasks: managers/leads/HR/Founder see all; members only see their assigned tasks
+  const visibleTasks = useMemo(() => filterVisibleTasks(user, tasks, teams), [user, tasks, teams])
 
-  // Filtered Tasks
-  const filteredTasks = tasks.filter((task) => {
+  // Metrics (based on visible tasks for this user)
+  const totalTasks = visibleTasks.length
+  const workingOnCount = visibleTasks.filter((t) => t.status === 'in_progress').length
+  const inReviewCount = visibleTasks.filter((t) => t.status === 'in_review').length
+  const completedCount = visibleTasks.filter((t) => t.status === 'completed').length
+
+  // Filtered Tasks (applied on top of visible tasks)
+  const filteredTasks = visibleTasks.filter((task) => {
     const matchCadence = cadenceFilter === 'all' || task.cadence === cadenceFilter
     const matchProj = selectedProjectId === 'all' || task.projectId === selectedProjectId
     const matchPriority = priorityFilter === 'all' || task.priority === priorityFilter
@@ -77,7 +78,7 @@ export default function TasksDashboard() {
 
   const handleAssignTaskSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!title || !isLead) return
+    if (!title || !userCanAssignTask) return
     const proj = projects.find((p) => p.id === projectId)
     addTask({
       title,
@@ -99,7 +100,7 @@ export default function TasksDashboard() {
 
   const handleUpdateTaskSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!editingTask || !isLead) return
+    if (!editingTask || !userCanAssignTask) return
     updateTask(editingTask.id, editingTask)
     setEditingTask(null)
   }
@@ -124,35 +125,18 @@ export default function TasksDashboard() {
 
   return (
     <div style={{ padding: '32px 36px', maxWidth: 1400, display: 'flex', flexDirection: 'column', gap: '24px', width: '100%', boxSizing: 'border-box' }}>
-      {/* INTERACTIVE ROLE SWITCHER DEMO BANNER */}
+      {/* REAL LOGGED IN ROLE PERMISSION BANNER */}
       <div className="nm-card-inset" style={{ padding: '12px 20px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', background: 'rgba(243, 239, 232, 0.55)', border: '1px solid rgba(51, 102, 89, 0.2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '18px' }}>🔐</span>
           <div>
-            <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)' }}>Role Permission Simulator</div>
+            <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)' }}>Account Role: @{user?.username} ({user?.role})</div>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>
-              {isLead ? '👑 Team Lead / Project Head Mode (Full permissions: Edit project tasks, reassign, & delete tasks)' : '👤 Regular Employee Mode (Restricted: View project tasks & update work progress)'}
+              {userCanAssignTask
+                ? '👑 Team Lead / Manager Mode — Viewing all tasks, can assign & edit'
+                : `👤 Member Mode — Showing your assigned tasks (${visibleTasks.length} task${visibleTasks.length !== 1 ? 's' : ''})`}
             </div>
           </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            type="button"
-            className={demoRoleMode === 'lead' ? 'nm-btn-accent' : 'nm-btn'}
-            style={{ padding: '8px 14px', fontSize: '12px', borderRadius: '10px', border: 'none', fontWeight: 700 }}
-            onClick={() => setDemoRoleMode('lead')}
-          >
-            👑 Team Lead / Head Mode
-          </button>
-          <button
-            type="button"
-            className={demoRoleMode === 'member' ? 'nm-btn-accent' : 'nm-btn'}
-            style={{ padding: '8px 14px', fontSize: '12px', borderRadius: '10px', border: 'none', fontWeight: 700 }}
-            onClick={() => setDemoRoleMode('member')}
-          >
-            👤 Member Mode (Restricted)
-          </button>
         </div>
       </div>
 
@@ -197,7 +181,7 @@ export default function TasksDashboard() {
           </div>
 
           {/* Lead Only Action */}
-          {isLead && (
+          {userCanAssignTask && (
             <button
               type="button"
               className="nm-btn-accent"
@@ -444,7 +428,7 @@ export default function TasksDashboard() {
                                   <option value="completed">✓ Completed</option>
                                 </select>
 
-                                {isLead && (
+                                {userCanAssignTask && (
                                   <div style={{ display: 'flex', gap: '6px' }}>
                                     <button type="button" className="nm-btn" style={{ padding: '4px 8px', fontSize: '11px' }} onClick={() => setEditingTask(task)}>✏️ Edit</button>
                                     <button type="button" className="nm-btn-accent" style={{ padding: '4px 8px', fontSize: '11px', background: 'var(--danger)', border: 'none', color: '#fff' }} onClick={() => deleteTask(task.id)}>🗑️</button>
@@ -522,7 +506,7 @@ export default function TasksDashboard() {
                       </select>
                     </div>
 
-                    {isLead && (
+                    {userCanAssignTask && (
                       <div style={{ display: 'flex', gap: '6px' }}>
                         <button type="button" className="nm-btn" style={{ padding: '4px 8px', fontSize: '11px' }} onClick={() => setEditingTask(task)}>✏️ Edit</button>
                         <button type="button" className="nm-btn-accent" style={{ padding: '4px 8px', fontSize: '11px', background: 'var(--danger)', border: 'none', color: '#fff' }} onClick={() => deleteTask(task.id)}>🗑️ Delete</button>
@@ -585,7 +569,7 @@ export default function TasksDashboard() {
                             <option value="completed">✓ Completed</option>
                           </select>
 
-                          {isLead && (
+                          {userCanAssignTask && (
                             <div style={{ display: 'flex', gap: '4px' }}>
                               <button type="button" style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '11px' }} onClick={() => setEditingTask(task)}>✏️</button>
                               <button type="button" style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '11px', color: 'var(--danger)' }} onClick={() => deleteTask(task.id)}>🗑️</button>
@@ -603,7 +587,7 @@ export default function TasksDashboard() {
       )}
 
       {/* ================= ASSIGN NEW TASK MODAL ================= */}
-      {showAssignModal && isLead && (
+      {showAssignModal && userCanAssignTask && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
           <div className="spatial-panel animate-pop-in" style={{ width: '100%', maxWidth: '540px', padding: '28px', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -728,7 +712,7 @@ export default function TasksDashboard() {
       )}
 
       {/* ================= EDIT TASK MODAL ================= */}
-      {editingTask && isLead && (
+      {editingTask && userCanAssignTask && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
           <div className="spatial-panel animate-pop-in" style={{ width: '100%', maxWidth: '520px', padding: '28px', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -745,7 +729,17 @@ export default function TasksDashboard() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Assignee @username</label>
-                  <input type="text" className="nm-input-glass" value={editingTask.assigneeName ?? ''} onChange={(e) => setEditingTask({ ...editingTask, assigneeName: e.target.value })} />
+                  <select
+                    className="nm-input-glass"
+                    value={editingTask.assigneeName ?? ''}
+                    onChange={(e) => setEditingTask({ ...editingTask, assigneeName: e.target.value })}
+                  >
+                    {registeredUsers.map((r) => r.profile).map((emp) => (
+                      <option key={emp.email} value={`@${emp.username}`}>
+                        @{emp.username} ({emp.role})
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '4px' }}>Cadence</label>

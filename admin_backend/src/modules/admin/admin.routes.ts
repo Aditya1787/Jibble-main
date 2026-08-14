@@ -9,6 +9,10 @@ import { requireSupabaseAuth } from '../../middlewares/supabase.middleware';
 import {
   sendOtp,
   verifyOtp,
+  checkUsername,
+  forgotPassword,
+  resetPassword,
+  registerEmployee,
   listEmployees,
   getEmployee,
   getMyProfile,
@@ -36,9 +40,14 @@ import {
 
 export const adminRouter = Router();
 
-// ── Public OTP Authentication Routes ──────────────────────────────────────────
+// ── Public Authentication & Registration Routes ─────────────────────────────
 adminRouter.post('/auth/send-otp', sendOtp);
 adminRouter.post('/auth/verify-otp', verifyOtp);
+adminRouter.post('/auth/check-username', checkUsername);
+adminRouter.get('/auth/check-username', checkUsername);
+adminRouter.post('/auth/forgot-password', forgotPassword);
+adminRouter.post('/auth/reset-password', resetPassword);
+adminRouter.post('/auth/register', registerEmployee);
 
 // ── All remaining admin routes require Supabase Auth ──────────────────────────
 adminRouter.use(requireSupabaseAuth);

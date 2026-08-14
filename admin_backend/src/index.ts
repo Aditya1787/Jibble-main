@@ -6,6 +6,7 @@
 import { createApp } from './app';
 import { startServer } from './server';
 import { logger } from './config/logger';
+import { autoSeedDatabase } from './modules/admin/admin.service';
 
 async function bootstrap() {
   try {

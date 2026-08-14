@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuthStore } from '../store/useAuthStore'
 import { useTeamTaskStore } from '../store/useTeamTaskStore'
 
@@ -6,28 +6,38 @@ const avatarPresets = ['🎒', '💻', '🎨', '🚀', '👨‍💼', '🦸‍�
 
 export default function Profile() {
   const { user, updateUserProfile } = useAuthStore()
-  const { tasks, updateTaskStatus, getEmployeePerformance } = useTeamTaskStore()
+  const { tasks, teams, updateTaskStatus, getEmployeePerformance, fetchAll } = useTeamTaskStore()
 
   const [showEditModal, setShowEditModal] = useState(false)
 
+  useEffect(() => {
+    fetchAll()
+  }, [fetchAll])
+
   // Edit form state initialized from logged in user
-  const [username, setUsername] = useState(user?.username || 'admin_ceo')
-  const [mobileNumber, setMobileNumber] = useState(user?.mobileNumber || '+91 98765 43210')
-  const [address, setAddress] = useState(user?.address || 'Building 4, Tech Park, New Delhi, India')
-  const [hometown, setHometown] = useState(user?.hometown || 'New Delhi, India')
-  const [favFood, setFavFood] = useState(user?.favFood || '🍕 Pizza')
-  const [avatar, setAvatar] = useState(user?.avatar || '🎒')
-  const [hobbiesInput, setHobbiesInput] = useState(user?.hobbies?.join(', ') || 'Coding, Gaming, Design')
+  const [username, setUsername] = useState(user?.username || '')
+  const [mobileNumber, setMobileNumber] = useState(user?.mobileNumber || '')
+  const [address, setAddress] = useState(user?.address || '')
+  const [hometown, setHometown] = useState(user?.hometown || '')
+  const [favFood, setFavFood] = useState(user?.favFood || '')
+  const [avatar, setAvatar] = useState(user?.avatar || '👤')
+  const [hobbiesInput, setHobbiesInput] = useState(user?.hobbies?.join(', ') || '')
 
   if (!user) return null
 
   // Calculate task performance stats
   const performance = getEmployeePerformance(user.username || user.email)
-  const userAssignedTasks = tasks.filter(
-    (t) =>
+  const cleanName = (str: string = '') => str.replace(/^@/, '').split(' ')[0].trim().toLowerCase()
+  const targetClean = cleanName(user.username || user.email)
+  const userAssignedTasks = tasks.filter((t) => {
+    const taskAssigneeClean = cleanName(t.assigneeName ?? '')
+    return (
+      taskAssigneeClean.includes(targetClean) ||
+      targetClean.includes(taskAssigneeClean) ||
       (t.assigneeName ?? '').toLowerCase().includes(user.username.toLowerCase()) ||
       (t.assigneeName ?? '').toLowerCase().includes(user.email.toLowerCase())
-  )
+    )
+  })
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,6 +52,18 @@ export default function Profile() {
     })
     setShowEditModal(false)
   }
+
+  const isFounderOrCeo = Boolean(
+    user.role?.toLowerCase().includes('founder') ||
+    user.role?.toLowerCase().includes('ceo')
+  )
+
+  const userTeams = teams.filter((t) => {
+    const leadClean = cleanName(t.leadName ?? '')
+    const isDirectLead = leadClean.includes(targetClean) || targetClean.includes(leadClean) || (t.leadName ?? '').toLowerCase().includes(user.username.toLowerCase())
+    const isMember = t.members.some((m) => cleanName(m.name).includes(targetClean) || cleanName(m.email).includes(targetClean) || m.name.toLowerCase().includes(user.username.toLowerCase()))
+    return isFounderOrCeo || isDirectLead || isMember
+  })
 
   return (
     <div style={{ padding: '32px 36px', maxWidth: 1400, display: 'flex', flexDirection: 'column', gap: '28px', width: '100%', boxSizing: 'border-box' }}>
@@ -87,8 +109,8 @@ export default function Profile() {
 
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '13px', color: 'var(--text-secondary)', marginTop: '8px', fontWeight: 600 }}>
               <span>📧 {user.email}</span>
-              <span>📱 {user.mobileNumber || '+91 98765 43210'}</span>
-              <span>📍 {user.hometown || 'New Delhi, India'}</span>
+              <span>📱 {user.mobileNumber || 'Not provided'}</span>
+              <span>📍 {user.hometown || 'Not specified'}</span>
             </div>
           </div>
 
@@ -105,28 +127,34 @@ export default function Profile() {
           <div className="nm-card-inset" style={{ padding: '14px 18px', borderRadius: '14px' }}>
             <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Physical Office Address</span>
             <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginTop: '4px' }}>
-              {user.address || 'Building 4, Tech Park, New Delhi, India'}
+              {user.address || '🏢 Corporate Headquarters / Tech Campus'}
             </div>
           </div>
 
           <div className="nm-card-inset" style={{ padding: '14px 18px', borderRadius: '14px' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Reporting Supervisor / Team Lead</span>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
+              {['founder', 'ceo', 'cto', 'cfo', 'coo', 'cpo', 'cmo', 'executive'].some((e) => user.role?.toLowerCase().includes(e))
+                ? 'Executive Command Level'
+                : 'Reporting Supervisor / Team Lead'}
+            </span>
             <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent)', marginTop: '4px' }}>
-              👨‍💼 {user.reportingLead || 'Alex Rivera (Team Lead)'}
+              {['founder', 'ceo', 'cto', 'cfo', 'coo', 'cpo', 'cmo', 'executive'].some((e) => user.role?.toLowerCase().includes(e))
+                ? '👑 Board of Directors / Executive Command'
+                : `👨‍💼 ${user.reportingLead && !user.reportingLead.includes('Alex') ? user.reportingLead : 'Department Lead / Executive Office'}`}
             </div>
           </div>
 
           <div className="nm-card-inset" style={{ padding: '14px 18px', borderRadius: '14px' }}>
             <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>HR Representative Contact</span>
             <div style={{ fontSize: '13px', fontWeight: 700, color: '#2563eb', marginTop: '4px' }}>
-              🤝 {user.hrContact || 'Priya Sharma (HR Lead)'}
+              🤝 {user.hrContact && !user.hrContact.includes('Priya') ? user.hrContact : 'Corporate HR & People Operations Desk'}
             </div>
           </div>
 
           <div className="nm-card-inset" style={{ padding: '14px 18px', borderRadius: '14px' }}>
             <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Fav Food & Hobbies</span>
             <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginTop: '4px' }}>
-              {user.favFood || '🍕 Pizza'} • {user.hobbies?.join(', ') || 'Coding, Music'}
+              {user.favFood || '🍕 Pizza'} • {user.hobbies?.join(', ') || 'Coding, Tech'}
             </div>
           </div>
         </div>
@@ -218,6 +246,69 @@ export default function Profile() {
           ) : (
             <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', gridColumn: '1 / -1' }}>
               No tasks currently assigned to you.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Teams & Leadership Responsibilities Section */}
+      <div className="nm-card" style={{ padding: '24px', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>
+            🏢 {isFounderOrCeo ? 'Executive Command Teams Oversight' : 'My Teams & Leadership Responsibilities'}
+          </h3>
+          <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--accent)', background: 'rgba(51,102,89,0.1)', padding: '4px 10px', borderRadius: '8px' }}>
+            {userTeams.length} Active Teams
+          </span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+          {userTeams.length > 0 ? (
+            userTeams.map((team) => {
+              const leadClean = cleanName(team.leadName ?? '')
+              const isDirectLead = leadClean.includes(targetClean) || targetClean.includes(leadClean) || (team.leadName ?? '').toLowerCase().includes(user.username.toLowerCase())
+              const isMember = team.members.some((m) => cleanName(m.name).includes(targetClean) || cleanName(m.email).includes(targetClean) || m.name.toLowerCase().includes(user.username.toLowerCase()))
+              
+              let roleBadge = '👑 Executive Command Oversight'
+              let badgeBg = 'rgba(245,158,11,0.12)'
+              let badgeColor = '#d97706'
+
+              if (isDirectLead) {
+                roleBadge = '👑 Team Lead'
+                badgeBg = 'rgba(16,185,129,0.12)'
+                badgeColor = '#059669'
+              } else if (isMember) {
+                roleBadge = '👥 Team Member'
+                badgeBg = 'rgba(59,130,246,0.12)'
+                badgeColor = '#2563eb'
+              }
+
+              return (
+                <div key={team.id} className="nm-card-inset animate-pop-in" style={{ padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--bg-primary)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: 'rgba(51,102,89,0.1)', color: 'var(--accent)' }}>
+                        {team.department}
+                      </span>
+                      <h4 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', marginTop: '4px' }}>{team.name}</h4>
+                    </div>
+                    <span style={{ fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px', background: badgeBg, color: badgeColor, textTransform: 'uppercase' }}>
+                      {roleBadge}
+                    </span>
+                  </div>
+
+                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{team.description}</p>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>Lead: {team.leadName}</span>
+                    <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--accent)' }}>{team.members.length} Members</span>
+                  </div>
+                </div>
+              )
+            })
+          ) : (
+            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', gridColumn: '1 / -1' }}>
+              No team leadership roles or team memberships assigned yet.
             </div>
           )}
         </div>

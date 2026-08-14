@@ -29,6 +29,7 @@ export interface EmployeeDTO {
   hometown: string | null
   favFood: string | null
   hobbies: string[]
+  authUserId?: string | null
   status: string
   joinedDate: string
 }
@@ -157,7 +158,7 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
 
 export const adminApi = {
 
-  // ── OTP Authentication ────────────────────────────────────────────────────
+  // ── OTP Authentication & Registration ─────────────────────────────────────
   auth: {
     sendOtp: (type: 'email' | 'mobile', recipient: string) =>
       apiFetch<OtpResponseDTO>('/auth/send-otp', {
@@ -168,6 +169,26 @@ export const adminApi = {
       apiFetch<OtpResponseDTO>('/auth/verify-otp', {
         method: 'POST',
         body: JSON.stringify({ type, recipient, otp }),
+      }),
+    checkUsername: (username: string, excludeId?: string | null) =>
+      apiFetch<{ available: boolean; message: string }>('/auth/check-username', {
+        method: 'POST',
+        body: JSON.stringify({ username, exclude_id: excludeId }),
+      }),
+    forgotPassword: (email: string) =>
+      apiFetch<OtpResponseDTO>('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      }),
+    resetPassword: (email: string, otp: string, newPassword: string) =>
+      apiFetch<OtpResponseDTO>('/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ email, otp, new_password: newPassword }),
+      }),
+    register: (data: Partial<EmployeeDTO>) =>
+      apiFetch<EmployeeDTO>('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(data),
       }),
   },
 

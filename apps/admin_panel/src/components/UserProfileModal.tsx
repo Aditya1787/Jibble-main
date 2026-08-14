@@ -8,18 +8,20 @@ interface Props {
 }
 
 export default function UserProfileModal({ initialUsername = '', onClose }: Props) {
-  const { registeredUsers } = useAuthStore()
+  const { user, registeredUsers } = useAuthStore()
   const { tasks, getEmployeePerformance } = useTeamTaskStore()
+
+  const allAvailableProfiles = user ? [user, ...registeredUsers.map(r => r.profile).filter(p => p.email !== user.email)] : registeredUsers.map(r => r.profile)
 
   const [searchUsername, setSearchUsername] = useState(initialUsername)
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(() => {
     if (initialUsername) {
-      const match = registeredUsers.find(
-        (acc) => acc.profile.username.toLowerCase() === initialUsername.toLowerCase()
+      const match = allAvailableProfiles.find(
+        (p) => p.username.toLowerCase() === initialUsername.toLowerCase() || p.email.toLowerCase() === initialUsername.toLowerCase()
       )
-      if (match) return match.profile
+      if (match) return match
     }
-    return registeredUsers[0]?.profile || null
+    return allAvailableProfiles[0] || user || null
   })
 
   // Filtered users dropdown
@@ -37,102 +39,116 @@ export default function UserProfileModal({ initialUsername = '', onClose }: Prop
     ? getEmployeePerformance(selectedUser.username || selectedUser.email)
     : { totalAssigned: 0, completedOnTime: 0, overdueCount: 0, onTimeRate: 0, ratingBadge: '⚡ Contributor' }
 
+  const cleanName = (str: string = '') => str.replace(/^@/, '').split(' ')[0].trim().toLowerCase()
+  const targetClean = selectedUser ? cleanName(selectedUser.username || selectedUser.email) : ''
   const userAssignedTasks = selectedUser
-    ? tasks.filter((t) => (t.assigneeName ?? '').toLowerCase().includes(selectedUser.username.toLowerCase()) || (t.assigneeName ?? '').toLowerCase().includes(selectedUser.email.toLowerCase()))
+    ? tasks.filter((t) => {
+        const taskAssigneeClean = cleanName(t.assigneeName ?? '')
+        return (
+          taskAssigneeClean.includes(targetClean) ||
+          targetClean.includes(taskAssigneeClean) ||
+          (t.assigneeName ?? '').toLowerCase().includes(selectedUser.username.toLowerCase()) ||
+          (t.assigneeName ?? '').toLowerCase().includes(selectedUser.email.toLowerCase())
+        )
+      })
     : []
+
+  const isFounderOrCeo = selectedUser
+    ? Boolean(selectedUser.role.toLowerCase().includes('founder') || selectedUser.role.toLowerCase().includes('ceo'))
+    : false
+
+  const selectedUserTeams = tasks ? useTeamTaskStore.getState().teams.filter((t) => {
+    if (!selectedUser) return false
+    const leadClean = cleanName(t.leadName ?? '')
+    const isDirectLead = leadClean.includes(targetClean) || targetClean.includes(leadClean) || (t.leadName ?? '').toLowerCase().includes(selectedUser.username.toLowerCase())
+    const isMember = t.members.some((m) => cleanName(m.name).includes(targetClean) || cleanName(m.email).includes(targetClean) || m.name.toLowerCase().includes(selectedUser.username.toLowerCase()))
+    return isFounderOrCeo || isDirectLead || isMember
+  }) : []
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
       <div className="spatial-panel animate-pop-in" style={{ width: '100%', maxWidth: '640px', padding: '28px', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '90vh', overflowY: 'auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)' }}>Employee Profile & Performance Analytics</h3>
-            <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Search any user by username to view their performance metrics and task history.</p>
-          </div>
-          <button type="button" style={{ border: 'none', background: 'transparent', fontSize: '20px', cursor: 'pointer' }} onClick={onClose}>✕</button>
+          <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)' }}>Employee Profile Dashboard</h3>
+          <button type="button" style={{ border: 'none', background: 'transparent', fontSize: '18px', cursor: 'pointer' }} onClick={onClose}>✕</button>
         </div>
 
-        {/* Username Search Input */}
-        <div style={{ position: 'relative' }}>
-          <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: 'var(--text-secondary)' }}>
-            Search User by @username
-          </label>
-          <div style={{ position: 'relative' }}>
+        {/* User Search Selector */}
+        <div className="nm-card-inset" style={{ padding: '12px 16px', borderRadius: '12px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <span style={{ fontSize: '14px' }}>🔍</span>
+          <div style={{ flex: 1, position: 'relative' }}>
             <input
               type="text"
               className="nm-input-glass"
-              placeholder="Type @username or email (e.g. admin_ceo, aditya)..."
+              placeholder="Search employee profile by @username or email..."
               value={searchUsername}
               onChange={(e) => setSearchUsername(e.target.value)}
-              style={{ paddingRight: '30px', fontWeight: 600 }}
+              style={{ fontSize: '12px' }}
             />
-            <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: '12px' }}>🔍</span>
-          </div>
 
-          {/* Search Dropdown list */}
-          {searchUsername && matchingUsers.length > 0 && searchUsername !== selectedUser?.username && (
-            <div
-              className="spatial-panel animate-pop-in"
-              style={{
-                position: 'absolute',
-                top: 'calc(100% + 4px)',
-                left: 0,
-                width: '100%',
-                maxHeight: '160px',
-                overflowY: 'auto',
-                zIndex: 120,
-                padding: '6px',
-                background: 'var(--bg-primary)',
-                borderRadius: '12px',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '4px'
-              }}
-            >
-              {matchingUsers.map((acc) => (
-                <button
-                  key={acc.profile.email}
-                  type="button"
-                  style={{
-                    textAlign: 'left',
-                    padding: '8px 10px',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    background: 'transparent',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}
-                  onClick={() => handleSelectUser(acc.profile)}
-                >
-                  <span style={{ fontWeight: 700 }}>@{acc.profile.username || acc.profile.email}</span>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{acc.profile.role}</span>
-                </button>
-              ))}
-            </div>
-          )}
+            {searchUsername && matchingUsers.length > 0 && (
+              <div
+                className="spatial-panel animate-pop-in"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 4px)',
+                  left: 0,
+                  width: '100%',
+                  maxHeight: '140px',
+                  overflowY: 'auto',
+                  zIndex: 120,
+                  padding: '6px',
+                  background: 'var(--bg-primary)',
+                  borderRadius: '10px',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px'
+                }}
+              >
+                {matchingUsers.map((acc) => (
+                  <button
+                    key={acc.profile.email}
+                    type="button"
+                    style={{
+                      textAlign: 'left',
+                      padding: '6px 8px',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      background: 'transparent',
+                      display: 'flex',
+                      justifyContent: 'space-between'
+                    }}
+                    onClick={() => handleSelectUser(acc.profile)}
+                  >
+                    <span style={{ fontWeight: 700 }}>@{acc.profile.username || acc.profile.email}</span>
+                    <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{acc.profile.role}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Selected User Details & Performance Dashboard */}
         {selectedUser ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* Identity Card */}
-            <div className="nm-card-inset" style={{ padding: '16px', borderRadius: '16px', display: 'flex', gap: '16px', alignItems: 'center' }}>
-              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--bg-primary)', boxShadow: 'var(--nm-flat-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px' }}>
+            {/* User Info Header */}
+            <div className="nm-card" style={{ padding: '20px', borderRadius: '16px', display: 'flex', gap: '16px', alignItems: 'center' }}>
+              <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--bg-primary)', boxShadow: 'var(--nm-flat-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px' }}>
                 {selectedUser.avatar || '👤'}
               </div>
-              <div style={{ flex: 1 }}>
+
+              <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <h4 style={{ fontSize: '18px', fontWeight: 800 }}>@{selectedUser.username}</h4>
+                  <h4 style={{ fontSize: '20px', fontWeight: 800 }}>@{selectedUser.username}</h4>
                   <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent)', background: 'rgba(51,102,89,0.1)', padding: '2px 8px', borderRadius: '6px' }}>
                     {selectedUser.role}
                   </span>
                 </div>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, marginTop: '2px' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
                   {selectedUser.email} • {selectedUser.category}
                 </div>
               </div>
@@ -173,6 +189,52 @@ export default function UserProfileModal({ initialUsername = '', onClose }: Prop
                 <div style={{ width: '100%', height: '8px', borderRadius: '4px', background: 'rgba(0,0,0,0.08)', overflow: 'hidden' }}>
                   <div style={{ width: `${performance.onTimeRate}%`, height: '100%', background: performance.onTimeRate >= 80 ? 'var(--accent)' : '#e67e22', borderRadius: '4px' }} />
                 </div>
+              </div>
+            </div>
+
+            {/* Teams & Leadership Responsibilities for Selected User */}
+            <div>
+              <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>
+                🏢 {isFounderOrCeo ? 'Executive Command Teams Oversight' : 'Assigned Teams & Leadership Roles'} ({selectedUserTeams.length})
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '160px', overflowY: 'auto' }}>
+                {selectedUserTeams.length > 0 ? (
+                  selectedUserTeams.map((t) => {
+                    const leadClean = cleanName(t.leadName ?? '')
+                    const isDirectLead = leadClean.includes(targetClean) || targetClean.includes(leadClean) || (selectedUser && (t.leadName ?? '').toLowerCase().includes(selectedUser.username.toLowerCase()))
+                    const isMember = selectedUser && t.members.some((m) => cleanName(m.name).includes(targetClean) || cleanName(m.email).includes(targetClean) || m.name.toLowerCase().includes(selectedUser.username.toLowerCase()))
+                    
+                    let roleBadge = '👑 Executive Command Oversight'
+                    let badgeBg = 'rgba(245,158,11,0.12)'
+                    let badgeColor = '#d97706'
+
+                    if (isDirectLead) {
+                      roleBadge = '👑 Lead'
+                      badgeBg = 'rgba(16,185,129,0.12)'
+                      badgeColor = '#059669'
+                    } else if (isMember) {
+                      roleBadge = '👥 Member'
+                      badgeBg = 'rgba(59,130,246,0.12)'
+                      badgeColor = '#2563eb'
+                    }
+
+                    return (
+                      <div key={t.id} className="nm-card-inset" style={{ padding: '10px 12px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontSize: '13px', fontWeight: 700 }}>{t.name}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{t.department} • Lead: {t.leadName}</div>
+                        </div>
+                        <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: badgeBg, color: badgeColor }}>
+                          {roleBadge}
+                        </span>
+                      </div>
+                    )
+                  })
+                ) : (
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', padding: '8px' }}>
+                    No assigned team leadership or team membership yet.
+                  </div>
+                )}
               </div>
             </div>
 

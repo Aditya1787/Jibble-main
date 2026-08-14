@@ -52,71 +52,11 @@ export interface PrivacySettings extends PrivacySettingsDTO {}
 
 const API_CONFIGURED = Boolean(import.meta.env.VITE_API_BASE_URL)
 
-// ── Seed data (fallback when backend not running) ─────────────────────────────
-const seedTeams: Team[] = [
-  {
-    id: 'team-1',
-    name: 'Frontend Core & Design System',
-    department: 'Engineering',
-    leadEmployeeId: null,
-    leadName: 'Alex Rivera',
-    description: 'Responsible for main web admin apps, component design systems, and spatial UI styling.',
-    activeProjectsCount: 3,
-    members: [
-      { id: 'm-1', name: 'Aditya Kumar', email: 'aditya@company.com', avatar: '💻', teamRole: 'Senior Frontend Lead', joinedDate: 'Jan 2025' },
-      { id: 'm-2', name: 'Priya Sharma', email: 'priya@company.com', avatar: '🎨', teamRole: 'UI/UX Designer', joinedDate: 'Feb 2025' },
-    ],
-  },
-  {
-    id: 'team-2',
-    name: 'Backend Infrastructure & Cloud API',
-    department: 'Software Engineering',
-    leadEmployeeId: null,
-    leadName: 'Elena Rostova',
-    description: 'Scalable cloud services, authentication microservices, database optimizations, and REST/GraphQL APIs.',
-    activeProjectsCount: 4,
-    members: [
-      { id: 'm-4', name: 'Marcus Vance', email: 'marcus@company.com', avatar: '👨‍💼', teamRole: 'Lead Architect', joinedDate: 'Dec 2024' },
-      { id: 'm-5', name: 'Neha Gupta', email: 'neha@company.com', avatar: '🔐', teamRole: 'Backend Security Dev', joinedDate: 'Jan 2025' },
-    ],
-  },
-  {
-    id: 'team-3',
-    name: 'People Operations & HR Excellence',
-    department: 'Human Resources',
-    leadEmployeeId: null,
-    leadName: 'Priya Sharma',
-    description: 'Talent recruitment, employee onboarding flows, workspace compliance, and internal community growth.',
-    activeProjectsCount: 2,
-    members: [
-      { id: 'm-7', name: 'Sarah Jenkins', email: 'sarah@company.com', avatar: '🏢', teamRole: 'HRBP Lead', joinedDate: 'Nov 2024' },
-    ],
-  },
-]
-
-const seedProjects: Project[] = [
-  { id: 'proj-1', name: 'Jibble Admin Console v2.0', teamId: 'team-1', teamName: 'Frontend Core & Design System', status: 'in_progress', description: 'Redesigning Admin console with employee management and privacy tools.', targetDate: 'Aug 30, 2026' },
-  { id: 'proj-2', name: 'Authentication Security Hardening', teamId: 'team-2', teamName: 'Backend Infrastructure & Cloud API', status: 'in_progress', description: 'Implementing OTP authentication, RBAC policy enforcement, and audit logs.', targetDate: 'Sep 15, 2026' },
-  { id: 'proj-3', name: 'Employee Onboarding & Policy Compliance', teamId: 'team-3', teamName: 'People Operations & HR Excellence', status: 'in_progress', description: 'Automating policy sign-offs and employee task assignments.', targetDate: 'Oct 01, 2026' },
-]
-
-const seedTasks: Task[] = [
-  { id: 'task-1', title: 'Daily Frontend Code Review & Component Linting', projectId: 'proj-1', projectName: 'Jibble Admin Console v2.0', assigneeId: null, assigneeName: 'Aditya Kumar', assigneeAvatar: '💻', priority: 'high', status: 'completed', cadence: 'day', dueDate: 'Today, 5:00 PM', description: 'Perform daily PR reviews for spatial UI components and theme tokens.' },
-  { id: 'task-2', title: 'Daily Backend API Health & Error Rate Monitoring', projectId: 'proj-2', projectName: 'Authentication Security Hardening', assigneeId: null, assigneeName: 'Robert Taylor', assigneeAvatar: '☁️', priority: 'urgent', status: 'in_progress', cadence: 'day', dueDate: 'Today, 6:00 PM', description: 'Verify API uptime, error rate metrics, and microservice latencies.' },
-  { id: 'task-3', title: 'Weekly Sprint Release: Team & Task Management Module', projectId: 'proj-1', projectName: 'Jibble Admin Console v2.0', assigneeId: null, assigneeName: 'Rahul Verma', assigneeAvatar: '🚀', priority: 'high', status: 'in_progress', cadence: 'week', dueDate: 'End of Sprint (Friday)', description: 'Finalize team creation modal, role selectors, and task cadence filters.' },
-  { id: 'task-4', title: 'Weekly HR Employee Onboarding Sync', projectId: 'proj-3', projectName: 'Employee Onboarding & Policy Compliance', assigneeId: null, assigneeName: 'Priya Sharma', assigneeAvatar: '🏢', priority: 'medium', status: 'todo', cadence: 'week', dueDate: 'This Friday, 3:00 PM', description: 'Review new employee registrations, HR contact assignments, and onboarding checklists.' },
-  { id: 'task-5', title: 'Monthly Privacy & GDPR Compliance Audit', projectId: 'proj-3', projectName: 'Employee Onboarding & Policy Compliance', assigneeId: null, assigneeName: 'Sarah Jenkins', assigneeAvatar: '🏢', priority: 'high', status: 'in_progress', cadence: 'month', dueDate: 'End of Month', description: 'Audit employee policy acceptance rates and PII data handling toggles.' },
-  { id: 'task-6', title: 'Monthly Database Indexing & Scalability Benchmark', projectId: 'proj-2', projectName: 'Authentication Security Hardening', assigneeId: null, assigneeName: 'Marcus Vance', assigneeAvatar: '👨‍💼', priority: 'medium', status: 'todo', cadence: 'month', dueDate: 'Aug 31, 2026', description: 'Run database query profiling, optimize high-traffic indexes, and prune telemetry logs.' },
-  { id: 'task-7', title: 'Yearly Information Security Policy Revision & ISO Certification', projectId: 'proj-3', projectName: 'Employee Onboarding & Policy Compliance', assigneeId: null, assigneeName: 'Neha Gupta', assigneeAvatar: '🔐', priority: 'urgent', status: 'in_progress', cadence: 'year', dueDate: 'Q4 2026', description: 'Comprehensive annual update of cybersecurity policies, data privacy guidelines, and ISO compliance.' },
-  { id: 'task-8', title: 'Annual Enterprise Architecture & Infrastructure Planning', projectId: 'proj-2', projectName: 'Authentication Security Hardening', assigneeId: null, assigneeName: 'Elena Rostova', assigneeAvatar: '☁️', priority: 'high', status: 'todo', cadence: 'year', dueDate: 'Dec 2026', description: 'Evaluate cloud provider contracts, disaster recovery budgets, and 2027 tech roadmap.' },
-]
-
-const seedPolicies: Policy[] = [
-  { id: 'pol-1', title: 'Corporate Data Privacy & GDPR Guidelines', category: 'Data Privacy', version: 'v2.4', effectiveDate: 'Jan 01, 2026', isMandatory: true, complianceRate: 94, content: 'Outlines strict guidelines for handling user data, PII, consent tracking, and GDPR compliance.' },
-  { id: 'pol-2', title: 'Information Security & Access Control Policy', category: 'Security', version: 'v3.1', effectiveDate: 'Feb 15, 2026', isMandatory: true, complianceRate: 98, content: 'Mandates MFA, password complexity standards, key rotation, and RBAC rules.' },
-  { id: 'pol-3', title: 'Remote Work & Spatial Workplace Conduct', category: 'Remote Work', version: 'v1.8', effectiveDate: 'Mar 10, 2026', isMandatory: false, complianceRate: 88, content: 'Best practices for remote working, virtual meeting decorum, and async communication.' },
-  { id: 'pol-4', title: 'Employee Code of Ethics & Community Values', category: 'Code of Conduct', version: 'v2.0', effectiveDate: 'Jan 15, 2026', isMandatory: true, complianceRate: 96, content: 'Standards of professional integrity, anti-harassment rules, and inclusive community guidelines.' },
-]
+// ── Seed data (starts clean and empty) ─────────────────────────────
+const seedTeams: Team[] = []
+const seedProjects: Project[] = []
+const seedTasks: Task[] = []
+const seedPolicies: Policy[] = []
 
 const seedPrivacySettings: PrivacySettings = {
   gdprCompliant: true,
@@ -147,7 +87,7 @@ interface TeamTaskState {
   // Mutation actions
   addTeam: (team: Omit<Team, 'id' | 'members'>) => Promise<void>
   updateTeam: (teamId: string, teamData: Partial<Team>) => Promise<void>
-  addMemberToTeam: (teamId: string, member: TeamMember) => void
+  addMemberToTeam: (teamId: string, member: TeamMember & { dbEmployeeId?: string }) => Promise<void>
   removeMemberFromTeam: (teamId: string, memberId: string) => Promise<void>
   addProject: (project: Omit<Project, 'id'>) => Promise<void>
   addTask: (task: Omit<Task, 'id'>) => Promise<void>
@@ -254,24 +194,39 @@ export const useTeamTaskStore = create<TeamTaskState>((set, get) => ({
   addTeam: async (team: Omit<Team, 'id' | 'members'>) => {
     if (API_CONFIGURED) {
       try {
-        const created = await adminApi.teams.create({
+        await adminApi.teams.create({
           name: team.name,
           department: team.department,
           leadEmployeeId: team.leadEmployeeId ?? null,
           leadName: team.leadName ?? null,
           description: team.description ?? null,
         })
-        set((state) => ({ teams: [...state.teams, { ...created, members: [] }] }))
+        await get().fetchTeams()
+        await get().fetchProjects()
         return
       } catch (e) {
         console.warn('addTeam API failed, using local:', e)
       }
     }
+
+    const createdTeam: Team = {
+      ...team,
+      id: `team-${Date.now()}`,
+      members: [],
+      activeProjectsCount: 0,
+    }
+    const defaultProject: Project = {
+      id: `proj-${Date.now()}`,
+      name: `${team.name} Deliverables`,
+      teamId: createdTeam.id,
+      teamName: createdTeam.name,
+      status: 'in_progress',
+      description: `Default workspace deliverables project for ${team.name}.`,
+      targetDate: 'Ongoing',
+    }
     set((state) => ({
-      teams: [
-        ...state.teams,
-        { ...team, id: `team-${Date.now()}`, members: [], activeProjectsCount: 0 },
-      ],
+      teams: [...state.teams, createdTeam],
+      projects: [defaultProject, ...state.projects],
     }))
   },
 
@@ -288,40 +243,47 @@ export const useTeamTaskStore = create<TeamTaskState>((set, get) => ({
     }))
   },
 
-  addMemberToTeam: (teamId, member) =>
+  addMemberToTeam: async (teamId, member) => {
+    const employeeIdToUse = (member as TeamMember & { dbEmployeeId?: string }).dbEmployeeId || member.id
+    const teamRole = 'Team Member'
+    if (API_CONFIGURED && employeeIdToUse) {
+      try {
+        await adminApi.teams.addMember(teamId, employeeIdToUse, teamRole)
+        await get().fetchTeams()
+        return
+      } catch (e) {
+        console.warn('addMemberToTeam API failed, using local:', e)
+      }
+    }
     set((state) => ({
       teams: state.teams.map((t) => {
-        if (t.id === teamId) {
-          if (
-            t.members.some(
-              (m) =>
-                m.name.toLowerCase() === member.name.toLowerCase() ||
-                m.email.toLowerCase() === member.email.toLowerCase()
-            )
-          ) {
-            return t
-          }
-          return { ...t, members: [...t.members, member] }
+        if (t.id !== teamId) return t
+        if (
+          t.members.some(
+            (m) =>
+              m.name.toLowerCase() === member.name.toLowerCase() ||
+              m.email.toLowerCase() === member.email.toLowerCase()
+          )
+        ) {
+          return t
         }
-        return t
+        return { ...t, members: [...t.members, { ...member, teamRole }] }
       }),
-    })),
+    }))
+  },
 
   removeMemberFromTeam: async (teamId, memberId) => {
     if (API_CONFIGURED) {
       try {
         await adminApi.teams.removeMember(teamId, memberId)
       } catch (e) {
-        console.warn('removeMember API failed, using local:', e)
+        console.warn('removeMemberFromTeam API failed, using local:', e)
       }
     }
     set((state) => ({
-      teams: state.teams.map((t) => {
-        if (t.id === teamId) {
-          return { ...t, members: t.members.filter((m) => m.id !== memberId) }
-        }
-        return t
-      }),
+      teams: state.teams.map((t) =>
+        t.id === teamId ? { ...t, members: t.members.filter((m) => m.id !== memberId) } : t
+      ),
     }))
   },
 
@@ -341,17 +303,35 @@ export const useTeamTaskStore = create<TeamTaskState>((set, get) => ({
   },
 
   addTask: async (task) => {
+    // Resolve assigneeName → assigneeId if not already provided
+    const resolvedTask = { ...task }
+    if (!resolvedTask.assigneeId) {
+      const cleanName = (resolvedTask.assigneeName ?? '').replace(/^@/, '').split(' ')[0].trim().toLowerCase()
+      const { useAuthStore } = await import('./useAuthStore') as any
+      const allUsers: any[] = useAuthStore.getState().registeredUsers
+      const match = allUsers.find((u: any) =>
+        (u.profile.username ?? '').toLowerCase() === cleanName ||
+        u.profile.email.toLowerCase().split('@')[0] === cleanName
+      )
+      if (match?.profile?.dbEmployeeId) {
+        resolvedTask.assigneeId = match.profile.dbEmployeeId
+        resolvedTask.assigneeAvatar = match.profile.avatar || '👤'
+      }
+    }
+
     if (API_CONFIGURED) {
       try {
-        const created = await adminApi.tasks.create(task)
-        set((state) => ({ tasks: [created, ...state.tasks] }))
+        const created = await adminApi.tasks.create(resolvedTask)
+        set((state) => ({ tasks: [created, ...state.tasks.filter((t) => t.id !== created.id)] }))
+        await get().fetchTasks()
         return
       } catch (e) {
         console.warn('addTask API failed, using local:', e)
       }
     }
+    const newTaskObj = { ...resolvedTask, id: `task-${Date.now()}` }
     set((state) => ({
-      tasks: [{ ...task, id: `task-${Date.now()}` }, ...state.tasks],
+      tasks: [newTaskObj, ...state.tasks],
     }))
   },
 
@@ -430,9 +410,16 @@ export const useTeamTaskStore = create<TeamTaskState>((set, get) => ({
   },
 
   getEmployeePerformance: (memberName) => {
-    const userTasks = get().tasks.filter((t) =>
-      t.assigneeName?.toLowerCase().includes(memberName.toLowerCase())
-    )
+    const cleanName = (str: string = '') => str.replace(/^@/, '').split(' ')[0].trim().toLowerCase()
+    const targetClean = cleanName(memberName)
+    const userTasks = get().tasks.filter((t) => {
+      const taskAssigneeClean = cleanName(t.assigneeName ?? '')
+      return (
+        taskAssigneeClean.includes(targetClean) ||
+        targetClean.includes(taskAssigneeClean) ||
+        (t.assigneeName ?? '').toLowerCase().includes(memberName.toLowerCase())
+      )
+    })
     const totalAssigned = Math.max(userTasks.length, 1)
     const completedOnTime = userTasks.filter((t) => t.status === 'completed').length
     const overdueCount = userTasks.filter(

@@ -14,14 +14,7 @@ interface PostItem {
   time: string
 }
 
-const initialPosts: PostItem[] = [
-  { id: 1, author: 'Aditya Kumar',  college: 'IIT Delhi', type: 'post', content: 'Just finished my ML project — built a sentiment analyser for college reviews 🎉', likes: 142, comments: 28, category: 'Tech',    flagged: false, time: '2h ago' },
-  { id: 2, author: 'Priya Sharma',  college: 'BITS Pilani', type: 'reel', content: '📹 30-sec Reel: Quick Flutter App animation demo & UI breakdown!', likes: 412, comments: 89, category: 'Tech', flagged: false, time: '3h ago' },
-  { id: 3, author: 'Arjun Singh',   college: 'DTU Delhi',   type: 'post', content: 'This post contains inappropriate content that has been flagged by multiple users...', likes: 3, comments: 7, category: 'General', flagged: true,  time: '6h ago' },
-  { id: 4, author: 'Neha Gupta',    college: 'NIT Trichy',  type: 'post', content: 'Campus placement season is here! Sharing tips from my recent interviews at top MNCs.', likes: 234, comments: 56, category: 'Career',  flagged: false, time: '8h ago' },
-  { id: 5, author: 'Riya Patel',    college: 'IIIT Hyd',    type: 'reel', content: '📹 Reel: Campus Hackathon Highlights & Team Celebrations! 🚀', likes: 520, comments: 94, category: 'Events',  flagged: false, time: '12h ago' },
-  { id: 6, author: 'Karan Mehta',   college: 'Manipal',     type: 'post', content: 'Suspicious content flagged by AI filter — potential spam or community policy violation.', likes: 1, comments: 0, category: 'General', flagged: true,  time: '1d ago' },
-]
+const initialPosts: PostItem[] = []
 
 const categoryColor: Record<string, string> = {
   Tech:    'var(--accent)',

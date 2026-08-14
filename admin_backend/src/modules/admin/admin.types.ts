@@ -69,7 +69,7 @@ export interface TeamMemberRow {
   employee_id: string;
   team_role: string;
   joined_date: string;
-  employee?: Pick<Employee, 'id' | 'full_name' | 'email' | 'avatar_emoji' | 'role'>;
+  employee?: Pick<Employee, 'id' | 'username' | 'full_name' | 'email' | 'avatar_emoji' | 'role'>;
 }
 
 export interface Team {

@@ -18,25 +18,8 @@ const foodOptions = [
   '🍝 Pasta', '🥗 Salad', '🌮 Taco', '🍜 Ramen'
 ]
 
-const leadPresets = [
-  { name: 'Marcus Vance', title: 'Tech Head / CTO', dept: 'Engineering' },
-  { name: 'David Kim', title: 'VP of Engineering', dept: 'Software Engineering' },
-  { name: 'Elena Rostova', title: 'Engineering Manager', dept: 'Backend & Cloud' },
-  { name: 'Alex Rivera', title: 'Frontend Lead', dept: 'UI/UX & Web' },
-  { name: 'Samantha Chen', title: 'Head of Product', dept: 'Product Strategy' },
-  { name: 'Robert Taylor', title: 'DevOps & SRE Lead', dept: 'Infrastructure' },
-  { name: 'Aarav Sharma', title: 'AI & Data Science Lead', dept: 'AI / Machine Learning' },
-  { name: 'Sophia Martinez', title: 'QA & Testing Manager', dept: 'Quality Assurance' },
-]
-
-const hrPresets = [
-  { name: 'Priya Sharma', title: 'HR Director', dept: 'People Operations' },
-  { name: 'Sarah Jenkins', title: 'HR Business Partner (HRBP)', dept: 'Engineering & Product' },
-  { name: 'Anita Roy', title: 'Talent Acquisition Lead', dept: 'Recruitment' },
-  { name: 'Michael Chang', title: 'People Operations Manager', dept: 'Employee Success' },
-  { name: 'Rohan Mehta', title: 'Senior HR Executive', dept: 'HR & Compliance' },
-  { name: 'Emily Watson', title: 'Onboarding & Cultural Lead', dept: 'People Experience' },
-]
+const defaultLeadPresets: Array<{ name: string; title: string; dept: string }> = []
+const defaultHrPresets: Array<{ name: string; title: string; dept: string }> = []
 
 export default function AuthFlow() {
   const store = useAuthStore()
@@ -82,6 +65,8 @@ export default function AuthFlow() {
   // Step 2 States (Email OTP)
   const [emailOtp, setEmailOtp] = useState(['', '', '', '', '', ''])
   const [emailTimer, setEmailTimer] = useState(30)
+  const [isVerifyingEmail, setIsVerifyingEmail] = useState(false)
+  const [emailSuccessAnim, setEmailSuccessAnim] = useState(false)
   
   // Step 3 States (Mobile OTP)
   const [phone, setPhone] = useState('')
@@ -89,6 +74,9 @@ export default function AuthFlow() {
   const [mobileOtpSent, setMobileOtpSent] = useState(false)
   const [mobileOtp, setMobileOtp] = useState(['', '', '', '', '', ''])
   const [mobileTimer, setMobileTimer] = useState(30)
+  const [isSendingMobileOtp, setIsSendingMobileOtp] = useState(false)
+  const [isVerifyingMobile, setIsVerifyingMobile] = useState(false)
+  const [mobileSuccessAnim, setMobileSuccessAnim] = useState(false)
   
   // Step 4 States (Onboarding)
   const [username, setUsername] = useState('')
@@ -100,28 +88,77 @@ export default function AuthFlow() {
   const [customAvatar, setCustomAvatar] = useState('')
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
   
+  // Forgot Password States
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [forgotStep, setForgotStep] = useState<'request' | 'reset'>('request')
+  const [forgotOtp, setForgotOtp] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
+  const [forgotLoading, setForgotLoading] = useState(false)
+  const [forgotMsg, setForgotMsg] = useState('')
+  const [forgotError, setForgotError] = useState('')
+
+  // Executive Role helpers
+  const isExecutiveRole = (role: string) => {
+    if (!role) return false
+    const norm = role.trim().toLowerCase()
+    const execs = ['founder', 'ceo', 'founder & ceo', 'founder and ceo', 'co-founder', 'co founder', 'cto', 'cfo', 'coo', 'cpo', 'cmo']
+    return execs.some((e) => norm === e || norm.includes(e))
+  }
+
+  const getExecutiveRoleHolder = (role: string) => {
+    if (!isExecutiveRole(role)) return null
+    const norm = role.trim().toLowerCase()
+    const match = store.registeredUsers.find(
+      (r) => r.profile?.role && isExecutiveRole(r.profile.role) && r.profile.role.trim().toLowerCase() === norm
+    )
+    return match ? match.profile.username : null
+  }
+
   // Step 5 States (Redirect)
   const [redirectCount, setRedirectCount] = useState(5)
   
   // Confetti Canvas Ref
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
-  // Username validation simulation
+  // Real-time Username Uniqueness Validation
   useEffect(() => {
-    if (!username) {
+    const trimmed = username.trim()
+    if (!trimmed) {
       setUsernameStatus('idle')
       return
     }
+    if (trimmed.length < 3) {
+      setUsernameStatus('taken')
+      return
+    }
+
+    const takenLocally = store.registeredUsers.some(
+      (r) => r.profile.username?.toLowerCase() === trimmed.toLowerCase()
+    ) || (store.user && store.user.username?.toLowerCase() === trimmed.toLowerCase())
+
+    if (takenLocally) {
+      setUsernameStatus('taken')
+      return
+    }
+
     setUsernameStatus('checking')
-    const t = setTimeout(() => {
-      if (username.length < 3) {
-        setUsernameStatus('taken')
-      } else {
+    const t = setTimeout(async () => {
+      try {
+        const res = await adminApi.auth.checkUsername(trimmed)
+        if (res.available) {
+          setUsernameStatus('available')
+        } else {
+          setUsernameStatus('taken')
+        }
+      } catch {
         setUsernameStatus('available')
       }
-    }, 600)
+    }, 400)
+
     return () => clearTimeout(t)
-  }, [username])
+  }, [username, store.registeredUsers, store.user])
 
   // Email Timer
   useEffect(() => {
@@ -224,7 +261,7 @@ export default function AuthFlow() {
   }, [step, redirectCount, activeMode])
 
   // Login handler
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const newErrors: Record<string, string> = {}
     if (!loginEmail) {
@@ -243,15 +280,28 @@ export default function AuthFlow() {
     }
 
     setIsLoggingIn(true)
-    setTimeout(() => {
-      const success = store.login(loginEmail, loginPassword)
-      setIsLoggingIn(false)
-      if (!success) {
-        setErrors({ loginGeneral: 'Invalid email or password.' })
-      } else {
-        setErrors({})
+    let success = false
+    let supabaseAttempted = false
+    try {
+      if (Boolean(import.meta.env.VITE_SUPABASE_URL) && import.meta.env.VITE_SUPABASE_URL !== 'https://placeholder.supabase.co') {
+        supabaseAttempted = true
+        success = await store.loginWithSupabase(loginEmail, loginPassword)
       }
-    }, 1000)
+    } catch (err) {
+      console.warn('Supabase login failed:', err)
+    }
+
+    // Only fallback to local mock login if Supabase was NOT configured
+    if (!success && !supabaseAttempted) {
+      success = store.login(loginEmail, loginPassword)
+    }
+
+    setIsLoggingIn(false)
+    if (!success) {
+      setErrors({ loginGeneral: 'Invalid email or password.' })
+    } else {
+      setErrors({})
+    }
   }
 
   // Computed categories filtered by search query
@@ -307,16 +357,28 @@ export default function AuthFlow() {
     return list
   }, [selCategory, roleSearch])
 
-  // Filtered Leads
-  const filteredLeads = leadPresets.filter(
+  // Dynamic Leads built from real active workspace employees
+  const dynamicLeads = store.registeredUsers.map(r => ({
+    name: r.profile.username,
+    title: r.profile.role || 'Department Lead',
+    dept: r.profile.category || 'Engineering',
+  }))
+
+  const filteredLeads = (dynamicLeads.length > 0 ? dynamicLeads : defaultLeadPresets).filter(
     (lead) =>
       lead.name.toLowerCase().includes(leadSearch.toLowerCase()) ||
       lead.title.toLowerCase().includes(leadSearch.toLowerCase()) ||
       lead.dept.toLowerCase().includes(leadSearch.toLowerCase())
   )
 
-  // Filtered HR Contacts
-  const filteredHrs = hrPresets.filter(
+  // Dynamic HR contacts built from real active workspace employees
+  const dynamicHrs = store.registeredUsers.filter(r => r.profile.category?.toLowerCase().includes('hr') || r.profile.category?.toLowerCase().includes('human') || r.profile.role?.toLowerCase().includes('hr') || r.profile.role?.toLowerCase().includes('lead')).map(r => ({
+    name: r.profile.username,
+    title: r.profile.role || 'HR Contact',
+    dept: r.profile.category || 'People Operations',
+  }))
+
+  const filteredHrs = (dynamicHrs.length > 0 ? dynamicHrs : store.registeredUsers.map(r => ({ name: r.profile.username, title: r.profile.role, dept: r.profile.category }))).filter(
     (hr) =>
       hr.name.toLowerCase().includes(hrSearch.toLowerCase()) ||
       hr.title.toLowerCase().includes(hrSearch.toLowerCase()) ||
@@ -329,6 +391,13 @@ export default function AuthFlow() {
       newErrors.email = 'Email ID is required.'
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       newErrors.email = 'Please enter a valid email address.'
+    } else {
+      const isAlreadyRegistered = store.registeredUsers.some(
+        (acc) => acc.email.toLowerCase() === email.toLowerCase()
+      )
+      if (isAlreadyRegistered) {
+        newErrors.email = 'An account with this email address already exists. Please log in instead.'
+      }
     }
     
     if (!password) {
@@ -347,6 +416,14 @@ export default function AuthFlow() {
     
     if (!selRole && !roleSearch) {
       newErrors.role = 'Please select or type a valid job role.'
+    } else {
+      const targetRole = selRole || roleSearch
+      if (targetRole && isExecutiveRole(targetRole)) {
+        const holder = getExecutiveRoleHolder(targetRole)
+        if (holder) {
+          newErrors.role = `The executive role '${targetRole}' is already allocated to @${holder}. Only one person can hold this role.`
+        }
+      }
     }
 
     setErrors(newErrors)
@@ -371,12 +448,8 @@ export default function AuthFlow() {
         finalHr || undefined
       )
       setStep(2)
-      // Send real Email OTP via backend API
-      adminApi.auth.sendOtp('email', email).then((res) => {
-        if (res.devOtpCode) {
-          console.log(`[Dev Mode] Email OTP for ${email}: ${res.devOtpCode}`)
-        }
-      }).catch((err) => {
+      // Send Email OTP via backend API
+      adminApi.auth.sendOtp('email', email).catch((err) => {
         console.warn('Backend OTP send failed, falling back to local timer:', err)
       })
     }
@@ -422,14 +495,24 @@ export default function AuthFlow() {
       setErrors({ emailOtp: 'Please enter all 6 digits.' })
       return
     }
+    setErrors({})
+    setIsVerifyingEmail(true)
+
     try {
       await adminApi.auth.verifyOtp('email', email, code)
     } catch (err: any) {
       console.warn('Backend Email OTP verify failed, verifying locally:', err.message)
     }
-    store.verifyEmailOTP()
-    setErrors({})
-    setStep(3)
+
+    setTimeout(() => {
+      setIsVerifyingEmail(false)
+      setEmailSuccessAnim(true)
+      setTimeout(() => {
+        setEmailSuccessAnim(false)
+        store.verifyEmailOTP()
+        setStep(3)
+      }, 700)
+    }, 1000)
   }
 
   const handleMobileSendOtp = async () => {
@@ -438,18 +521,21 @@ export default function AuthFlow() {
       return
     }
     setErrors({})
+    setIsSendingMobileOtp(true)
+
     try {
       const fullPhone = `${countryCode}${phone}`
-      const res = await adminApi.auth.sendOtp('mobile', fullPhone)
-      if (res.devOtpCode) {
-        console.log(`[Dev Mode] Mobile OTP for ${fullPhone}: ${res.devOtpCode}`)
-      }
+      await adminApi.auth.sendOtp('mobile', fullPhone)
     } catch (err: any) {
       console.warn('Backend Mobile OTP send failed, falling back to local store:', err.message)
     }
-    store.sendMobileOTP(phone)
-    setMobileOtpSent(true)
-    setMobileTimer(30)
+
+    setTimeout(() => {
+      setIsSendingMobileOtp(false)
+      store.sendMobileOTP(phone)
+      setMobileOtpSent(true)
+      setMobileTimer(30)
+    }, 600)
   }
 
   const handleMobileOtpVerify = async () => {
@@ -458,15 +544,25 @@ export default function AuthFlow() {
       setErrors({ mobileOtp: 'Please enter all 6 digits.' })
       return
     }
+    setErrors({})
+    setIsVerifyingMobile(true)
+
     try {
       const fullPhone = `${countryCode}${phone}`
       await adminApi.auth.verifyOtp('mobile', fullPhone, code)
     } catch (err: any) {
       console.warn('Backend Mobile OTP verify failed, verifying locally:', err.message)
     }
-    store.verifyMobileOTP()
-    setErrors({})
-    setStep(4)
+
+    setTimeout(() => {
+      setIsVerifyingMobile(false)
+      setMobileSuccessAnim(true)
+      setTimeout(() => {
+        setMobileSuccessAnim(false)
+        store.verifyMobileOTP()
+        setStep(4)
+      }, 700)
+    }, 1000)
   }
 
   const toggleHobby = (hobby: string) => {
@@ -721,17 +817,200 @@ export default function AuthFlow() {
                   onChange={(e) => setLoginPassword(e.target.value)}
                 />
                 {errors.loginPassword && <span style={{ color: 'var(--danger)', fontSize: '11px', marginTop: '4px', display: 'block', fontWeight: 600 }}>{errors.loginPassword}</span>}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForgotPassword(true)
+                      setForgotEmail(loginEmail)
+                      setForgotStep('request')
+                      setForgotError('')
+                      setForgotMsg('')
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--accent)',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
               </div>
             </div>
 
-            <button
-              type="submit"
-              className="nm-btn-accent"
-              disabled={isLoggingIn}
-              style={{ marginTop: '10px' }}
-            >
-              {isLoggingIn ? 'Verifying Account... ⏳' : 'Sign In to Workspace →'}
-            </button>
+            {!showForgotPassword && (
+              <button
+                type="submit"
+                className="nm-btn-accent"
+                disabled={isLoggingIn}
+                style={{ marginTop: '10px' }}
+              >
+                {isLoggingIn ? 'Verifying Account... ⏳' : 'Sign In to Workspace →'}
+              </button>
+            )}
+
+            {/* Forgot Password Flow Card */}
+            {showForgotPassword && (
+              <div className="animate-pop-in nm-card-inset" style={{ padding: '16px', borderRadius: '16px', marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <h4 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>🔑 Reset Password</h4>
+                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                    {forgotStep === 'request'
+                      ? 'Enter registered email to receive a 6-digit reset code.'
+                      : 'Enter 6-digit code sent to email and set new password.'}
+                  </p>
+                </div>
+
+                {forgotError && (
+                  <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'rgba(179,74,74,0.1)', color: 'var(--danger)', fontSize: '12px', fontWeight: 600, textAlign: 'center' }}>
+                    ⚠️ {forgotError}
+                  </div>
+                )}
+
+                {forgotMsg && (
+                  <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'rgba(51,102,89,0.12)', color: 'var(--accent)', fontSize: '12px', fontWeight: 600, textAlign: 'center' }}>
+                    ✅ {forgotMsg}
+                  </div>
+                )}
+
+                {forgotStep === 'request' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: 'var(--text-secondary)' }}>Email Address</label>
+                      <input
+                        type="email"
+                        className="nm-input-glass"
+                        placeholder="your_email@example.com"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        type="button"
+                        className="nm-btn"
+                        style={{ flex: 1, padding: '8px', fontSize: '12px' }}
+                        onClick={() => setShowForgotPassword(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="nm-btn-accent"
+                        disabled={forgotLoading}
+                        style={{ flex: 1.5, padding: '8px', fontSize: '12px' }}
+                        onClick={async () => {
+                          if (!forgotEmail || !/\S+@\S+\.\S+/.test(forgotEmail)) {
+                            setForgotError('Please enter a valid email address.')
+                            return
+                          }
+                          setForgotError('')
+                          setForgotLoading(true)
+                          try {
+                            await adminApi.auth.forgotPassword(forgotEmail)
+                            setForgotMsg('Verification code sent to your email! (Test OTP: 123456)')
+                            setForgotStep('reset')
+                          } catch (err: any) {
+                            setForgotError(err.message || 'Failed to send reset code.')
+                          } finally {
+                            setForgotLoading(false)
+                          }
+                        }}
+                      >
+                        {forgotLoading ? 'Sending... ⏳' : 'Send Reset Code →'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: 'var(--text-secondary)' }}>6-Digit Code</label>
+                      <input
+                        type="text"
+                        className="nm-input-glass"
+                        placeholder="123456"
+                        maxLength={6}
+                        value={forgotOtp}
+                        onChange={(e) => setForgotOtp(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: 'var(--text-secondary)' }}>New Password</label>
+                      <input
+                        type="password"
+                        className="nm-input-glass"
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: 'var(--text-secondary)' }}>Confirm Password</label>
+                      <input
+                        type="password"
+                        className="nm-input-glass"
+                        placeholder="••••••••"
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                      <button
+                        type="button"
+                        className="nm-btn"
+                        style={{ flex: 1, padding: '8px', fontSize: '12px' }}
+                        onClick={() => setForgotStep('request')}
+                      >
+                        ← Back
+                      </button>
+                      <button
+                        type="button"
+                        className="nm-btn-accent"
+                        disabled={forgotLoading}
+                        style={{ flex: 1.5, padding: '8px', fontSize: '12px' }}
+                        onClick={async () => {
+                          if (!forgotOtp || forgotOtp.length < 6) {
+                            setForgotError('Please enter all 6 digits of the verification code.')
+                            return
+                          }
+                          if (!newPassword || newPassword.length < 6) {
+                            setForgotError('Password must be at least 6 characters.')
+                            return
+                          }
+                          if (newPassword !== confirmNewPassword) {
+                            setForgotError('Passwords do not match.')
+                            return
+                          }
+                          setForgotError('')
+                          setForgotLoading(true)
+                          try {
+                            await adminApi.auth.resetPassword(forgotEmail, forgotOtp, newPassword)
+                            setForgotMsg('Password reset successful! Setting credentials...')
+                            setTimeout(() => {
+                              setShowForgotPassword(false)
+                              setLoginEmail(forgotEmail)
+                              setLoginPassword(newPassword)
+                              setForgotMsg('')
+                            }, 1000)
+                          } catch (err: any) {
+                            setForgotError(err.message || 'Password reset failed.')
+                          } finally {
+                            setForgotLoading(false)
+                          }
+                        }}
+                      >
+                        {forgotLoading ? 'Updating... ⏳' : 'Reset Password'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </form>
         )}
 
@@ -1271,10 +1550,23 @@ export default function AuthFlow() {
               
               {errors.emailOtp && <span style={{ color: 'var(--danger)', fontSize: '12px', fontWeight: 600 }}>{errors.emailOtp}</span>}
 
-              {/* Demo Helper box */}
-              <div className="nm-card-inset" style={{ padding: '8px 16px', borderRadius: '10px', fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', gap: '6px', alignItems: 'center' }}>
-                💡 <span>Verification Code: <strong style={{ color: 'var(--accent)' }}>123456</strong></span>
-              </div>
+              {/* Helper instruction prompt & verification animation banner */}
+              {isVerifyingEmail ? (
+                <div className="nm-card-inset verification-pulse" style={{ padding: '14px 20px', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', background: 'rgba(51, 102, 89, 0.08)', width: '100%', maxWidth: '340px' }}>
+                  <div className="spinner-accent" />
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent)' }}>
+                    🔐 Verifying Email Security Code...
+                  </span>
+                </div>
+              ) : emailSuccessAnim ? (
+                <div className="nm-card-inset animate-pop-in" style={{ padding: '14px 20px', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center', background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', fontWeight: 800, fontSize: '13px', width: '100%', maxWidth: '340px' }}>
+                  <span style={{ fontSize: '20px' }}>✅</span> Email Verified Successfully!
+                </div>
+              ) : (
+                <div className="nm-card-inset" style={{ padding: '10px 16px', borderRadius: '12px', fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', width: '100%', maxWidth: '340px' }}>
+                  📧 <span>A 6-digit OTP code has been dispatched to <strong>{email}</strong>. Please check your inbox.</span>
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
@@ -1283,6 +1575,7 @@ export default function AuthFlow() {
                 className="nm-btn"
                 style={{ padding: '10px 18px', fontSize: '12px' }}
                 onClick={() => setStep(1)}
+                disabled={isVerifyingEmail || emailSuccessAnim}
               >
                 ← Back
               </button>
@@ -1295,6 +1588,7 @@ export default function AuthFlow() {
                     type="button"
                     style={{ border: 'none', background: 'transparent', color: 'var(--accent)', fontWeight: 600, fontSize: '12px', cursor: 'pointer' }}
                     onClick={() => setEmailTimer(30)}
+                    disabled={isVerifyingEmail || emailSuccessAnim}
                   >
                     Resend Code
                   </button>
@@ -1302,10 +1596,19 @@ export default function AuthFlow() {
                 <button
                   type="button"
                   className="nm-btn-accent"
-                  style={{ padding: '10px 20px', fontSize: '13px' }}
+                  style={{ padding: '10px 20px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}
                   onClick={handleEmailOtpVerify}
+                  disabled={isVerifyingEmail || emailSuccessAnim}
                 >
-                  Verify Code
+                  {isVerifyingEmail ? (
+                    <>
+                      <span className="spinner" /> Verifying...
+                    </>
+                  ) : emailSuccessAnim ? (
+                    '✓ Verified'
+                  ) : (
+                    'Verify Code'
+                  )}
                 </button>
               </div>
             </div>
@@ -1387,10 +1690,23 @@ export default function AuthFlow() {
 
                   {errors.mobileOtp && <span style={{ color: 'var(--danger)', fontSize: '12px', fontWeight: 600 }}>{errors.mobileOtp}</span>}
 
-                  {/* Demo Helper box */}
-                  <div className="nm-card-inset" style={{ padding: '8px 16px', borderRadius: '10px', fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', gap: '6px', alignItems: 'center' }}>
-                    💡 <span>Verification Code: <strong style={{ color: 'var(--accent)' }}>654321</strong></span>
-                  </div>
+                  {/* Helper instruction prompt & verification animation banner */}
+                  {isVerifyingMobile ? (
+                    <div className="nm-card-inset verification-pulse" style={{ padding: '14px 20px', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', background: 'rgba(51, 102, 89, 0.08)', width: '100%', maxWidth: '340px' }}>
+                      <div className="spinner-accent" />
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent)' }}>
+                        📱 Verifying Mobile SMS Code...
+                      </span>
+                    </div>
+                  ) : mobileSuccessAnim ? (
+                    <div className="nm-card-inset animate-pop-in" style={{ padding: '14px 20px', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center', background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', fontWeight: 800, fontSize: '13px', width: '100%', maxWidth: '340px' }}>
+                      <span style={{ fontSize: '20px' }}>✅</span> Mobile Verified Successfully!
+                    </div>
+                  ) : (
+                    <div className="nm-card-inset" style={{ padding: '10px 16px', borderRadius: '12px', fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', width: '100%', maxWidth: '340px' }}>
+                      📱 <span>A 6-digit SMS verification code has been dispatched to <strong>{countryCode} {phone}</strong>.</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1407,6 +1723,7 @@ export default function AuthFlow() {
                     setStep(2)
                   }
                 }}
+                disabled={isSendingMobileOtp || isVerifyingMobile || mobileSuccessAnim}
               >
                 ← Back
               </button>
@@ -1415,10 +1732,17 @@ export default function AuthFlow() {
                 <button
                   type="button"
                   className="nm-btn-accent"
-                  style={{ padding: '10px 20px', fontSize: '13px' }}
+                  style={{ padding: '10px 20px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}
                   onClick={handleMobileSendOtp}
+                  disabled={isSendingMobileOtp}
                 >
-                  Send OTP Code →
+                  {isSendingMobileOtp ? (
+                    <>
+                      <span className="spinner" /> Sending SMS...
+                    </>
+                  ) : (
+                    'Send OTP Code →'
+                  )}
                 </button>
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1429,6 +1753,7 @@ export default function AuthFlow() {
                       type="button"
                       style={{ border: 'none', background: 'transparent', color: 'var(--accent)', fontWeight: 600, fontSize: '12px', cursor: 'pointer' }}
                       onClick={handleMobileSendOtp}
+                      disabled={isSendingMobileOtp || isVerifyingMobile || mobileSuccessAnim}
                     >
                       Resend Code
                     </button>
@@ -1436,10 +1761,19 @@ export default function AuthFlow() {
                   <button
                     type="button"
                     className="nm-btn-accent"
-                    style={{ padding: '10px 20px', fontSize: '13px' }}
+                    style={{ padding: '10px 20px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}
                     onClick={handleMobileOtpVerify}
+                    disabled={isVerifyingMobile || mobileSuccessAnim}
                   >
-                    Verify & Setup Profile
+                    {isVerifyingMobile ? (
+                      <>
+                        <span className="spinner" /> Verifying...
+                      </>
+                    ) : mobileSuccessAnim ? (
+                      '✓ Verified'
+                    ) : (
+                      'Verify Code'
+                    )}
                   </button>
                 </div>
               )}

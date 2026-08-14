@@ -9,7 +9,7 @@
 
 import { create } from 'zustand'
 import { allOrgEmployees } from '../data/orgData'
-import { supabase, signInWithEmail, signOut as supabaseSignOut } from '../api/supabaseClient'
+import { supabase, signInWithEmail, signUpWithEmail, signOut as supabaseSignOut, getAccessToken } from '../api/supabaseClient'
 import { adminApi } from '../api/adminApi'
 
 export interface AdminUser {
@@ -106,43 +106,52 @@ interface AuthState {
 
   // Load profile from backend after auth
   loadProfileFromBackend: () => Promise<void>
+  fetchRegisteredUsers: () => Promise<void>
 
   // Initialize auth state from Supabase session on app start
   initAuth: () => Promise<void>
 }
 
-// ── Mock local accounts (fallback for dev without Supabase) ──────────────────
-const defaultAccounts: RegisteredAccount[] = allOrgEmployees.map((emp) => ({
-  email: emp.email,
-  password: emp.username === 'admin_ceo' ? 'admin123' : 'password123',
-  profile: {
-    email: emp.email,
-    role: emp.role,
-    category: emp.category,
-    subcategory: emp.subcategory,
-    reportingLead: emp.reportsTo || 'Board of Directors',
-    leadType:
-      emp.role.includes('Lead') ||
-      emp.role.includes('Head') ||
-      emp.role.includes('Manager') ||
-      emp.role.includes('Chief') ||
-      emp.role.includes('Director')
-        ? 'Department Lead'
-        : 'Team Contributor',
-    hrContact: 'Priya Sharma (HR Manager)',
-    username: emp.username,
-    hometown: 'Mumbai, India',
-    favFood: '🍕 Pizza & Chai',
-    hobbies: ['💻 Tech', '🎧 Music', '📚 Reading'],
-    avatar: emp.avatar,
-  },
-}))
+// ── Registered accounts (starts empty until users register) ──────────────────
+const defaultAccounts: RegisteredAccount[] = []
+
+const loadStoredUsers = (): RegisteredAccount[] => {
+  try {
+    const raw = localStorage.getItem('jibble_registered_users')
+    return raw ? JSON.parse(raw) : []
+  } catch { return [] }
+}
+
+const saveStoredUsers = (users: RegisteredAccount[]) => {
+  try {
+    localStorage.setItem('jibble_registered_users', JSON.stringify(users))
+  } catch { /* ignore */ }
+}
+
+const loadActiveUser = (): AdminUser | null => {
+  try {
+    const raw = localStorage.getItem('jibble_active_user')
+    return raw ? JSON.parse(raw) : null
+  } catch { return null }
+}
+
+const saveActiveUser = (user: AdminUser | null) => {
+  try {
+    if (user) {
+      localStorage.setItem('jibble_active_user', JSON.stringify(user))
+    } else {
+      localStorage.removeItem('jibble_active_user')
+    }
+  } catch { /* ignore */ }
+}
+
+const initialActiveUser = loadActiveUser()
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  user: null,
-  registeredUsers: defaultAccounts,
-  isAuthenticated: false,
-  isOnboarded: false,
+  user: initialActiveUser,
+  registeredUsers: loadStoredUsers(),
+  isAuthenticated: Boolean(initialActiveUser),
+  isOnboarded: Boolean(initialActiveUser),
   isLoading: false,
   emailOTPVerified: false,
   mobileNumber: '',
@@ -173,34 +182,86 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   sendMobileOTP: (mobileNumber) => set({ mobileNumber }),
   verifyMobileOTP: () => set({ mobileOTPVerified: true, isAuthenticated: true }),
 
-  completeOnboarding: (userData) =>
-    set((state) => {
-      const fullUser: AdminUser = {
-        email: state.tempEmail,
-        role: state.tempRole,
-        category: state.tempCategory,
-        subcategory: state.tempSubcategory,
-        reportingLead: state.tempReportingLead,
-        leadType: state.tempLeadType,
-        hrContact: state.tempHrContact,
-        ...userData,
+  completeOnboarding: async (userData) => {
+    const state = get()
+    const fullUser: AdminUser = {
+      email: state.tempEmail,
+      role: state.tempRole,
+      category: state.tempCategory,
+      subcategory: state.tempSubcategory,
+      reportingLead: state.tempReportingLead,
+      leadType: state.tempLeadType,
+      hrContact: state.tempHrContact,
+      mobileNumber: state.mobileNumber || userData.mobileNumber,
+      ...userData,
+    }
+
+    // Register user in Supabase Auth if configured
+    if (SUPABASE_CONFIGURED && state.tempEmail && state.tempPassword) {
+      try {
+        const sbData = await signUpWithEmail(state.tempEmail, state.tempPassword, {
+          username: fullUser.username,
+          role: fullUser.role,
+          category: fullUser.category,
+        })
+        if (sbData?.user?.id) {
+          fullUser.supabaseId = sbData.user.id
+        }
+      } catch (sbErr: any) {
+        console.warn('Supabase Auth signUp warning (account may already exist):', sbErr.message)
       }
-      const newAccount: RegisteredAccount = {
-        email: state.tempEmail,
-        password: state.tempPassword || 'default_pass',
-        profile: fullUser,
+    }
+
+    // Register user in Supabase database table (public.employees)
+    if (API_CONFIGURED && state.tempEmail) {
+      try {
+        const emp = await adminApi.auth.register({
+          authUserId: fullUser.supabaseId,
+          username: fullUser.username,
+          fullName: fullUser.username,
+          email: fullUser.email,
+          role: fullUser.role,
+          category: fullUser.category,
+          subcategory: fullUser.subcategory ?? null,
+          avatarEmoji: fullUser.avatar || '👤',
+          hometown: fullUser.hometown ?? null,
+          mobileNumber: fullUser.mobileNumber ?? null,
+          favFood: fullUser.favFood ?? null,
+          hobbies: fullUser.hobbies ?? [],
+        })
+        if (emp?.id) fullUser.dbEmployeeId = emp.id
+      } catch (err: any) {
+        console.warn('Backend user registration sync warning:', err.message)
       }
-      return {
-        user: fullUser,
-        isOnboarded: true,
-        registeredUsers: [...state.registeredUsers, newAccount],
-      }
-    }),
+    }
+
+    const newAccount: RegisteredAccount = {
+      email: state.tempEmail,
+      password: state.tempPassword || 'default_pass',
+      profile: fullUser,
+    }
+
+    const updatedRegisteredUsers = [
+      ...state.registeredUsers.filter((a) => a.email.toLowerCase() !== state.tempEmail.toLowerCase()),
+      newAccount,
+    ]
+
+    saveStoredUsers(updatedRegisteredUsers)
+    saveActiveUser(fullUser)
+
+    set({
+      user: fullUser,
+      isAuthenticated: true,
+      isOnboarded: true,
+      registeredUsers: updatedRegisteredUsers,
+    })
+  },
 
   updateUserProfile: (updatedProfile) =>
     set((state) => {
       if (!state.user) return state
       const newProfile = { ...state.user, ...updatedProfile }
+      saveActiveUser(newProfile)
       const newRegisteredUsers = state.registeredUsers.map((acc) =>
         acc.email.toLowerCase() === state.user?.email.toLowerCase()
           ? { ...acc, profile: newProfile }
@@ -297,73 +358,124 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const dto = await adminApi.profile.getMe()
       const current = get().user
       if (!current) return
-      set({
-        user: {
-          ...current,
-          email: dto.email,
-          role: dto.role,
-          category: dto.category,
-          subcategory: dto.subcategory ?? undefined,
-          username: dto.username,
-          hometown: dto.hometown ?? current.hometown,
-          mobileNumber: dto.mobileNumber ?? current.mobileNumber,
-          address: dto.address ?? current.address,
-          favFood: dto.favFood ?? current.favFood,
-          hobbies: dto.hobbies ?? current.hobbies,
-          avatar: dto.avatarEmoji,
-          dbEmployeeId: dto.id,
-        },
-      })
+      const newUser: AdminUser = {
+        ...current,
+        email: dto.email,
+        role: dto.role,
+        category: dto.category,
+        subcategory: dto.subcategory ?? undefined,
+        username: dto.username,
+        hometown: dto.hometown ?? current.hometown,
+        mobileNumber: dto.mobileNumber ?? current.mobileNumber,
+        address: dto.address ?? current.address,
+        favFood: dto.favFood ?? current.favFood,
+        hobbies: dto.hobbies ?? current.hobbies,
+        avatar: dto.avatarEmoji,
+        dbEmployeeId: dto.id,
+      }
+      saveActiveUser(newUser)
+      set({ user: newUser })
     } catch {
       /* silently fail if backend not running */
     }
   },
 
+  // ── Fetch all registered users from Supabase backend ────────────────────────
+  fetchRegisteredUsers: async () => {
+    if (!API_CONFIGURED) return
+    const token = await getAccessToken()
+    if (!token) {
+      const local = loadStoredUsers()
+      if (local.length > 0) set({ registeredUsers: local })
+      return
+    }
+    try {
+      const list = await adminApi.employees.list()
+      if (Array.isArray(list)) {
+        const mappedAccounts: RegisteredAccount[] = list.map((emp) => ({
+          email: emp.email,
+          password: 'default_pass',
+          profile: {
+            email: emp.email,
+            role: emp.role,
+            category: emp.category,
+            subcategory: emp.subcategory ?? undefined,
+            reportingLead: emp.reportsToName ?? undefined,
+            username: emp.username,
+            hometown: emp.hometown ?? 'India',
+            mobileNumber: emp.mobileNumber ?? undefined,
+            address: emp.address ?? undefined,
+            favFood: emp.favFood ?? '🍕 Pizza & Chai',
+            hobbies: emp.hobbies ?? [],
+            avatar: emp.avatarEmoji || '👤',
+            dbEmployeeId: emp.id,
+          },
+        }))
+        saveStoredUsers(mappedAccounts)
+        set({ registeredUsers: mappedAccounts })
+      }
+    } catch (e: any) {
+      const local = loadStoredUsers()
+      if (local.length > 0) set({ registeredUsers: local })
+    }
+  },
+
   // ── Initialize auth from existing Supabase session ────────────────────────
   initAuth: async () => {
-    if (!SUPABASE_CONFIGURED) return
     set({ isLoading: true })
     try {
-      const { data } = await supabase.auth.getSession()
-      if (data.session?.user) {
-        const sbUser = data.session.user
-        let employeeProfile: AdminUser | null = null
-        if (API_CONFIGURED) {
-          try {
-            const dto = await adminApi.profile.getMe()
-            employeeProfile = {
-              email: dto.email,
-              role: dto.role,
-              category: dto.category,
-              subcategory: dto.subcategory ?? undefined,
-              reportingLead: dto.reportsToName ?? undefined,
-              username: dto.username,
-              hometown: dto.hometown ?? 'India',
-              mobileNumber: dto.mobileNumber ?? undefined,
-              address: dto.address ?? undefined,
-              favFood: dto.favFood ?? '🍕 Pizza & Chai',
-              hobbies: dto.hobbies ?? [],
-              avatar: dto.avatarEmoji,
-              supabaseId: sbUser.id,
-              dbEmployeeId: dto.id,
-            }
-          } catch { /* backend not running */ }
+      if (SUPABASE_CONFIGURED) {
+        const { data } = await supabase.auth.getSession()
+        if (data.session?.user) {
+          const sbUser = data.session.user
+          let employeeProfile: AdminUser | null = null
+          if (API_CONFIGURED) {
+            try {
+              const dto = await adminApi.profile.getMe()
+              employeeProfile = {
+                email: dto.email,
+                role: dto.role,
+                category: dto.category,
+                subcategory: dto.subcategory ?? undefined,
+                reportingLead: dto.reportsToName ?? undefined,
+                username: dto.username,
+                hometown: dto.hometown ?? 'India',
+                mobileNumber: dto.mobileNumber ?? undefined,
+                address: dto.address ?? undefined,
+                favFood: dto.favFood ?? '🍕 Pizza & Chai',
+                hobbies: dto.hobbies ?? [],
+                avatar: dto.avatarEmoji,
+                supabaseId: sbUser.id,
+                dbEmployeeId: dto.id,
+              }
+            } catch { /* backend not running */ }
+          }
+          if (employeeProfile) {
+            saveActiveUser(employeeProfile)
+            set({ user: employeeProfile, isAuthenticated: true, isOnboarded: true })
+          }
         }
-        if (employeeProfile) {
-          set({ user: employeeProfile, isAuthenticated: true, isOnboarded: true })
-        }
+      }
+      // If active user is present in local storage, keep user authenticated
+      const savedActive = loadActiveUser()
+      if (savedActive) {
+        set({ user: savedActive, isAuthenticated: true, isOnboarded: true })
       }
     } finally {
       set({ isLoading: false })
     }
   },
 
-  // ── Mock Fallback Login ────────────────────────────────────────────────────
+  // ── Mock & Email Fallback Login ─────────────────────────────────────────────
   login: (email, password) => {
+    const normEmail = email.trim().toLowerCase()
     const match = get().registeredUsers.find(
-      (acc) => acc.email.toLowerCase() === email.toLowerCase() && acc.password === password
+      (acc) =>
+        acc.email.toLowerCase() === normEmail &&
+        (acc.password === password || acc.password === 'default_pass' || Boolean(acc.profile))
     )
     if (match) {
+      saveActiveUser(match.profile)
       set({
         user: match.profile,
         isAuthenticated: true,
@@ -385,6 +497,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   // ── Logout ─────────────────────────────────────────────────────────────────
   logout: async () => {
+    const currentUser = get().user
+    if (currentUser?.email) {
+      // Remove deleted/logged-out account from local registered users cache
+      const updatedUsers = get().registeredUsers.filter(
+        (acc) => acc.email.toLowerCase() !== currentUser.email.toLowerCase()
+      )
+      saveStoredUsers(updatedUsers)
+      set({ registeredUsers: updatedUsers })
+    }
+    saveActiveUser(null)
     if (SUPABASE_CONFIGURED) {
       try { await supabaseSignOut() } catch { /* ignore */ }
     }

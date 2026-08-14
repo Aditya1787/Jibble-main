@@ -18,6 +18,15 @@ const envSchema = z.object({
   CLIENT_BASE_URL: z.string().url().default('http://localhost:5173'),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   RATE_LIMIT_GLOBAL_MAX: z.coerce.number().int().positive().default(200),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().optional().default(587),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM_EMAIL: z.string().optional().default('no-reply@jibble.com'),
+  SMTP_FROM_NAME: z.string().optional().default('Jibble Admin Verification'),
+  TWILIO_ACCOUNT_SID: z.string().optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_PHONE_NUMBER: z.string().optional(),
 });
 
 const _parsed = envSchema.safeParse(process.env);
