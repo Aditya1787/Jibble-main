@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "743411095883",
+    "project_id": "jibble-b1b91",
+    "storage_bucket": "jibble-b1b91.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:743411095883:android:91a0dab075955983f4f0ce",
+        "android_client_info": {
+          "package_name": "com.example.jibble_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9PiO4zP4osJ9RoJNaicjPIVITYnUtH6c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

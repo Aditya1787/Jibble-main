@@ -86,8 +86,9 @@ export const authController = {
    */
   async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      if (req.user?.sub) {
-        await authService.logout(req.user.sub);
+      const user = (req as any).user;
+      if (user?.sub) {
+        await authService.logout(user.sub);
       }
 
       res.clearCookie(REFRESH_COOKIE, { path: '/api/v1/auth' });
@@ -102,7 +103,8 @@ export const authController = {
    */
   async me(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const user = await authService.getMe(req.user!.sub);
+      const userId = (req as any).user?.sub;
+      const user = await authService.getMe(userId);
       sendSuccess(res, { user });
     } catch (err) {
       next(err);

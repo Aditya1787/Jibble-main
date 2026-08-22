@@ -1,7 +1,7 @@
 /**
  * @file auth.middleware.ts
  * @description Extracts and verifies the Bearer JWT from Authorization header.
- *              Attaches decoded payload to req.user.
+ *              Attaches decoded payload to (req as any).user.
  *              Throws 401 if missing or invalid.
  */
 
@@ -29,7 +29,7 @@ export const authMiddleware = (
       return next(AppError.unauthorized('Invalid token type'));
     }
 
-    req.user = payload;
+    (req as any).user = payload;
     next();
   } catch {
     next(AppError.unauthorized('Invalid or expired access token'));
@@ -47,7 +47,7 @@ export const optionalAuth = (
   if (header?.startsWith('Bearer ')) {
     try {
       const payload = verifyAccessToken(header.slice(7));
-      if (payload.type === 'access') req.user = payload;
+      if (payload.type === 'access') (req as any).user = payload;
     } catch {
       // silently ignore
     }

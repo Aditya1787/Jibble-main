@@ -1,0 +1,70 @@
+================================================================================
+          JIBBLE COMMUNITY APP - STEP-BY-STEP ACTION PLAN & USER GUIDE
+================================================================================
+
+--------------------------------------------------------------------------------
+PART 1: REMAINING DEVELOPMENT PHASES (4 PHASES)
+--------------------------------------------------------------------------------
+
+PHASE 1: MOBILE APP FEATURE COMPLETION (Target: ~65% -> 100%)
+  - Step 1.1: Reels Feature (Video player & full-screen vertical swipe feed)
+  - Step 1.2: Stories Feature (Camera, Story viewer ring indicators & timers)
+  - Step 1.3: Real-time Socket.io Chat Integration (Live messaging & unread counts)
+  - Step 1.4: Push Notifications & Deep Linking UI
+  - Step 1.5: User Settings, Security & Local Offline Cache
+
+PHASE 2: END-TO-END INTEGRATION & BACKEND CONNECTIVITY
+  - Step 2.1: Full API Wiring (Mobile -> Backend Server APIs)
+  - Step 2.2: Real-time Messaging & Event Handling
+  - Step 2.3: Video Transcoding Pipeline & Search Optimization
+
+PHASE 3: ADMIN PANEL FINAL TOUCHES
+  - Step 3.1: Batch Action Modals (Bulk community approvals & user export tools)
+  - Step 3.2: Final Theme & UI Consistency Check
+
+PHASE 4: PRODUCTION DEPLOYMENT & TESTING
+  - Step 4.1: Cloud Hosting & Production DB Migration
+  - Step 4.2: Final App Store / Play Store Build Generation
+
+--------------------------------------------------------------------------------
+PART 2: DETAILED STEP-BY-STEP GUIDE FOR YOU (THE USER)
+--------------------------------------------------------------------------------
+
+STEP 1: FIREBASE & PUSH NOTIFICATIONS SETUP
+  1. Go to console.firebase.google.com and create a project named "Jibble".
+  2. Add Android App (package name: com.jibble.app).
+     - Download google-services.json
+     - Save to: apps/mobile_app/android/app/google-services.json
+  3. Add iOS App (Bundle ID: com.jibble.app).
+     - Download GoogleService-Info.plist
+     - Save to: apps/mobile_app/ios/Runner/GoogleService-Info.plist
+  4. Copy Cloud Messaging Server Key into backend/.env under FIREBASE_SERVER_KEY.
+
+STEP 2: CLOUD MEDIA STORAGE SETUP (AWS S3 or Cloudinary)
+  1. Create an AWS Account and create an S3 Bucket named "jibble-media-uploads".
+  2. Configure CORS policy to allow uploads from mobile and web apps.
+  3. Copy AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, AWS_S3_BUCKET_NAME.
+  4. Save keys into backend/.env.
+
+STEP 3: PRODUCTION DATABASE & REDIS HOSTING
+  1. PostgreSQL: Create a database on Supabase (supabase.com) or Neon (neon.tech).
+     - Save connection string into backend/.env under DATABASE_URL.
+  2. Redis: Create a Redis instance on Upstash (upstash.com).
+     - Save Redis URL into backend/.env under REDIS_URL.
+
+STEP 4: DEVELOPER ACCOUNTS (FOR APP STORES)
+  1. Google Play Console Account ($25 one-time fee at play.google.com/console).
+  2. Apple Developer Program Account ($99/year fee at developer.apple.com).
+
+STEP 5: APP STORE GRAPHICS & ASSETS
+  - App Logo: 1024x1024 px PNG.
+  - Feature Graphic (Android): 1024x500 px.
+  - Screenshots: iPhone (6.5-inch & 5.5-inch) and Android Phone screenshots.
+  - Privacy Policy URL link.
+
+STEP 6: PHYSICAL DEVICE TESTING
+  - Test camera capture, push notification banners, and smooth video playback on real phones.
+
+================================================================================
+END OF GUIDE
+================================================================================

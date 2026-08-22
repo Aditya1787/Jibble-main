@@ -28,9 +28,7 @@ CREATE INDEX IF NOT EXISTS idx_stories_user_id       ON stories (user_id);
 CREATE INDEX IF NOT EXISTS idx_stories_expires_at    ON stories (expires_at);
 CREATE INDEX IF NOT EXISTS idx_stories_is_highlight  ON stories (is_highlight);
 CREATE INDEX IF NOT EXISTS idx_stories_created_at    ON stories (created_at DESC);
--- Partial index: only active (non-expired) stories
-CREATE INDEX IF NOT EXISTS idx_stories_active        ON stories (user_id, created_at DESC)
-  WHERE expires_at > NOW();
+CREATE INDEX IF NOT EXISTS idx_stories_active        ON stories (user_id, expires_at, created_at DESC);
 
 COMMENT ON TABLE stories IS '24-hour ephemeral stories. Expires after 24 hours by default. Supports highlights.';
 COMMENT ON COLUMN stories.text_style IS 'JSON styling config for text-only stories (font, colors, positioning).';

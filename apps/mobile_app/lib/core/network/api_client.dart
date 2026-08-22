@@ -10,7 +10,7 @@ import 'network_interceptor.dart';
 class ApiClient {
   /// 10.0.2.2 is the Android emulator loopback for the host machine localhost.
   /// Change to your device IP when testing on a physical device.
-  static const String _baseUrl = 'http://10.0.2.2:8080/api/v1';
+  static const String _baseUrl = 'http://localhost:8080/api/v1';
 
   late final Dio _dio;
 
