@@ -5,9 +5,10 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec ts-node src/index.ts",
-    "build": "tsc",
+    "build": "prisma generate --schema=src/db/schema.prisma && tsc",
+    "postinstall": "prisma generate --schema=src/db/schema.prisma",
     "start": "node dist/index.js",
-    "db:generate": "prisma generate",
+    "db:generate": "prisma generate --schema=src/db/schema.prisma",
     "db:migrate": "prisma migrate dev",
     "db:migrate:raw": "ts-node src/db/migrate.ts",
     "db:rollback": "ts-node src/db/rollback.ts",
