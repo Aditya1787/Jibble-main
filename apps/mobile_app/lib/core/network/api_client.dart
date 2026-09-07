@@ -8,9 +8,8 @@ import 'network_interceptor.dart';
 /// - [baseUrl] points to the backend `/api/v1` prefix.
 /// - Injects [NetworkInterceptor] for auth tokens, 401 refresh, and logging.
 class ApiClient {
-  /// 10.0.2.2 is the Android emulator loopback for the host machine localhost.
-  /// Change to your device IP when testing on a physical device.
-  static const String _baseUrl = 'http://localhost:8080/api/v1';
+  /// Production Render backend URL.
+  static const String _baseUrl = 'https://jibble-main.onrender.com/api/v1';
 
   late final Dio _dio;
 
