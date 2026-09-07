@@ -286,9 +286,9 @@ class _ChatArenaPageState extends State<ChatArenaPage> {
                     color: Colors.black.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       SizedBox(
                         width: 12,
                         height: 12,

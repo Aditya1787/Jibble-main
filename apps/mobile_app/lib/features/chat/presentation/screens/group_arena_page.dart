@@ -142,8 +142,8 @@ class _GroupArenaPageState extends State<GroupArenaPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             color: AppColors.accent.withValues(alpha: 0.1),
-            child: Row(
-              children: const [
+            child: const Row(
+              children: [
                 Icon(Icons.push_pin_rounded, size: 18, color: AppColors.accent),
                 SizedBox(width: 10),
                 Expanded(

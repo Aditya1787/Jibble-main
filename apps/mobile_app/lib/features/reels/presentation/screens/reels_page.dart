@@ -583,7 +583,7 @@ class _ReelsPageState extends State<ReelsPage> with TickerProviderStateMixin {
                               ),
                               child: Text(
                                 reel.isFollowing ? 'Following' : 'Follow',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
@@ -637,7 +637,7 @@ class _ReelsPageState extends State<ReelsPage> with TickerProviderStateMixin {
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.black26,
               shape: BoxShape.circle,
             ),
