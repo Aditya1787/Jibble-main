@@ -27,6 +27,8 @@ export interface JwtPayload {
   sub: string;       // user UUID
   email?: string;
   role?: string;
+  account_type?: string;
+  accountType?: string;
   type?: 'access' | 'refresh';
   iat?: number;
   exp?: number;

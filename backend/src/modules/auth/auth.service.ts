@@ -14,9 +14,23 @@ import { ACCESS_TOKEN_TTL } from './auth.constants';
 import type { SignupInput, LoginInput } from './auth.validation';
 import type { AuthResponse, AuthTokens } from './auth.types';
 
-const buildTokens = async (userId: string, email: string): Promise<AuthTokens> => {
-  const accessToken = signAccessToken({ sub: userId, email });
-  const refreshToken = signRefreshToken({ sub: userId, email });
+const buildTokens = async (
+  userId: string,
+  email: string,
+  accountType?: string,
+): Promise<AuthTokens> => {
+  const accessToken = signAccessToken({
+    sub: userId,
+    email,
+    account_type: accountType,
+    accountType,
+  });
+  const refreshToken = signRefreshToken({
+    sub: userId,
+    email,
+    account_type: accountType,
+    accountType,
+  });
 
   // Store hashed refresh token in DB
   await authRepository.storeRefreshToken(userId, refreshToken);
@@ -57,7 +71,11 @@ export const authService = {
     const freshUser = await userRepository.findById(userRow.id);
     if (!freshUser) throw AppError.internal('Failed to retrieve new user');
 
-    const tokens = await buildTokens(freshUser.id, freshUser.email!);
+    const tokens = await buildTokens(
+      freshUser.id,
+      freshUser.email!,
+      (freshUser as any).account_type,
+    );
     await authRepository.updateLastLogin(freshUser.id);
 
     return {
@@ -93,7 +111,11 @@ export const authService = {
       throw AppError.forbidden('Your account has been suspended', 'ACCOUNT_BANNED');
     }
 
-    const tokens = await buildTokens(userRow.id, userRow.email!);
+    const tokens = await buildTokens(
+      userRow.id,
+      userRow.email!,
+      (userRow as any).account_type,
+    );
     await authRepository.updateLastLogin(userRow.id);
 
     const freshUser = await userRepository.findById(userRow.id);
@@ -131,7 +153,7 @@ export const authService = {
       throw AppError.unauthorized('Account not found or suspended');
     }
 
-    return buildTokens(user.id, user.email!);
+    return buildTokens(user.id, user.email!, (user as any).account_type);
   },
 
   /**
@@ -178,6 +200,11 @@ export const authService = {
     }
 
     const fresh = await userRepository.findById(userId);
-    return userMapper.toDto(fresh!);
+    const tokens = await buildTokens(userId, fresh?.email ?? user.email!, newAccountType);
+
+    return {
+      user: userMapper.toDto(fresh!),
+      tokens,
+    };
   },
 };

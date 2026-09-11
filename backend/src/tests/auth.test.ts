@@ -135,7 +135,7 @@ describe('authService.signup', () => {
 
 describe('authService.login', () => {
   it('returns tokens on valid credentials', async () => {
-    mockAuthRepo.findByEmail.mockResolvedValue(MOCK_USER_ROW as any);
+    mockAuthRepo.findByEmailOrUsername.mockResolvedValue(MOCK_USER_ROW as any);
     mockCrypto.comparePassword.mockResolvedValue(true);
     mockUserRepo.findById.mockResolvedValue(MOCK_USER_ROW as any);
 
@@ -144,7 +144,7 @@ describe('authService.login', () => {
       password: 'Password1',
     });
 
-    expect(mockAuthRepo.findByEmail).toHaveBeenCalledWith('test@example.com');
+    expect(mockAuthRepo.findByEmailOrUsername).toHaveBeenCalledWith('test@example.com');
     expect(mockCrypto.comparePassword).toHaveBeenCalledWith(
       'Password1',
       MOCK_USER_ROW.password_hash,
@@ -154,7 +154,7 @@ describe('authService.login', () => {
   });
 
   it('throws UNAUTHORIZED if user does not exist', async () => {
-    mockAuthRepo.findByEmail.mockResolvedValue(null);
+    mockAuthRepo.findByEmailOrUsername.mockResolvedValue(null);
 
     await expect(
       authService.login({ email: 'noone@example.com', password: 'Password1' }),
@@ -162,7 +162,7 @@ describe('authService.login', () => {
   });
 
   it('throws UNAUTHORIZED if password is wrong', async () => {
-    mockAuthRepo.findByEmail.mockResolvedValue(MOCK_USER_ROW as any);
+    mockAuthRepo.findByEmailOrUsername.mockResolvedValue(MOCK_USER_ROW as any);
     mockCrypto.comparePassword.mockResolvedValue(false);
 
     await expect(
@@ -171,7 +171,7 @@ describe('authService.login', () => {
   });
 
   it('throws FORBIDDEN if account is banned', async () => {
-    mockAuthRepo.findByEmail.mockResolvedValue({
+    mockAuthRepo.findByEmailOrUsername.mockResolvedValue({
       ...MOCK_USER_ROW,
       status: 'banned',
     } as any);
@@ -183,7 +183,7 @@ describe('authService.login', () => {
   });
 
   it('throws BAD_REQUEST if account uses social login (no password_hash)', async () => {
-    mockAuthRepo.findByEmail.mockResolvedValue({
+    mockAuthRepo.findByEmailOrUsername.mockResolvedValue({
       ...MOCK_USER_ROW,
       password_hash: null,
       provider: 'google',

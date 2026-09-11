@@ -7,13 +7,30 @@ import { PostRow, PostDto, PollOption, LinkPreview } from './post.types';
 
 export const postMapper = {
   toDto(row: PostRow, requestingUserId?: string): PostDto {
-    const hasAuthor = !!row.username && !!row.display_name;
+    const isAnonymous = !!row.is_anonymous;
     const isAuthor = requestingUserId && row.user_id === requestingUserId;
     const hideMetrics = !!row.hide_likes_views && !isAuthor;
 
+    let author = null;
+    if (isAnonymous) {
+      author = {
+        username: row.anonymous_alias || 'anonymous',
+        displayName: row.anonymous_alias || 'Anonymous Member',
+        avatarUrl: null,
+        isVerified: false,
+      };
+    } else if (row.username && row.display_name) {
+      author = {
+        username: row.username,
+        displayName: row.display_name,
+        avatarUrl: row.avatar_url ?? null,
+        isVerified: row.is_verified ?? false,
+      };
+    }
+
     return {
       id: row.id,
-      userId: row.user_id,
+      userId: isAnonymous ? 'anonymous' : row.user_id,
       collegeId: row.college_id,
       circleId: row.circle_id ?? null,
       type: row.type,
@@ -32,20 +49,15 @@ export const postMapper = {
       isArchived: row.is_archived ?? false,
       hideLikesViews: !!row.hide_likes_views,
       hideComments: !!row.hide_comments,
+      isAnonymous,
+      anonymousAlias: row.anonymous_alias ?? null,
       likesCount: hideMetrics ? -1 : Number(row.likes_count ?? 0),
       commentsCount: row.hide_comments && !isAuthor ? -1 : Number(row.comments_count ?? 0),
       sharesCount: Number(row.shares_count ?? 0),
       viewsCount: hideMetrics ? -1 : Number(row.views_count ?? 0),
       createdAt: new Date(row.created_at).toISOString(),
       updatedAt: new Date(row.updated_at).toISOString(),
-      author: hasAuthor
-        ? {
-            username: row.username!,
-            displayName: row.display_name!,
-            avatarUrl: row.avatar_url ?? null,
-            isVerified: row.is_verified ?? false,
-          }
-        : null,
+      author,
       isLiked: !!row.is_liked,
     };
   },

@@ -46,6 +46,8 @@ export interface PostRow {
   circle_id?: string | null;
   hide_likes_views?: boolean;
   hide_comments?: boolean;
+  is_anonymous?: boolean;
+  anonymous_alias?: string | null;
 
   // Joined fields from profiles
   username?: string;
@@ -78,6 +80,8 @@ export interface PostDto {
   isArchived: boolean;
   hideLikesViews: boolean;
   hideComments: boolean;
+  isAnonymous?: boolean;
+  anonymousAlias?: string | null;
   likesCount: number;
   commentsCount: number;
   sharesCount: number;

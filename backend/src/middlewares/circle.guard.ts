@@ -13,17 +13,29 @@ import { query } from '../db/index';
  * Enforces boundary isolation:
  * Rejects requests from Circle Community accounts when trying to access global consumer endpoints.
  */
-export const blockCircleCommunityFromGlobal = (
+export const blockCircleCommunityFromGlobal = async (
   req: Request,
   _res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   const user = (req as any).user;
   if (!user) {
     return next(AppError.unauthorized('Authentication required'));
   }
 
-  const accountType = user.account_type || user.accountType;
+  let accountType = user.account_type || user.accountType;
+  if (!accountType && user.sub) {
+    try {
+      const { rows } = await query(
+        `SELECT account_type FROM users WHERE id = $1 LIMIT 1`,
+        [user.sub],
+      );
+      accountType = rows[0]?.account_type;
+    } catch {
+      // continue
+    }
+  }
+
   if (accountType === 'CIRCLE_COMMUNITY') {
     return next(
       AppError.forbidden(
