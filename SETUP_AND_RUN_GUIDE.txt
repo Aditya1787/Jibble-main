@@ -1,5 +1,0 @@
-Reporting Supervisor / Team Lead
-👨‍💼 Alex Rivera (Team Lead)
-HR Representative Contact
-🤝 Priya Sharma (HR Lead)
-this thing is still showing in the profile page which is obiously incorrect so fix that and in the users section you are showing the role as student what the shit is this and only HR and founder can BAN a eployee or remove him after banning he is not able to login again after registering a new account do not show anything to him untill founder or any HR approves him as an employee 

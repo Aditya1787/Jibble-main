@@ -1,4 +1,4 @@
-﻿# Node
+# Node
 node_modules/
 dist/
 .env
@@ -30,4 +30,28 @@ Thumbs.db
 
 # Build artifacts
 apps/admin_panel/dist/
+logs/
+
+# Personal study files & documentation
+Study_For_Me/
+Product Document/
+guide.md
+list.md
+permissions.md
+PROJECT_PROGRESS_REPORT.txt
+README.md
+SETUP_AND_RUN_GUIDE.txt
+setup_guide.md
+TECH_STACK.md
+
+# Scratch scripts
+debug_pdf.js
+extract_pdfs.js
+pdf_extract.js
+repoint_and_push.ps1
+backfill_commits.ps1
+
+# Root package configuration
+package.json
+package-lock.json
 
