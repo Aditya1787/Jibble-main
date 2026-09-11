@@ -254,6 +254,28 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// In-place switch between Normal User and Content Creator
+  Future<void> setCreatorMode(bool enabled) async {
+    if (state.user == null) return;
+    try {
+      final updatedUser = await _authService.setCreatorMode(enabled);
+      state = state.copyWith(user: updatedUser);
+    } catch (e) {
+      // Local fallback for offline/mock
+      final currentRoles = List<String>.from(state.user!.roles);
+      if (enabled) {
+        if (!currentRoles.contains('CREATOR')) currentRoles.add('CREATOR');
+      } else {
+        currentRoles.remove('CREATOR');
+      }
+      final updatedUser = state.user!.copyWith(
+        accountType: enabled ? 'CREATOR' : 'USER',
+        roles: currentRoles,
+      );
+      state = state.copyWith(user: updatedUser);
+    }
+  }
+
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   String _parseError(Object e) {
@@ -285,3 +307,6 @@ final authProvider =
   final storage = ref.watch(secureStorageProvider);
   return AuthNotifier(authService, storage);
 });
+
+final authNotifierProvider = authProvider;
+

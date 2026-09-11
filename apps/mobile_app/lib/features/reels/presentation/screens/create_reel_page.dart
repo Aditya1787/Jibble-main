@@ -12,6 +12,7 @@ class CreateReelPage extends StatefulWidget {
 class _CreateReelPageState extends State<CreateReelPage> {
   final TextEditingController _captionController = TextEditingController();
   final String _selectedAudioTrack = '🎵 Trending Campus Vibe - Original Sound';
+  String _reelDestination = 'global_reels'; // 'global_reels' or 'circle'
   
   int _selectedDurationIndex = 1; // 30s default
   int _selectedFilterIndex = 0;
@@ -249,6 +250,65 @@ class _CreateReelPageState extends State<CreateReelPage> {
                     ),
                   ),
                   const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // Destination Selector Pill
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E2C),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _reelDestination = 'global_reels'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _reelDestination == 'global_reels' ? AppColors.accent : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '🎬 Global Reels',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: _reelDestination == 'global_reels' ? Colors.white : Colors.white60,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _reelDestination = 'circle'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _reelDestination == 'circle' ? AppColors.accent : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '🎯 Circle Reel',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: _reelDestination == 'circle' ? Colors.white : Colors.white60,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

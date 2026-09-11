@@ -67,13 +67,14 @@ export const authService = {
   },
 
   /**
-   * Login with email + password.
+   * Login with email or username + password.
    */
   async login(dto: LoginInput): Promise<AuthResponse> {
-    const userRow = await authRepository.findByEmail(dto.email);
+    const loginIdentifier = (dto.identifier || dto.email || '').trim();
+    const userRow = await authRepository.findByEmailOrUsername(loginIdentifier);
 
     if (!userRow) {
-      throw AppError.unauthorized('Invalid email or password');
+      throw AppError.unauthorized('Invalid email/username or password');
     }
 
     if (!userRow.password_hash) {
@@ -148,5 +149,35 @@ export const authService = {
     const user = await userRepository.findById(userId);
     if (!user) throw AppError.notFound('User not found');
     return userMapper.toDto(user);
+  },
+
+  /**
+   * Switch between Normal User and Content Creator mode seamlessly without re-registration.
+   */
+  async toggleCreatorMode(userId: string, enable: boolean) {
+    const user = await userRepository.findById(userId);
+    if (!user) throw AppError.notFound('User not found');
+
+    const newAccountType = enable ? 'CREATOR' : 'USER';
+    const currentRoles: string[] = (user as any).roles ?? ['USER'];
+    const newRoles = enable
+      ? Array.from(new Set([...currentRoles, 'CREATOR']))
+      : currentRoles.filter((r: string) => r !== 'CREATOR');
+
+    const { query } = await import('../../db/index');
+    await query(
+      'UPDATE users SET account_type = $1, roles = $2, updated_at = NOW() WHERE id = $3',
+      [newAccountType, newRoles, userId],
+    );
+
+    if (enable) {
+      await query(
+        'INSERT INTO creator_profiles (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING',
+        [userId],
+      );
+    }
+
+    const fresh = await userRepository.findById(userId);
+    return userMapper.toDto(fresh!);
   },
 };

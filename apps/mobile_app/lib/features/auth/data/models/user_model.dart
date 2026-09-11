@@ -8,6 +8,9 @@ class UserModel {
   final String status;
   final String provider;
   final bool emailVerified;
+  final String accountType; // 'USER', 'CREATOR', 'CIRCLE_COMMUNITY'
+  final List<String> roles;
+  final String? activeCircleId;
   final String? createdAt;
 
   const UserModel({
@@ -17,8 +20,14 @@ class UserModel {
     required this.status,
     required this.provider,
     required this.emailVerified,
+    this.accountType = 'USER',
+    this.roles = const ['USER'],
+    this.activeCircleId,
     this.createdAt,
   });
+
+  bool get isCreator => accountType == 'CREATOR' || roles.contains('CREATOR');
+  bool get isCircleCommunity => accountType == 'CIRCLE_COMMUNITY';
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
@@ -28,6 +37,9 @@ class UserModel {
       status: (json['status'] as String?) ?? 'active',
       provider: (json['provider'] as String?) ?? 'local',
       emailVerified: (json['emailVerified'] as bool?) ?? false,
+      accountType: (json['accountType'] ?? json['account_type'] ?? 'USER') as String,
+      roles: (json['roles'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const ['USER'],
+      activeCircleId: (json['activeCircleId'] ?? json['active_circle_id']) as String?,
       createdAt: json['createdAt'] as String?,
     );
   }
@@ -39,6 +51,9 @@ class UserModel {
         'status': status,
         'provider': provider,
         'emailVerified': emailVerified,
+        'accountType': accountType,
+        'roles': roles,
+        'activeCircleId': activeCircleId,
         'createdAt': createdAt,
       };
 
@@ -49,6 +64,9 @@ class UserModel {
     String? status,
     String? provider,
     bool? emailVerified,
+    String? accountType,
+    List<String>? roles,
+    String? activeCircleId,
     String? createdAt,
   }) {
     return UserModel(
@@ -58,6 +76,9 @@ class UserModel {
       status: status ?? this.status,
       provider: provider ?? this.provider,
       emailVerified: emailVerified ?? this.emailVerified,
+      accountType: accountType ?? this.accountType,
+      roles: roles ?? this.roles,
+      activeCircleId: activeCircleId ?? this.activeCircleId,
       createdAt: createdAt ?? this.createdAt,
     );
   }

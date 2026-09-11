@@ -27,6 +27,18 @@ export interface UserAuthRow {
 
 export const authRepository = {
   /**
+   * Find a user by email or username (for login).
+   */
+  async findByEmailOrUsername(identifier: string): Promise<UserAuthRow | null> {
+    const val = identifier.toLowerCase().trim();
+    const { rows } = await query(
+      'SELECT id, email, phone, password_hash, provider, status, email_verified, refresh_token, created_at, updated_at FROM users WHERE LOWER(email) = $1 OR LOWER(username) = $1 LIMIT 1',
+      [val],
+    );
+    return rows[0] ?? null;
+  },
+
+  /**
    * Find a user by email (for login).
    */
   async findByEmail(email: string): Promise<UserAuthRow | null> {

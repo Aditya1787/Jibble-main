@@ -6,10 +6,11 @@
 
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { env } from '../config/env';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const SALT_ROUNDS = 12;
+const SALT_ROUNDS = 10;
 
 // ─── Password ────────────────────────────────────────────────────────────────
 
@@ -53,8 +54,10 @@ export const verifyRefreshToken = (token: string): JwtPayload =>
 
 // ─── Refresh token hashing (stored hashed in DB) ─────────────────────────────
 
-export const hashToken = (token: string): Promise<string> =>
-  bcrypt.hash(token, 10);
+export const hashToken = async (token: string): Promise<string> =>
+  crypto.createHash('sha256').update(token).digest('hex');
 
-export const compareToken = (token: string, hash: string): Promise<boolean> =>
-  bcrypt.compare(token, hash);
+export const compareToken = async (token: string, hash: string): Promise<boolean> => {
+  const computedHash = crypto.createHash('sha256').update(token).digest('hex');
+  return computedHash === hash;
+};

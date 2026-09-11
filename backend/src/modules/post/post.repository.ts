@@ -36,16 +36,17 @@ export const postRepository = {
       // 2. Insert post row
       const insertPostText = `
         INSERT INTO posts (
-          user_id, college_id, type, visibility, caption, media_urls,
+          user_id, college_id, circle_id, type, visibility, caption, media_urls,
           thumbnail_url, link_url, link_preview, poll_options, poll_ends_at,
-          location, hashtags, mentions
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+          location, hashtags, mentions, hide_likes_views, hide_comments
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
         RETURNING *
       `;
 
       const postParams = [
         userId,
         collegeId,
+        dto.circleId ?? null,
         dto.type,
         dto.visibility,
         dto.caption ?? null,
@@ -58,6 +59,8 @@ export const postRepository = {
         dto.location ?? null,
         dto.hashtags ?? [],
         dto.mentions ?? [],
+        dto.hideLikesViews ?? false,
+        dto.hideComments ?? false,
       ];
 
       const postRes = await client.query<PostRow>(insertPostText, postParams);
@@ -122,6 +125,7 @@ export const postRepository = {
       FROM posts
       LEFT JOIN profiles p ON posts.user_id = p.user_id
       WHERE posts.is_archived = FALSE
+        AND posts.circle_id IS NULL
         AND (
           posts.user_id = $1
           OR (posts.visibility = 'public' AND ($2::UUID IS NULL OR posts.college_id = $2::UUID))

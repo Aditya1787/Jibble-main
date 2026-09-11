@@ -8,13 +8,16 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(uuid())
-  email         String?  @unique
-  phone         String?  @unique
-  passwordHash  String?  @map("password_hash")
-  status        String   @default("active")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id              String    @id @default(uuid())
+  email           String?   @unique
+  phone           String?   @unique
+  passwordHash    String?   @map("password_hash")
+  status          String    @default("active")
+  accountType     String    @default("USER") @map("account_type")
+  roles           String[]  @default(["USER"])
+  activeCircleId  String?   @map("active_circle_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
   @@map("users")
 }
@@ -33,12 +36,18 @@ model Profile {
 }
 
 model Post {
-  id        String   @id @default(uuid())
-  authorId  String   @map("author_id")
-  content   String?
-  mediaUrl  String?  @map("media_url")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id                 String    @id @default(uuid())
+  authorId           String    @map("author_id")
+  circleId           String?   @map("circle_id")
+  content            String?
+  mediaUrl           String?   @map("media_url")
+  targetDestination  String    @default("global_feed") @map("target_destination")
+  hideLikesAndViews  Boolean   @default(false) @map("hide_likes_and_views")
+  hideComments       Boolean   @default(false) @map("hide_comments")
+  isAnonymous        Boolean   @default(false) @map("is_anonymous")
+  anonymousAlias     String?   @map("anonymous_alias")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
 
   @@map("posts")
 }

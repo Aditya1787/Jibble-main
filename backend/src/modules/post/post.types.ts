@@ -43,6 +43,10 @@ export interface PostRow {
   created_at: Date;
   updated_at: Date;
 
+  circle_id?: string | null;
+  hide_likes_views?: boolean;
+  hide_comments?: boolean;
+
   // Joined fields from profiles
   username?: string;
   display_name?: string;
@@ -57,6 +61,7 @@ export interface PostDto {
   id: string;
   userId: string;
   collegeId: string | null;
+  circleId: string | null;
   type: PostType;
   visibility: VisibilityType;
   caption: string | null;
@@ -71,6 +76,8 @@ export interface PostDto {
   mentions: string[];
   isPinned: boolean;
   isArchived: boolean;
+  hideLikesViews: boolean;
+  hideComments: boolean;
   likesCount: number;
   commentsCount: number;
   sharesCount: number;
@@ -103,4 +110,7 @@ export interface CreatePostDto {
   location?: string | null;
   hashtags?: string[] | null;
   mentions?: string[] | null;
+  circleId?: string | null;
+  hideLikesViews?: boolean;
+  hideComments?: boolean;
 }

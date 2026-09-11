@@ -48,7 +48,7 @@ export const postService = {
       throw AppError.internal('Failed to retrieve newly created post');
     }
 
-    return postMapper.toDto(postWithAuthor);
+    return postMapper.toDto(postWithAuthor, userId);
   },
 
   /**
@@ -59,7 +59,7 @@ export const postService = {
     if (!row) {
       throw AppError.notFound('Post not found', 'POST_NOT_FOUND');
     }
-    return postMapper.toDto(row);
+    return postMapper.toDto(row, userId);
   },
 
   /**
@@ -70,7 +70,7 @@ export const postService = {
     const collegeId = profile ? profile.college_id : null;
 
     const rows = await postRepository.getHomeFeed(userId, collegeId, limit, offset);
-    return postMapper.toDtoList(rows);
+    return postMapper.toDtoList(rows, userId);
   },
 
   /**
@@ -93,7 +93,7 @@ export const postService = {
       offset,
       isOwnProfile
     );
-    return postMapper.toDtoList(rows);
+    return postMapper.toDtoList(rows, userId);
   },
 
   /**

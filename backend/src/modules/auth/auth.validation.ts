@@ -19,8 +19,12 @@ export const signupSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email address').toLowerCase(),
+  email: z.string().min(1, 'Email or username is required').optional(),
+  identifier: z.string().min(1, 'Email or username is required').optional(),
   password: z.string().min(1, 'Password is required'),
+}).refine(data => data.email || data.identifier, {
+  message: 'Email or username is required',
+  path: ['email'],
 });
 
 export const refreshTokenSchema = z.object({

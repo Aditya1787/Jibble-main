@@ -48,6 +48,14 @@ router.get('/:id', validate(circleIdParamSchema, 'params'), circleController.get
 router.post('/:id/join', validate(circleIdParamSchema, 'params'), circleController.joinCircle);
 router.delete('/:id/leave', validate(circleIdParamSchema, 'params'), circleController.leaveCircle);
 
+// Circle 5-Nav Experience Endpoints
+router.get('/:id/home', validate(circleIdParamSchema, 'params'), circleController.getCircleHome);
+router.post('/:id/events', validate(circleIdParamSchema, 'params'), circleController.createCircleEvent);
+router.post('/:id/anonymous', validate(circleIdParamSchema, 'params'), circleController.createAnonymousPost);
+router.post('/:id/groups', validate(circleIdParamSchema, 'params'), circleController.createCircleGroup);
+router.get('/:id/groups/:groupId/messages', circleController.getGroupMessages);
+router.post('/:id/groups/:groupId/messages', circleController.sendGroupMessage);
+
 // Component toggles & configuration
 router.get('/:id/components', validate(circleIdParamSchema, 'params'), circleController.getCircleComponents);
 router.patch(

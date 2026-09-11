@@ -13,6 +13,10 @@ import { postRouter } from '../../modules/post/post.routes';
 import { globalRateLimiter } from '../../middlewares/rateLimiter.global';
 import { storyRouter } from '../../modules/story/story.routes';
 import { circleRouter } from '../../modules/circle/circle.routes';
+import { followRouter } from '../../modules/follow/follow.routes';
+import { searchRouter } from '../../modules/search/search.routes';
+import { notificationRouter } from '../../modules/notification/notification.routes';
+import { chatRouter } from '../../modules/chat/chat.routes';
 
 export const v1Router = Router();
 
@@ -42,3 +46,16 @@ v1Router.use('/stories', storyRouter);
 
 // ── Circles ───────────────────────────────────────────────────────────────────
 v1Router.use('/circles', circleRouter);
+
+// ── Follow ────────────────────────────────────────────────────────────────────
+v1Router.use('/follow', followRouter);
+
+// ── Search ────────────────────────────────────────────────────────────────────
+v1Router.use('/search', searchRouter);
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+v1Router.use('/notifications', notificationRouter);
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
+v1Router.use('/chat', chatRouter);
+

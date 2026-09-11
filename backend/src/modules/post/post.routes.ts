@@ -6,6 +6,7 @@
 import { Router } from 'express';
 import { postController } from './post.controller';
 import { authMiddleware } from '../../middlewares/auth.middleware';
+import { blockCircleCommunityFromGlobal } from '../../middlewares/circle.guard';
 import { validate } from '../../middlewares/validate.middleware';
 import { postRateLimiter } from '../../middlewares/rateLimiter.post';
 import {
@@ -28,9 +29,10 @@ router.post(
   postController.createPost,
 );
 
-// GET /api/v1/posts/feed
+// GET /api/v1/posts/feed - Strictly for normal users and creators (blocked for Circle Community accounts)
 router.get(
   '/feed',
+  blockCircleCommunityFromGlobal,
   validate(getFeedSchema, 'query'),
   postController.getHomeFeed,
 );

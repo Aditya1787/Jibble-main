@@ -1,1 +1,11 @@
-// upload profile picture
+import '../repositories/profile_repository.dart';
+
+class UploadProfilePictureUseCase {
+  final ProfileRepository _repository;
+
+  UploadProfilePictureUseCase(this._repository);
+
+  Future<String> call(String filePath) {
+    return _repository.uploadProfilePicture(filePath);
+  }
+}

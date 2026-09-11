@@ -6,13 +6,16 @@
 import { PostRow, PostDto, PollOption, LinkPreview } from './post.types';
 
 export const postMapper = {
-  toDto(row: PostRow): PostDto {
+  toDto(row: PostRow, requestingUserId?: string): PostDto {
     const hasAuthor = !!row.username && !!row.display_name;
+    const isAuthor = requestingUserId && row.user_id === requestingUserId;
+    const hideMetrics = !!row.hide_likes_views && !isAuthor;
 
     return {
       id: row.id,
       userId: row.user_id,
       collegeId: row.college_id,
+      circleId: row.circle_id ?? null,
       type: row.type,
       visibility: row.visibility,
       caption: row.caption ?? null,
@@ -27,10 +30,12 @@ export const postMapper = {
       mentions: parseJsonArray(row.mentions),
       isPinned: row.is_pinned ?? false,
       isArchived: row.is_archived ?? false,
-      likesCount: Number(row.likes_count ?? 0),
-      commentsCount: Number(row.comments_count ?? 0),
+      hideLikesViews: !!row.hide_likes_views,
+      hideComments: !!row.hide_comments,
+      likesCount: hideMetrics ? -1 : Number(row.likes_count ?? 0),
+      commentsCount: row.hide_comments && !isAuthor ? -1 : Number(row.comments_count ?? 0),
       sharesCount: Number(row.shares_count ?? 0),
-      viewsCount: Number(row.views_count ?? 0),
+      viewsCount: hideMetrics ? -1 : Number(row.views_count ?? 0),
       createdAt: new Date(row.created_at).toISOString(),
       updatedAt: new Date(row.updated_at).toISOString(),
       author: hasAuthor
@@ -45,8 +50,8 @@ export const postMapper = {
     };
   },
 
-  toDtoList(rows: PostRow[]): PostDto[] {
-    return rows.map((r) => this.toDto(r));
+  toDtoList(rows: PostRow[], requestingUserId?: string): PostDto[] {
+    return rows.map((r) => this.toDto(r, requestingUserId));
   },
 };
 

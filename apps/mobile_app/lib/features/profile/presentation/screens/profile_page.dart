@@ -51,9 +51,19 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text('User Name', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+            const Text(
+              '@username',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
             const SizedBox(height: 4),
-            const Text('Computer Science · Batch of 2026', style: TextStyle(color: AppColors.textSecondary)),
+            const Text(
+              'Community Builder & Tech Enthusiast',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+            ),
             const SizedBox(height: 24),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),

@@ -63,6 +63,22 @@ class AuthService {
     }
   }
 
+  // ── Creator Mode Switch ───────────────────────────────────────────────────
+
+  /// POST /api/v1/auth/creator-mode
+  Future<UserModel> setCreatorMode(bool enabled, {String? displayName, String? bio}) async {
+    final response = await _apiClient.dio.post(
+      Endpoints.creatorMode,
+      data: {
+        'enable': enabled,
+        if (displayName != null) 'displayName': displayName,
+        if (bio != null) 'bio': bio,
+      },
+    );
+    final data = response.data['data'] as Map<String, dynamic>;
+    return UserModel.fromJson(data['user'] as Map<String, dynamic>);
+  }
+
   // ── Refresh ───────────────────────────────────────────────────────────────
 
   /// POST /api/v1/auth/refresh

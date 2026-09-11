@@ -20,6 +20,10 @@ class CreatePostPage extends ConsumerStatefulWidget {
 class _CreatePostPageState extends ConsumerState<CreatePostPage> {
   final TextEditingController _captionController = TextEditingController();
   String _selectedVisibility = 'public';
+  String _targetDestination = 'global_feed'; // 'global_feed' or 'circle_only'
+  String _selectedCircleName = 'CSE Community';
+  bool _hideLikesAndViews = false;
+  bool _hideComments = false;
   String? _selectedLocation;
   String? _selectedMusic;
   final List<String> _mediaUrls = [];
@@ -77,8 +81,8 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
 
     final user = ref.read(authProvider).user;
     final authorModel = AuthorModel(
-      username: user?.email.split('@')[0] ?? 'student',
-      displayName: user?.email.split('@')[0].toUpperCase() ?? 'STUDENT',
+      username: user?.email.split('@')[0] ?? 'creator',
+      displayName: user?.email.split('@')[0].toUpperCase() ?? 'CREATOR',
       avatarUrl: null,
       isVerified: true,
     );
@@ -97,7 +101,7 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
       pollOptions: null,
       pollEndsAt: null,
       location: _selectedLocation,
-      hashtags: ['JibbleCampus', 'StudentLife'],
+      hashtags: ['JibbleCommunity', _targetDestination == 'circle_only' ? _selectedCircleName : 'Global'],
       mentions: [],
       isPinned: false,
       isArchived: false,
@@ -114,9 +118,11 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
     // Optimistically prepend new post into feedProvider state
     ref.read(feedProvider.notifier).addOptimisticPost(newPost);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Post published to campus feed! 🚀')),
-    );
+    final message = _targetDestination == 'circle_only'
+        ? 'Post shared exclusively to $_selectedCircleName! 🎯'
+        : 'Post published to Global Jibble Feed! 🚀';
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     Navigator.pop(context);
   }
 
@@ -171,7 +177,101 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // User Avatar + Audience / Visibility Selector Header Row
+                  // 1. Publishing Destination Toggle Bar
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1B1B2A),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => _targetDestination = 'global_feed'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              decoration: BoxDecoration(
+                                color: _targetDestination == 'global_feed' ? AppColors.accent : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '🌐 Main Jibble',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: _targetDestination == 'global_feed' ? Colors.white : Colors.white60,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => _targetDestination = 'circle_only'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              decoration: BoxDecoration(
+                                color: _targetDestination == 'circle_only' ? AppColors.accent : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '🎯 Post to Circle',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: _targetDestination == 'circle_only' ? Colors.white : Colors.white60,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  if (_targetDestination == 'circle_only') ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.bubble_chart_rounded, color: AppColors.accent, size: 18),
+                          const SizedBox(width: 8),
+                          const Text('Target Circle: ', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                          DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _selectedCircleName,
+                              dropdownColor: AppColors.surface,
+                              style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 12),
+                              items: const [
+                                DropdownMenuItem(value: 'CSE Community', child: Text('CSE Community')),
+                                DropdownMenuItem(value: 'Flutter Developers', child: Text('Flutter Developers')),
+                                DropdownMenuItem(value: 'Design Hub', child: Text('Design Hub')),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) setState(() => _selectedCircleName = val);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 16),
+
+                  // User Avatar + Audience Selector
                   Row(
                     children: [
                       CircleAvatar(
@@ -191,7 +291,6 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textPrimary),
                           ),
                           const SizedBox(height: 2),
-                          // Visibility Dropdown Chip
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                             decoration: BoxDecoration(
@@ -205,17 +304,13 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
                                 isDense: true,
                                 icon: const Icon(Icons.arrow_drop_down, color: AppColors.accent, size: 18),
                                 items: const [
-                                  DropdownMenuItem(value: 'public', child: Text('🌐 Anyone', style: TextStyle(fontSize: 11, color: AppColors.textPrimary))),
-                                  DropdownMenuItem(value: 'college_only', child: Text('🎓 College Only', style: TextStyle(fontSize: 11, color: AppColors.textPrimary))),
-                                  DropdownMenuItem(value: 'followers', child: Text('🔒 Followers', style: TextStyle(fontSize: 11, color: AppColors.textPrimary))),
-                                  DropdownMenuItem(value: 'private', child: Text('🕵️ Anonymous', style: TextStyle(fontSize: 11, color: AppColors.textPrimary))),
+                                  DropdownMenuItem(value: 'public', child: Text('🌐 Everyone', style: TextStyle(fontSize: 11, color: AppColors.textPrimary))),
+                                  DropdownMenuItem(value: 'followers', child: Text('🔒 Followers Only', style: TextStyle(fontSize: 11, color: AppColors.textPrimary))),
+                                  DropdownMenuItem(value: 'friends', child: Text('👥 Friends Only', style: TextStyle(fontSize: 11, color: AppColors.textPrimary))),
+                                  DropdownMenuItem(value: 'private', child: Text('🔒 Only Me', style: TextStyle(fontSize: 11, color: AppColors.textPrimary))),
                                 ],
                                 onChanged: (val) {
-                                  if (val != null) {
-                                    setState(() {
-                                      _selectedVisibility = val;
-                                    });
-                                  }
+                                  if (val != null) setState(() => _selectedVisibility = val);
                                 },
                               ),
                             ),
@@ -240,6 +335,45 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
                         hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 15),
                         border: InputBorder.none,
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Privacy & Interaction Settings Card
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Creator Privacy Controls',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
+                        ),
+                        SwitchListTile.adaptive(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Only I can see views & likes', style: TextStyle(fontSize: 13, color: AppColors.textPrimary)),
+                          subtitle: const Text('Hide public like and view counts', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                          value: _hideLikesAndViews,
+                          activeTrackColor: AppColors.accent,
+                          onChanged: (val) => setState(() => _hideLikesAndViews = val),
+                        ),
+                        const Divider(height: 1, color: Colors.white10),
+                        SwitchListTile.adaptive(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Hide / disable comments', style: TextStyle(fontSize: 13, color: AppColors.textPrimary)),
+                          subtitle: const Text('Turn off commenting for this post', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                          value: _hideComments,
+                          activeTrackColor: AppColors.accent,
+                          onChanged: (val) => setState(() => _hideComments = val),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),

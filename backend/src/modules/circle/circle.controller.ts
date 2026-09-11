@@ -208,4 +208,123 @@ export const circleController = {
       next(err);
     }
   },
+
+  /**
+   * Aggregated Circle Home endpoint.
+   * GET /api/v1/circles/:id/home
+   */
+  async getCircleHome(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const userId = req.user!.sub;
+      const { circleHubService } = await import('./circle.hub.service');
+      const data = await circleHubService.getCircleHome(id, userId);
+      res.status(200).json({
+        success: true,
+        data,
+        error: null,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
+   * Create an event with redirect join link.
+   * POST /api/v1/circles/:id/events
+   */
+  async createCircleEvent(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const userId = req.user!.sub;
+      const { circleHubService } = await import('./circle.hub.service');
+      const event = await circleHubService.createEvent(id, userId, req.body);
+      res.status(201).json({
+        success: true,
+        data: event,
+        error: null,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
+   * Create an anonymous post in circle feed.
+   * POST /api/v1/circles/:id/anonymous
+   */
+  async createAnonymousPost(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const userId = req.user!.sub;
+      const { circleHubService } = await import('./circle.hub.service');
+      const post = await circleHubService.createAnonymousPost(id, userId, req.body);
+      res.status(201).json({
+        success: true,
+        data: post,
+        error: null,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
+   * Create a sub-group within circle.
+   * POST /api/v1/circles/:id/groups
+   */
+  async createCircleGroup(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const userId = req.user!.sub;
+      const { circleHubService } = await import('./circle.hub.service');
+      const group = await circleHubService.createGroup(id, userId, req.body);
+      res.status(201).json({
+        success: true,
+        data: group,
+        error: null,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
+   * Get messages inside a circle group.
+   * GET /api/v1/circles/:id/groups/:groupId/messages
+   */
+  async getGroupMessages(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { groupId } = req.params;
+      const { circleHubService } = await import('./circle.hub.service');
+      const messages = await circleHubService.getGroupMessages(groupId);
+      res.status(200).json({
+        success: true,
+        data: messages,
+        error: null,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
+   * Send a message to a circle group chat.
+   * POST /api/v1/circles/:id/groups/:groupId/messages
+   */
+  async sendGroupMessage(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { groupId } = req.params;
+      const userId = req.user!.sub;
+      const { circleHubService } = await import('./circle.hub.service');
+      const message = await circleHubService.sendGroupMessage(groupId, userId, req.body);
+      res.status(201).json({
+        success: true,
+        data: message,
+        error: null,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
 };

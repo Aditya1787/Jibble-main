@@ -53,4 +53,11 @@ router.get(
   authController.me,
 );
 
+// POST /api/v1/auth/creator-mode
+router.post(
+  '/creator-mode',
+  authMiddleware,
+  authController.toggleCreatorMode,
+);
+
 export { router as authRouter };

@@ -1,29 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/presentation/widgets/neumorphic_box.dart';
+import '../../../auth/presentation/provider/auth_provider.dart';
 import 'home_page.dart';
 import '../../../circle/presentation/screens/circle_page.dart';
 import '../../../reels/presentation/screens/reels_page.dart';
 import '../../../chat/presentation/screens/chat_list_page.dart';
 import '../../../post/presentation/screens/creation_hub_shell.dart';
 
-class MainShell extends StatefulWidget {
+class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
 
   @override
-  State<MainShell> createState() => _MainShellState();
+  ConsumerState<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends ConsumerState<MainShell> {
   int _currentIndex = 0;
-
-  final List<Widget> _pages = const [
-    HomePage(),
-    CirclePage(),
-    Scaffold(), // Placeholder for Create Post tab modal
-    ReelsPage(),
-    ChatListPage(),
-  ];
 
   void _onTabTapped(int index) {
     if (index == 2) {
@@ -38,11 +32,29 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(authProvider).user;
+
+    // Strict Role Enforcement: Circle Community accounts are locked into their Circle Dashboard
+    if (user?.isCircleCommunity == true) {
+      return const Scaffold(
+        body: CirclePage(
+          circleName: 'Official Community Dashboard',
+        ),
+      );
+    }
+
+    final List<Widget> pages = [
+      const HomePage(),
+      CirclePage(onReturnHome: () => _onTabTapped(0)),
+      const Scaffold(), // Placeholder for Create Post tab modal
+      const ReelsPage(),
+      const ChatListPage(),
+    ];
     return Scaffold(
       extendBody: true,
       body: IndexedStack(
         index: _currentIndex,
-        children: _pages,
+        children: pages,
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(

@@ -39,6 +39,9 @@ export const createPostSchema = z.object({
   location: z.string().max(255).nullable().optional(),
   hashtags: z.array(z.string().max(50)).max(20).nullable().optional(),
   mentions: z.array(z.string().uuid('Invalid mention user ID')).max(50).nullable().optional(),
+  circleId: z.string().uuid('Invalid circle ID').nullable().optional(),
+  hideLikesViews: z.boolean().optional().default(false),
+  hideComments: z.boolean().optional().default(false),
 });
 
 export const getFeedSchema = z.object({

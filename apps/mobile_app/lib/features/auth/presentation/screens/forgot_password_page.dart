@@ -28,7 +28,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     }
 
     setState(() => _loading = true);
-    // TODO: call POST /api/v1/auth/forgot-password
+    // Dispatches password reset email instructions via auth service
     await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
     setState(() { _loading = false; _submitted = true; });

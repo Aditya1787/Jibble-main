@@ -110,4 +110,19 @@ export const authController = {
       next(err);
     }
   },
+
+  /**
+   * POST /api/v1/auth/creator-mode
+   * Enables or disables Content Creator capabilities for the authenticated user.
+   */
+  async toggleCreatorMode(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = (req as any).user?.sub;
+      const { enable } = req.body;
+      const user = await authService.toggleCreatorMode(userId, Boolean(enable));
+      sendSuccess(res, { user, message: enable ? 'Content Creator mode enabled' : 'Switched to Normal User mode' });
+    } catch (err) {
+      next(err);
+    }
+  },
 };
